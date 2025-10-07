@@ -1,4 +1,4 @@
-IMPORTANT NOTE: Always Pull Updates to Local Machien 
+IMPORTANT NOTE: Always Pull Updates to Local Machine 
 From Git BEFORE Starting Your Coding Session
 
 # PortfolAI-CS4300-Fall-2024-Group-4
