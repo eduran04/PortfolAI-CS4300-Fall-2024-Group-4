@@ -5,3 +5,13 @@ Alexis
 Elizandro
 
 Sreya
+- Overall, the team worked really well together and we were able to
+efficiently figure out a plan of action to get this done as soon as
+possible. We all divided the tasks pretty easily and were able to work
+together to figure out all the issues and resolve them. One of the things
+that we were working with for a long time to try and figure out was how
+to display an image on the landing page and how to host the image because
+there aren't a lot of websites that will offer a free image and it isn't
+very efficient to host it locally from one person's device. In the next
+iteration, I think it would be nice to make the landing page more aesthetic
+and see if there's any way to further optimize the code as we go along.
