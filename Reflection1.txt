@@ -1,7 +1,7 @@
 Jessica
 
 Alexis
-This sprint went smoothly as our team colloaborated well and kept communication clear.
+This sprint went smoothly as our team collaborated well and kept communication clear.
 We divided responsibilities evenly and resolved issues quickly. Our main achievements included
 setting up the repo, generate SSH keys, and build a simple landing page with very basic styling 
 for the project. We have expanded our knowledge of Django, HTML5, and CSS, which help us to
