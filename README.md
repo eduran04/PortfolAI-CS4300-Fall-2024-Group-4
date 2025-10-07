@@ -1,3 +1,6 @@
+IMPORTANT NOTE: Always Pull Updates to Local Machien 
+From Git BEFORE Starting Your Coding Session
+
 # PortfolAI-CS4300-Fall-2024-Group-4
 
 Browser Link to Landing Page: http://127.0.0.1:3000/
