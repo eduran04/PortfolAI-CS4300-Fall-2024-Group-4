@@ -1,4 +1,10 @@
 Jessica
+Our team collaborated to develop a plan for configuring the main page for sprint 0. 
+We divided tasks to the best of our abilities to resolve issues and complete tasks efficiently. 
+For this sprint, we set up our landing page and repository with django, HTML5, and some of our 
+knowledge from our homework 2. As we continue developing, we hope to design a user-friendly 
+and clean homepage to reflect the product we are developing. With the setup of our main page, 
+it will help us branch to other pages we will have developed for future features
 
 Alexis
 This sprint went smoothly as our team collaborated well and kept communication clear.
