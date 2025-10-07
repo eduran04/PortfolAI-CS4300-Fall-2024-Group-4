@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0a73d2d9-0cb7-472b-b419-2692ccca71af" name="Changes" comment="Small updates" />
+    <list default="true" id="0a73d2d9-0cb7-472b-b419-2692ccca71af" name="Changes" comment="Added sme crucial upgrades" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -128,7 +128,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759870498395</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="Added sme crucial upgrades">
+      <option name="closed" value="true" />
+      <created>1759870663086</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1759870663086</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -150,6 +158,7 @@
     <MESSAGE value="home/static/home/css/styles.css - Added an Image for Landing" />
     <MESSAGE value="imported a few packages needed" />
     <MESSAGE value="Small updates" />
-    <option name="LAST_COMMIT_MESSAGE" value="Small updates" />
+    <MESSAGE value="Added sme crucial upgrades" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added sme crucial upgrades" />
   </component>
 </project>
