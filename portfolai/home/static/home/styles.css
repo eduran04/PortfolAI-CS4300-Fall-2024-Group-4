@@ -6,7 +6,7 @@ body {
 }
 
 .hero {
-    background: url("https://unsplash.com/photos/financial-chart-and-rising-graph-with-lines-and-numbers-and-bar-diagrams-that-illustrate-stock-market-behaviour-concept-of-successful-trading-dark-blue-background-3d-rendering-AM3wYIikxO4") center/cover no-repeat;
+    background: url("{% static 'home/images/landing.jpg' %}") center/cover no-repeat;
     height: 100vh;
     display: flex;
     align-items: center;
