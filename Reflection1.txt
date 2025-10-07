@@ -3,6 +3,15 @@ Jessica
 Alexis
 
 Elizandro
+- Overall, I believe our team worked well and communicated efficiently
+throughout the course of our sprint. Tasks were divided well and issues 
+were resolved with ease. We were able to create a basic landing page with
+basic styling with ease. We were also able to clone the repository and 
+create ssh keys in the environment. We also gained additional familiarity 
+with django, HTML5, and more. We were also exploring css styling resources
+online and are still deciding how to proceed from here. In future sprints
+we want to focus on making the landing page more aesthetic to meet our 
+wireframe sketches and adhere to best practices.
 
 Sreya
 - Overall, the team worked very well together and we were able to
