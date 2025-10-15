@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-_f5+_=5qv+d$qlhbcdh70md6aflnc!*8j@ds&r*!z4-puryqvq"
+SECRET_KEY = config('SECRET_KEY', default="django-insecure-_f5+_=5qv+d$qlhbcdh70md6aflnc!*8j@ds&r*!z4-puryqvq")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default="app-edurancontainer-20.devedu.io,*").split(',')
 
 
 # Application definition
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "home", # added by SK
+    "rest_framework"
 ]
 
 MIDDLEWARE = [
@@ -117,9 +119,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'home', 'static')]  # added by SK
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'home', 'static'),  # added by SK
+    os.path.join(BASE_DIR, 'home', 'static', 'dashboard'),  # React dashboard static files
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+

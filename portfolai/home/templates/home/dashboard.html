@@ -1,0 +1,236 @@
+{% extends 'home/base.html' %}
+{% load static %}
+
+{% block title %}PortfolAI Dashboard{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'home/dashboard/dashboard.css' %}">
+<style>
+  /* Override base template styles for dashboard */
+  body {
+    background-color: #23252e !important;
+    color: #8a8fa7 !important;
+    font-family: 'Lato', sans-serif !important;
+  }
+  
+  #mainContent {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  #sidebar {
+    display: none; /* Hide sidebar for dashboard */
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="grid-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <a href="{% url 'index' %}" style="text-decoration: none; color: inherit;">PORTFOLAI</a>
+    </div>
+    <div class="header-left">
+      <ul class="list">
+        <li class="list-item">
+          <a href="{% url 'index' %}">
+            <span class="material-icons-outlined">home</span> HOME
+          </a>
+        </li>
+        <li class="list-item active">
+          <a href="{% url 'dashboard' %}">
+            <span class="material-icons-outlined">dashboard</span> DASHBOARD
+          </a>
+        </li>
+        <li class="list-item">
+          <a href="#">
+            <span class="material-icons-outlined">inventory_2</span> PORTFOLIOS
+          </a>
+        </li>
+        <li class="list-item">
+          <a href="#">
+            <span class="material-icons-outlined">poll</span> ANALYTICS
+          </a>
+        </li>
+        <li class="list-item">
+          <a href="#">
+            <span class="material-icons-outlined">settings</span> SETTINGS
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="header-right">
+      <span class="material-icons-outlined">notifications</span>
+      <span class="material-icons-outlined">email</span>
+      <span class="material-icons-outlined">account_circle</span>
+    </div>
+  </header>
+  <!-- End Header -->
+
+         <!-- Main -->
+         <main class="main-container">
+           <!-- TradingView Ticker Tape -->
+           <div class="ticker-tape-section">
+             <div class="ticker-tape-header">
+               <h2 class="ticker-tape-title">
+                 <span class="material-icons-outlined">trending_up</span>
+                 Market Overview
+               </h2>
+             </div>
+             <div class="tradingview-widget-container">
+               <div class="tradingview-widget-container__widget"></div>
+               <div class="tradingview-widget-copyright">
+                 <a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank">
+                   <span class="blue-text">Ticker tape</span>
+                 </a>
+                 <span class="trademark"> by TradingView</span>
+               </div>
+             </div>
+           </div>
+
+           <!-- Search Section -->
+           <div class="search-section">
+             <div class="search-container">
+               <div class="search-input-group">
+                 <input 
+                   type="text" 
+                   id="stock-search" 
+                   placeholder="Search stocks (e.g., AAPL, Microsoft, Tesla)" 
+                   class="search-input"
+                 >
+                 <button id="search-btn" class="search-btn">
+                   <span class="material-icons-outlined">search</span>
+                   Search
+                 </button>
+               </div>
+               <div id="search-results" class="search-results"></div>
+             </div>
+           </div>
+
+    <div class="main-cards">
+
+      <div class="card">
+        <div class="card-inner">
+          <p>WATCHLIST</p>
+          <div class="icon icon-shape background-blue text-primary">
+            <span class="material-icons-outlined">inventory_2</span>
+          </div>
+        </div>
+        <span class="text-primary" id="watchlist-count">0</span>
+      </div>
+      
+      <div class="card">
+        <div class="card-inner">
+          <p>MARKET STATUS</p>
+          <div class="icon icon-shape background-orange text-primary">
+            <span class="material-icons-outlined">trending_up</span>
+          </div>
+        </div>
+        <span class="text-primary" id="market-status">Loading...</span>
+      </div>
+
+      <div class="card">
+        <div class="card-inner">
+          <p>SELECTED STOCK</p>
+          <div class="icon icon-shape background-green text-primary">
+            <span class="material-icons-outlined">show_chart</span>
+          </div>
+        </div>
+        <span class="text-primary" id="selected-stock">None</span>
+      </div>
+
+      <div class="card">
+        <div class="card-inner">
+          <p>PRICE CHANGE</p>
+          <div class="icon icon-shape background-red text-primary">
+            <span class="material-icons-outlined">notification_important</span>
+          </div>
+        </div>
+        <span class="text-primary" id="price-change">$0.00</span>
+      </div>
+
+    </div>
+
+    <!-- Selected Stock Information -->
+    <div class="stock-info-section" id="stock-info-section" style="display: none;">
+      <div class="stock-info-card">
+        <div class="stock-header">
+          <div class="stock-symbol" id="stock-symbol-display">-</div>
+          <div class="stock-company" id="stock-company-display">-</div>
+        </div>
+        <div class="stock-price-info">
+          <div class="current-price" id="current-price-display">$0.00</div>
+          <div class="price-change" id="price-change-display">$0.00 (0.00%)</div>
+        </div>
+        <div class="stock-details">
+          <div class="detail-item">
+            <span class="detail-label">High:</span>
+            <span class="detail-value" id="stock-high">$0.00</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Low:</span>
+            <span class="detail-value" id="stock-low">$0.00</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Open:</span>
+            <span class="detail-value" id="stock-open">$0.00</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Previous Close:</span>
+            <span class="detail-value" id="stock-prev-close">$0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Watchlist Section -->
+    <div class="watchlist-section">
+      <div class="watchlist-header">
+        <h2 class="watchlist-title">
+          <span class="material-icons-outlined">star</span>
+          My Watchlist
+        </h2>
+        <div class="watchlist-actions">
+          <button id="clear-watchlist-btn" class="clear-btn" title="Clear all stocks">
+            <span class="material-icons-outlined">clear_all</span>
+          </button>
+        </div>
+      </div>
+      <div class="watchlist-container" id="watchlist-container">
+        <div class="watchlist-empty" id="watchlist-empty">
+          <span class="material-icons-outlined">star_border</span>
+          <p>No stocks in watchlist</p>
+          <small>Search and add stocks to your watchlist</small>
+        </div>
+        <div class="watchlist-grid" id="watchlist-grid" style="display: none;">
+          <!-- Watchlist items will be populated here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="charts">
+
+      <div class="charts-card">
+        <p class="chart-title">Portfolio Performance</p>
+        <div id="bar-chart"></div>
+      </div>
+
+      <div class="charts-card">
+        <p class="chart-title">Stock Analysis Trends - <span id="chart-stock-symbol">Select a stock to view trends</span></p>
+        <div id="area-chart"></div>
+      </div>
+
+    </div>
+  </main>
+  <!-- End Main -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ApexCharts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.40.0/apexcharts.min.js"></script>
+<script src="{% static 'home/dashboard/dashboard.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,46 @@
+# Virtual environments
+myenv/
+venv/
+env/
+.venv/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Database
+*.db
+*.sqlite3
+
+# Test coverage
+htmlcov/
+.coverage
+.pytest_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
