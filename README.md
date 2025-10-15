@@ -6,25 +6,63 @@ Django-based web application for stock analysis and portfolio management with re
 
 ## Setup Guide
 
-1. Clone the repository: `git clone https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4.git`
-2. Navigate to project directory: `cd PortfolAI-CS4300-Fall-2024-Group-4/portfolai`
-3. Create virtual environment: `python -m venv myenv`
-4. Activate virtual environment: `source myenv/bin/activate`
-5. Install dependencies: `pip install -r requirements.txt`
-6. Create `.env` file with your Finnhub API key:
-   ```
-   FINNHUB_API_KEY=your_finnhub_api_key_here
-   SECRET_KEY=your-secret-key-here
-   DEBUG=True
-   ALLOWED_HOSTS=localhost,127.0.0.1
-   ```
-7. Run migrations: `python manage.py migrate`
-8. Start server: `python manage.py runserver 0.0.0.0:8000`
-9. Access application at http://localhost:8000/
+1. Clone and enter the Repository
 
-## Testing
+```
+git clone https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4.git
+cd PortfolAI-CS4300-Fall-2024-Group-4/portfolai
+```
 
-Run tests: `pytest -v`
+2. Create and Activate a Virtual Environment
+
+```
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+```
+
+3. Install Dependencies
+
+```
+pip install -r requirements.txt
+```
+
+4. Configure Environment Variables
+
+Create a .env file in the project root:
+
+```
+touch .env
+```
+
+Add Key to .env file:
+```
+FINNHUB_API_KEY=your_finnhub_api_key_here
+SECRET_KEY=your_secret_key_here
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
+```
+
+5. Run Migrations
+
+```
+python manage.py migrate
+```
+
+7. Start the Development Server
+
+```
+python manage.py runserver 0.0.0.0:3000
+```
+
+Visit ➜ http://localhost:3000/
+
+8. Running Tests
+
+To run all tests:
+
+```
+pytest -v
+```
 
 ## Project Structure
 
