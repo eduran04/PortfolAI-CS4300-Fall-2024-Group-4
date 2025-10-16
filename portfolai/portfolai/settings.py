@@ -130,7 +130,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'home', 'static'),  # added by SK
-    os.path.join(BASE_DIR, 'home', 'static', 'dashboard'),  # React dashboard static files
 ]
 
 # WhiteNoise configuration
