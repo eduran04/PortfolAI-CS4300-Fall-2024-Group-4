@@ -461,12 +461,6 @@
         </footer>
     </body>
 
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js"
-        integrity="sha512-Ysw1DcK1P+uYLqprEAzNQJP+J4hTx4t/3X2nbVwszao8wD+9afLjBQYjz7Uk4ADP+Er++mJoScI42ueGtQOzEA=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-    ></script>
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.css"
@@ -474,6 +468,12 @@
         crossorigin="anonymous"
         referrerpolicy="no-referrer"
     />
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js"
+        integrity="sha512-Ysw1DcK1P+uYLqprEAzNQJP+J4hTx4t/3X2nbVwszao8wD+9afLjBQYjz7Uk4ADP+Er++mJoScI42ueGtQOzEA=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+    ></script>
 
     <script src="{% static 'home/saasy.js' %}"></script>
     <script src="{% static 'home/finance/finance-dashboard.js' %}"></script>
@@ -519,22 +519,51 @@
         window.addEventListener("resize", responsive)
 
         // Initialize Swiper for testimonials
-        const reviewSwiper = new Swiper('.review-container', {
-            //effect: "coverflow",
-            // grabCursor: true,
-            loop: true,
-            centeredSlides: true,
-            slidesPerView: 'auto',
-            autoplay: {
-                delay: 7000,
-            },
-            pagination: {
-                el: '.dots-container',
-                clickable: true,
-                renderBullet: function (index, className) {
-                    return `<span class="!tw-h-[3px] !tw-w-[40px] !tw-rounded-none ${className}"></span>`
-                },
-            },
-        })
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if Swiper is available
+            if (typeof Swiper !== 'undefined') {
+                const reviewSwiper = new Swiper('.review-container', {
+                    //effect: "coverflow",
+                    // grabCursor: true,
+                    loop: true,
+                    centeredSlides: true,
+                    slidesPerView: 'auto',
+                    autoplay: {
+                        delay: 7000,
+                    },
+                    pagination: {
+                        el: '.dots-container',
+                        clickable: true,
+                        renderBullet: function (index, className) {
+                            return `<span class="!tw-h-[3px] !tw-w-[40px] !tw-rounded-none ${className}"></span>`
+                        },
+                    },
+                });
+                console.log('Swiper initialized successfully');
+            } else {
+                console.error('Swiper library not loaded');
+                // Fallback: try again after a delay
+                setTimeout(function() {
+                    if (typeof Swiper !== 'undefined') {
+                        const reviewSwiper = new Swiper('.review-container', {
+                            loop: true,
+                            centeredSlides: true,
+                            slidesPerView: 'auto',
+                            autoplay: {
+                                delay: 7000,
+                            },
+                            pagination: {
+                                el: '.dots-container',
+                                clickable: true,
+                                renderBullet: function (index, className) {
+                                    return `<span class="!tw-h-[3px] !tw-w-[40px] !tw-rounded-none ${className}"></span>`
+                                },
+                            },
+                        });
+                        console.log('Swiper initialized on retry');
+                    }
+                }, 1000);
+            }
+        });
     </script>
 </html>
