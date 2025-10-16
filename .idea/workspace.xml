@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0a73d2d9-0cb7-472b-b419-2692ccca71af" name="Changes" comment="Added sme crucial upgrades">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="0a73d2d9-0cb7-472b-b419-2692ccca71af" name="Changes" comment="Added reflection">
+      <change beforePath="$PROJECT_DIR$/.idea/PortfolAI-CS4300-Fall-2024-Group-4.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/PortfolAI-CS4300-Fall-2024-Group-4.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_7_25,_3_29 PM_[Changes]/shelved.patch" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_7_25__3_29PM__Changes_.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Reflection1.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Reflection1.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,6 +17,7 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -48,7 +50,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-53e2683a6804-9cdd278e9d02-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-251.26094.141" />
+        <option value="bundled-python-sdk-d2614ccfe7c8-e2d783800521-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-251.28774.16" />
       </set>
     </attachedChunks>
   </component>
@@ -148,7 +150,23 @@
       <option name="project" value="LOCAL" />
       <updated>1759870858531</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Added some crucial upgrades">
+      <option name="closed" value="true" />
+      <created>1759873967712</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1759873967713</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Added reflection">
+      <option name="closed" value="true" />
+      <created>1759874001288</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1759874001288</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -171,6 +189,8 @@
     <MESSAGE value="imported a few packages needed" />
     <MESSAGE value="Small updates" />
     <MESSAGE value="Added sme crucial upgrades" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added sme crucial upgrades" />
+    <MESSAGE value="Added some crucial upgrades" />
+    <MESSAGE value="Added reflection" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added reflection" />
   </component>
 </project>
