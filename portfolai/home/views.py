@@ -22,15 +22,6 @@ def dashboard(request):
     return render(request, 'home/dashboard.html', context)
 
 
-def finance_dashboard(request):
-    """
-    Finance dashboard page view - serves the finance-focused dashboard
-    """
-    context = {
-        'page_title': 'PortfolAI Finance Dashboard',
-        'user': request.user if request.user.is_authenticated else None,
-    }
-    return render(request, 'home/finance_dashboard.html', context)
 
 
 @csrf_exempt
