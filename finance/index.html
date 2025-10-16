@@ -1,27 +1,27 @@
-{% load static %}
 <!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PortfolAI Finance Dashboard</title>
-        <meta name="description" content="AI-Powered Stock Analysis and Portfolio Management" />
+        <title>Smart Finance</title>
+        <meta name="description" content="" />
         <link
             rel="shortcut icon"
-            href="{% static 'home/assets/logo.png' %}"
+            href="./assets/logo/logo1.png"
             type="image/x-icon"
         />
 
         <!-- Open Graph / Facebook -->
-        <meta property="og:title" content="PortfolAI Finance Dashboard" />
-        <meta property="og:description" content="AI-Powered Stock Analysis and Portfolio Management" />
+        <meta property="og:title" content="Title of the project" />
+        <meta property="og:description" content="" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4" />
-        <meta property="og:image" content="{% static 'home/assets/logo.png' %}" />
+        <meta property="og:url" content="https://github.com/PaulleDemon" />
+        <!--Replace with the current website url-->
+        <meta property="og:image" content="" />
 
-        <link rel="stylesheet" href="{% static 'home/tailwind-build.css' %}" />
-        <link rel="stylesheet" href="{% static 'home/saasy-custom.css' %}" />
-        <link rel="stylesheet" href="{% static 'home/finance/finance-dashboard.css' %}" />
+        <link rel="stylesheet" href="../../tailwind-css/tailwind-runtime.css" />
+        <!-- <link rel="stylesheet" href="./css/tailwind-build.css"> -->
+        <link rel="stylesheet" href="./css/index.css" />
 
         <link
             rel="stylesheet"
@@ -35,10 +35,10 @@
         <header
             class="tw-absolute tw-top-0 tw-z-20 tw-flex tw-h-[60px] tw-w-full tw-bg-white tw-px-[10%] tw-text-black max-lg:tw-mr-auto max-lg:tw-px-4 lg:tw-justify-around"
         >
-            <a class="tw-h-[50px] tw-w-[50px] tw-p-[4px]" href="{% url 'index' %}">
+            <a class="tw-h-[50px] tw-w-[50px] tw-p-[4px]" href="">
                 <img
-                    src="{% static 'home/assets/logo.png' %}"
-                    alt="PortfolAI logo"
+                    src="./assets/logo/logo1.png"
+                    alt="logo"
                     class="tw-object tw-h-full tw-w-full"
                 />
             </a>
@@ -49,9 +49,9 @@
                 <div
                     class="tw-flex tw-h-full tw-w-max tw-gap-5 tw-text-base tw-text-black max-lg:tw-mt-[30px] max-lg:tw-flex-col max-lg:tw-place-items-end max-lg:tw-gap-5 lg:tw-mx-auto lg:tw-place-items-center"
                 >
-                    <a class="header-links" href="{% url 'index' %}"> Home </a>
-                    <a class="header-links" href="{% url 'dashboard' %}"> Dashboard </a>
-                    <a class="header-links" href="{% url 'finance_dashboard' %}" style="color: #1e85ec;"> Finance </a>
+                    <a class="header-links" href=""> About us </a>
+                    <a class="header-links" href=""> Pricing </a>
+                    <a class="header-links" href=""> Blogs </a>
                     <a class="header-links" href="" rel="noreferrer">
                         Contact us
                     </a>
@@ -59,7 +59,21 @@
                 <div
                     class="tw-flex tw-place-items-center tw-gap-[20px] tw-text-lg max-md:tw-w-full max-md:tw-flex-col max-md:tw-place-content-center"
                 >
-                    <!-- Login/Signup removed for cleaner interface -->
+                    <a
+                        href=""
+                        aria-label="login"
+                        class="tw-transition-colors tw-duration-[0.3s]"
+                    >
+                        Login
+                    </a>
+
+                    <a
+                        href=""
+                        aria-label="signup"
+                        class="tw-rounded-sm tw-border-2 tw-border-[#1c1c1c] tw-p-1 tw-px-2 tw-transition-colors tw-duration-[0.3s] hover:tw-bg-black hover:tw-text-white"
+                    >
+                        Signup
+                    </a>
                 </div>
             </div>
             <button
@@ -82,34 +96,35 @@
                     <div
                         class="tw-flex tw-flex-wrap tw-text-6xl tw-font-semibold tw-uppercase tw-leading-[80px] max-lg:tw-text-4xl max-md:tw-leading-snug"
                     >
-                        Empower your portfolio
+                        Empower your finance
                         <br />
-                        with AI-powered,
+                        with seamless,
                         <br />
-                        stock analysis.
+                        cloud-based control.
                     </div>
                     <div
                         class="reveal tw-mt-10 tw-p-2 tw-text-justify max-lg:tw-max-w-full"
                     >
-                        Advanced AI algorithms analyze market patterns, provide intelligent insights, and help you make informed investment decisions without the risk of actual trading.
+                        Lorem ipsum dolor sit amet consectetur, adipisicing
+                        elit. Error adipisci corrupti accusamus reiciendis
+                        similique assumenda nostrum fuga dicta vitae ipsum.
                     </div>
 
-                    <h2 class="reveal tw-mt-6 tw-text-lg">Get started with AI analysis</h2>
+                    <h2 class="reveal tw-mt-6 tw-text-lg">Get started</h2>
                     <div
                         class="reveal tw-mt-4 tw-flex tw-h-[50px] tw-w-[350px] tw-max-w-[350px] tw-place-items-center tw-gap-2 tw-overflow-hidden"
                     >
                         <input
-                            type="text"
-                            id="stock-search-input"
+                            type="email"
                             class="input tw-h-full tw-w-full tw-rounded-md tw-border-[2px] tw-border-solid tw-border-[#bfbfbf] tw-bg-transparent tw-p-2 tw-px-3 tw-outline-none tw-transition-colors tw-duration-[0.3s]"
-                            placeholder="Search stocks (e.g., AAPL, Microsoft)"
+                            placeholder="joe@example.com"
                         />
-                        <button
-                            id="search-stock-btn"
+                        <a
                             class="btn tw-h-full tw-transition-colors tw-duration-[0.3s]"
+                            href=""
                         >
-                            Analyze
-                        </button>
+                            Signup
+                        </a>
                     </div>
 
                     <div class="reveal tw-mt-6 tw-flex tw-gap-4 tw-text-2xl">
@@ -117,7 +132,7 @@
                             <i class="bi bi-linkedin"></i>
                         </a>
                         <a
-                            href="https://twitter.com/@portfolai"
+                            href="https://twitter.com/@pauls_freeman"
                             aria-label="Twitter"
                         >
                             <i class="bi bi-twitter"></i>
@@ -125,7 +140,7 @@
                         <a
                             href="https://instagram.com/"
                             class="tw-h-[40px] tw-w-[40px]"
-                            aria-label="Instagram"
+                            aria-label="Tripadvisor"
                         >
                             <i class="bi bi-instagram"></i>
                         </a>
@@ -142,8 +157,8 @@
                             class="tw-flex tw-max-h-[550px] tw-min-h-[450px] tw-min-w-[350px] tw-max-w-[650px] tw-overflow-hidden tw-rounded-2xl tw-shadow-xl max-lg:tw-h-[320px] max-lg:tw-w-[320px]"
                         >
                             <img
-                                src="{% static 'home/assets/images/home/dash.png' %}"
-                                alt="PortfolAI Dashboard"
+                                src="./assets/images/home/dashboard.png"
+                                alt="dashboard"
                                 class="tw-h-full tw-w-full tw-object-cover max-lg:tw-object-contain"
                             />
                         </div>
@@ -151,30 +166,11 @@
                 </div>
             </div>
         </section>
-
-        <!-- Stock Analysis Results Section -->
-        <section
-            class="tw-relative tw-flex tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-6"
-            id="stock-results-section"
-            style="display: none;"
-        >
-            <h2 class="tw-text-3xl tw-text-[#5d5d5d] max-lg:tw-text-2xl">
-                Stock Analysis Results
-            </h2>
-
-            <div
-                class="tw-mt-8 tw-flex tw-w-full tw-max-w-[800px] tw-flex-col tw-gap-6"
-                id="stock-analysis-container"
-            >
-                <!-- Stock info will be populated here -->
-            </div>
-        </section>
-
         <section
             class="tw-relative tw-flex tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-6"
         >
             <h2 class="tw-text-3xl tw-text-[#5d5d5d] max-lg:tw-text-2xl">
-                Trusted by investors worldwide
+                Trusted by industry leaders
             </h2>
 
             <div
@@ -182,7 +178,7 @@
             >
                 <div class="tw-h-[50px] tw-w-[150px]">
                     <img
-                        src="{% static 'home/assets/images/brand-logos/google.svg' %}"
+                        src="./assets/images/brand-logos/google.svg"
                         alt="Google"
                         class="tw-h-full tw-w-full tw-object-contain tw-grayscale"
                         srcset=""
@@ -190,7 +186,7 @@
                 </div>
                 <div class="tw-h-[50px] tw-w-[150px]">
                     <img
-                        src="{% static 'home/assets/images/brand-logos/microsoft.svg' %}"
+                        src="./assets/images/brand-logos/microsoft.svg"
                         alt="Microsoft"
                         class="tw-h-full tw-w-full tw-object-contain tw-grayscale"
                         srcset=""
@@ -198,7 +194,7 @@
                 </div>
                 <div class="tw-h-[50px] tw-w-[150px]">
                     <img
-                        src="{% static 'home/assets/images/brand-logos/adobe.svg' %}"
+                        src="./assets/images/brand-logos/adobe.svg"
                         alt="Adobe"
                         class="tw-h-full tw-w-full tw-object-contain tw-grayscale"
                         srcset=""
@@ -206,7 +202,6 @@
                 </div>
             </div>
         </section>
-
         <section
             class="tw-relative tw-flex tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-6"
         >
@@ -216,11 +211,15 @@
                 <h2
                     class="tw-mt-5 tw-text-4xl tw-font-semibold max-lg:tw-text-3xl"
                 >
-                    AI-Powered Stock Analysis Technology
+                    A unique technology for your account needs
                 </h2>
 
-                <div class="tw-text-gray-700 tw-max-w-[600px] tw-mx-auto">
-                    Our advanced machine learning algorithms analyze market patterns, news sentiment, and historical data to provide you with intelligent stock insights and recommendations. No trading, no risk - just pure analysis and learning.
+                <div class="tw-text-gray-700">
+                    Lorem ipsum dolor, sit amet consectetur adipisicing elit.
+                    Temporibus consequatur odit exercitationem repellendus,
+                    recusandae ratione at tenetur, omnis dicta tempore dolor
+                    saepe quos doloremque tempora quibusdam. Aspernatur deserunt
+                    voluptatem aliquid.
                 </div>
             </div>
         </section>
@@ -231,7 +230,7 @@
         >
             <div class="tw-flex tw-flex-col tw-place-items-center tw-gap-5">
                 <h2 class="tw-mt-5 tw-text-4xl tw-font-semibold">
-                    Features for intelligent analysis
+                    Features for error free accounting
                 </h2>
 
                 <div class="tw-flex tw-gap-6 max-lg:tw-flex-col">
@@ -239,39 +238,57 @@
                         class="tw-flex tw-h-[400px] tw-w-[350px] tw-flex-col tw-gap-2 tw-rounded-xl tw-p-4 tw-shadow-xl"
                     >
                         <div
-                            class="tw-h-[200px] tw-w-full tw-overflow-clip tw-rounded-xl tw-bg-gradient-to-br tw-from-blue-500 tw-to-purple-600 tw-flex tw-items-center tw-justify-center"
+                            class="tw-h-[200px] tw-w-full tw-overflow-clip tw-rounded-xl"
                         >
-                            <i class="bi bi-robot tw-text-6xl tw-text-white"></i>
+                            <img
+                                src="./assets/images/home/sample.jpg"
+                                alt="feature1"
+                            />
                         </div>
-                        <h3 class="tw-text-2xl">AI Analysis</h3>
+                        <h3 class="tw-text-2xl">Feature 1</h3>
                         <div>
-                            Advanced machine learning algorithms analyze market patterns and provide intelligent stock recommendations based on historical data and market trends.
+                            Lorem ipsum dolor sit amet consectetur, adipisicing
+                            elit. Quos, voluptates numquam quam expedita
+                            mollitia possimus. Quos tempora placeat pariatur
+                            est!
                         </div>
                     </div>
                     <div
                         class="tw-flex tw-h-[400px] tw-w-[350px] tw-flex-col tw-gap-2 tw-rounded-xl tw-p-4 tw-shadow-xl"
                     >
                         <div
-                            class="tw-h-[200px] tw-w-full tw-overflow-clip tw-rounded-xl tw-bg-gradient-to-br tw-from-green-500 tw-to-teal-600 tw-flex tw-items-center tw-justify-center"
+                            class="tw-h-[200px] tw-w-full tw-overflow-clip tw-rounded-xl"
                         >
-                            <i class="bi bi-graph-up-arrow tw-text-6xl tw-text-white"></i>
+                            <img
+                                src="./assets/images/home/sample.jpg"
+                                alt="feature2"
+                            />
                         </div>
-                        <h3 class="tw-text-2xl">Real-time Data</h3>
+                        <h3 class="tw-text-2xl">Feature 2</h3>
                         <div>
-                            Access live market data, real-time price updates, and instant analysis to make informed decisions quickly and stay ahead of market movements.
+                            Lorem ipsum dolor sit amet consectetur, adipisicing
+                            elit. Quos, voluptates numquam quam expedita
+                            mollitia possimus. Quos tempora placeat pariatur
+                            est!
                         </div>
                     </div>
                     <div
                         class="tw-flex tw-h-[400px] tw-w-[350px] tw-flex-col tw-gap-2 tw-rounded-xl tw-p-4 tw-shadow-xl"
-                        >
+                    >
                         <div
-                            class="tw-h-[200px] tw-w-full tw-overflow-clip tw-rounded-xl tw-bg-gradient-to-br tw-from-orange-500 tw-to-red-600 tw-flex tw-items-center tw-justify-center"
+                            class="tw-h-[200px] tw-w-full tw-overflow-clip tw-rounded-xl"
                         >
-                            <i class="bi bi-shield-check tw-text-6xl tw-text-white"></i>
+                            <img
+                                src="./assets/images/home/sample.jpg"
+                                alt="feature3"
+                            />
                         </div>
-                        <h3 class="tw-text-2xl">Risk-Free Learning</h3>
+                        <h3 class="tw-text-2xl">Feature 3</h3>
                         <div>
-                            Learn about stock analysis and portfolio management without any financial risk. Perfect for beginners and experienced investors alike.
+                            Lorem ipsum dolor sit amet consectetur, adipisicing
+                            elit. Quos, voluptates numquam quam expedita
+                            mollitia possimus. Quos tempora placeat pariatur
+                            est!
                         </div>
                     </div>
                 </div>
@@ -279,15 +296,15 @@
         </section>
 
         <section
-            class="tw-flex tw-min-h-[30vh] tw-w-full tw-flex-col tw-place-content-center tw-place-items-center tw-gap-8 tw-overflow-hidden tw-p-4 tw-px-[10%] max-md:tw-flex-col"
+            class="tw-flex tw-min-h-[30vh] tw-w-full tw-flex-col tw-place-content-center tw-place-items-center tw-gap-[10%] tw-overflow-hidden tw-p-4 tw-px-[10%] max-md:tw-flex-col"
         >
-            <h2 class="tw-text-3xl max-md:tw-text-2xl">Ready to start analyzing?</h2>
+            <h2 class="tw-text-3xl max-md:tw-text-2xl">Want to learn more?</h2>
 
             <a
-                href="{% url 'dashboard' %}"
-                class="btn tw-duration-[0.3s] hover:tw-scale-105"
+                href="https://"
+                class="btn tw-mt-[2%] tw-duration-[0.3s] hover:tw-scale-105 max-md:tw-mt-8"
             >
-                Go to Dashboard
+                Schedule a call
             </a>
         </section>
 
@@ -321,6 +338,7 @@
                     }
 
                     .swiper-pagination-bullet-active {
+                        //color: #fff;
                         background: #000 !important;
                     }
 
@@ -339,16 +357,17 @@
                             class="tw-h-[50px] tw-w-[50px] tw-overflow-hidden tw-rounded-full tw-border-[2px] tw-border-solid tw-border-[#1c191a]"
                         >
                             <img
-                                src="{% static 'home/assets/images/people/women.jpg' %}"
+                                src="./assets/images/people/women.jpg"
                                 class="tw-h-full tw-w-full tw-object-cover"
                                 alt="women"
                             />
                         </div>
 
                         <p class="tw-mt-4 tw-italic tw-text-gray-600">
-                            "PortfolAI's AI analysis helped me understand market trends better than any other platform. The insights are incredibly accurate and easy to understand."
+                            Lorem ipsum dolor sit amet consectetur, adipisicing
+                            elit. Beatae, vero.
                         </p>
-                        <p class="tw-mt-3">- Sarah Chen</p>
+                        <p class="tw-mt-3">- Trich B</p>
                     </div>
 
                     <div
@@ -358,15 +377,16 @@
                             class="tw-h-[50px] tw-w-[50px] tw-overflow-hidden tw-rounded-full tw-border-[2px] tw-border-solid tw-border-[#1c191a]"
                         >
                             <img
-                                src="{% static 'home/assets/images/people/man.jpg' %}"
+                                src="./assets/images/people/man.jpg"
                                 class="tw-h-full tw-w-full tw-object-cover"
                                 alt="man"
                             />
                         </div>
                         <p class="tw-mt-5 tw-italic tw-text-gray-600">
-                            "The risk-free learning environment is perfect for someone like me who wanted to understand investing without losing money. Highly recommended!"
+                            Lorem ipsum dolor sit amet, consectetur adipisicing
+                            elit. Consequatur, porro!
                         </p>
-                        <p class="tw-mt-3">- Michael Rodriguez</p>
+                        <p class="tw-mt-3">- Bára Müllerová</p>
                     </div>
 
                     <div
@@ -376,21 +396,52 @@
                             class="tw-h-[50px] tw-w-[50px] tw-overflow-hidden tw-rounded-full tw-border-[2px] tw-border-solid tw-border-[#1c191a]"
                         >
                             <img
-                                src="{% static 'home/assets/images/people/man2.jpg' %}"
+                                src="./assets/images/people/man2.jpg"
                                 class="tw-h-full tw-w-full tw-object-cover"
                                 alt="man"
                             />
                         </div>
 
                         <p class="tw-mt-5 tw-italic tw-text-gray-600">
-                            "Real-time data and AI insights in one platform. This is exactly what I needed to improve my investment analysis skills."
+                            Lorem ipsum dolor sit amet.
                         </p>
-                        <p class="tw-mt-3">- David Kim</p>
+                        <p class="tw-mt-3">- Matt freeman</p>
                     </div>
                 </div>
 
                 <!-- Navigation dots -->
                 <div class="dots-container tw-mt-auto"></div>
+            </div>
+        </section>
+
+        <section
+            class="tw-flex tw-w-full tw-flex-col tw-place-content-center tw-place-items-center tw-gap-[10%] tw-p-[5%] tw-px-[10%]"
+        >
+            <div
+                class="tw-flex tw-w-full tw-flex-col tw-place-content-center tw-place-items-center tw-gap-3"
+            >
+                <h2 class="primary-text-color tw-text-2xl max-md:tw-text-xl">
+                    Special Newsletter signup
+                </h2>
+                <h2 class="tw-text-xl max-md:tw-text-lg">
+                    Keep yourself updated
+                </h2>
+
+                <div
+                    class="tw-flex tw-h-[60px] tw-place-items-center tw-gap-2 tw-overflow-hidden tw-p-2"
+                >
+                    <input
+                        type="email"
+                        class="input tw-h-full tw-w-full tw-p-2"
+                        placeholder="email"
+                    />
+                    <a
+                        class="btn tw-transition-colors tw-duration-[0.3s]"
+                        href=""
+                    >
+                        Signup
+                    </a>
+                </div>
             </div>
         </section>
 
@@ -401,17 +452,17 @@
                 class="tw-flex tw-h-full tw-w-[250px] tw-flex-col tw-place-items-center tw-gap-6 max-md:tw-w-full"
             >
                 <img
-                    src="{% static 'home/assets/logo.png' %}"
-                    alt="PortfolAI logo"
+                    src="./assets/logo/logo1.png"
+                    alt="logo"
                     srcset=""
                     class="tw-max-w-[120px]"
                 />
                 <div>
-                    AI-Powered Stock Analysis
+                    2 Lord Edward St,
                     <br />
-                    No Risk, No Trading
+                    D02 P634,
                     <br />
-                    Learn & Analyze
+                    United Kingdom
                 </div>
                 <div class="tw-mt-3 tw-text-lg tw-font-semibold">Follow us</div>
                 <div class="tw-flex tw-gap-4 tw-text-2xl">
@@ -419,7 +470,7 @@
                         <i class="bi bi-facebook"></i>
                     </a>
                     <a
-                        href="https://twitter.com/@portfolai"
+                        href="https://twitter.com/@pauls_freeman"
                         aria-label="Twitter"
                     >
                         <i class="bi bi-twitter"></i>
@@ -431,17 +482,6 @@
                     >
                         <i class="bi bi-instagram"></i>
                     </a>
-                </div>
-            </div>
-
-            <div class="tw-flex tw-h-full tw-w-[250px] tw-flex-col tw-gap-4">
-                <h2 class="tw-text-3xl max-md:tw-text-xl">Analysis</h2>
-                <div class="tw-flex tw-flex-col tw-gap-3 max-md:tw-text-sm">
-                    <a href="{% url 'dashboard' %}" class="footer-link">Stock Analysis</a>
-                    <a href="{% url 'finance_dashboard' %}" class="footer-link">Finance Dashboard</a>
-                    <a href="" class="footer-link">Portfolio Tools</a>
-                    <a href="" class="footer-link">AI Insights</a>
-                    <a href="" class="footer-link">Contact</a>
                 </div>
             </div>
 
@@ -472,51 +512,11 @@
         referrerpolicy="no-referrer"
     />
 
-    <script src="{% static 'home/saasy.js' %}"></script>
-    <script src="{% static 'home/finance/finance-dashboard.js' %}"></script>
+    <script src="./index.js"></script>
     <script>
-        // Header toggle functionality
-        const RESPONSIVE_WIDTH = 1024
-        let isHeaderCollapsed = window.innerWidth < RESPONSIVE_WIDTH
-        const collapseBtn = document.getElementById("collapse-btn")
-        const collapseHeaderItems = document.getElementById("collapsed-header-items")
-
-        function onHeaderClickOutside(e) {
-            if (!collapseHeaderItems.contains(e.target)) {
-                toggleHeader()
-            }
-        }
-
-        function toggleHeader() {
-            if (isHeaderCollapsed) {
-                collapseHeaderItems.classList.add("opacity-100",)
-                collapseHeaderItems.style.width = "60vw"
-                collapseBtn.classList.remove("bi-list")
-                collapseBtn.classList.add("bi-x", "max-lg:tw-fixed")
-                isHeaderCollapsed = false
-                setTimeout(() => window.addEventListener("click", onHeaderClickOutside), 1)
-            } else {
-                collapseHeaderItems.classList.remove("opacity-100")
-                collapseHeaderItems.style.width = "0vw"
-                collapseBtn.classList.remove("bi-x", "max-lg:tw-fixed")
-                collapseBtn.classList.add("bi-list")
-                isHeaderCollapsed = true
-                window.removeEventListener("click", onHeaderClickOutside)
-            }
-        }
-
-        function responsive() {
-            if (window.innerWidth > RESPONSIVE_WIDTH) {
-                collapseHeaderItems.style.width = ""
-            } else {
-                isHeaderCollapsed = true
-            }
-        }
-
-        window.addEventListener("resize", responsive)
-
-        // Initialize Swiper for testimonials
         const reviewSwiper = new Swiper('.review-container', {
+            //effect: "coverflow",
+            // grabCursor: true,
             loop: true,
             centeredSlides: true,
             slidesPerView: 'auto',
