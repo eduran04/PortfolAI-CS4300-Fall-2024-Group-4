@@ -35,6 +35,13 @@
                 >
                     Dashboard
                 </a>
+                <a
+                    class="btn tw-flex tw-gap-2 tw-bg-[#1e85ec] tw-text-white tw-transition-colors tw-duration-[0.3s] hover:tw-bg-[#1976d2]"
+                    href="{% url 'finance_dashboard' %}"
+                >
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span>Finance Dashboard</span>
+                </a>
                         <a
                             class="btn tw-flex tw-gap-2 !tw-bg-black !tw-text-white tw-transition-colors tw-duration-[0.3s] hover:!tw-bg-white hover:!tw-text-black"
                             href=""
@@ -679,8 +686,8 @@
             <div class="tw-flex tw-h-full tw-w-[250px] tw-flex-col tw-gap-4">
                 <h2 class="tw-text-3xl max-md:tw-text-xl">Analysis</h2>
                 <div class="tw-flex tw-flex-col tw-gap-3 max-md:tw-text-sm">
-                    <a href="" class="footer-link">Stock Analysis</a>
-                    <a href="" class="footer-link">Market Trends</a>
+                    <a href="{% url 'dashboard' %}" class="footer-link">Stock Analysis</a>
+                    <a href="{% url 'finance_dashboard' %}" class="footer-link">Finance Dashboard</a>
                     <a href="" class="footer-link">Portfolio Tools</a>
                     <a href="" class="footer-link">AI Insights</a>
                     <a href="" class="footer-link">Contact</a>

@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('finance-dashboard/', views.finance_dashboard, name='finance_dashboard'),
     
     # API endpoints
     path('api/search/', views.api_search_stocks, name='api_search_stocks'),
