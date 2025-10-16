@@ -27,7 +27,13 @@ SECRET_KEY = config('SECRET_KEY', default="django-insecure-_f5+_=5qv+d$qlhbcdh70
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default="app-edurancontainer-20.devedu.io,*").split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default="app-edurancontainer-20.devedu.io,localhost,127.0.0.1").split(',')
+
+# CSRF trusted origins for Render
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
+    "https://app-edurancontainer-20.devedu.io",
+]
 
 
 # Application definition
@@ -45,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -119,10 +126,15 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'home', 'static'),  # added by SK
     os.path.join(BASE_DIR, 'home', 'static', 'dashboard'),  # React dashboard static files
 ]
+
+# WhiteNoise configuration
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

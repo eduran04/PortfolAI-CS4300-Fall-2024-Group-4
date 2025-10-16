@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: portfolai
+    env: python
+    plan: free
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn portfolai.wsgi:application"
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: FINNHUB_API_KEY
+        sync: false
+    disk:
+      name: sqlite-data
+      mountPath: /opt/render/project/src/portfolai
+      sizeGB: 1
