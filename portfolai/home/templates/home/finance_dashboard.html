@@ -297,103 +297,69 @@
             class="tw-mt-5 tw-flex tw-w-full tw-flex-col tw-place-items-center tw-p-[2%]"
         >
             <h3
-                class="primary-text-color tw-text-3xl tw-font-medium max-md:tw-text-xl"
+                class="tw-text-3xl tw-font-medium tw-text-gray-800 max-md:tw-text-xl"
             >
                 What some of our clients say
             </h3>
 
             <div
-                class="swiper review-container tw-mt-8 tw-flex tw-w-fit tw-max-w-[550px] tw-flex-col tw-place-content-center tw-overflow-hidden tw-p-6 max-lg:tw-max-w-[300px] max-md:tw-h-[400px]"
+                class="tw-mt-8 tw-flex tw-w-full tw-max-w-[1200px] tw-flex-wrap tw-justify-center tw-gap-8"
             >
-                <style>
-                    .swiper-pagination-bullet {
-                        width: 20px;
-                        height: 20px;
-                        text-align: center;
-                        line-height: 20px;
-                        font-size: 12px;
-                        color: #000;
-                        opacity: 1;
-                        background: rgba(0, 0, 0, 0.2);
-                    }
-                    .swiper-pagination-bullet:hover {
-                        color: #000;
-                        opacity: 1;
-                        background: #1f1c1cbd;
-                    }
-
-                    .swiper-pagination-bullet-active {
-                        background: #000 !important;
-                    }
-
-                    .swiper {
-                        padding: 10px !important;
-                    }
-
-                </style>
-
                 <div
-                    class="swiper-wrapper !tw-h-[250px] tw-space-x-4 tw-text-lg max-md:tw-text-base"
+                    class="tw-flex tw-w-[350px] tw-flex-col tw-gap-4 tw-rounded-xl tw-bg-white tw-p-6 tw-shadow-lg"
                 >
                     <div
-                        class="swiper-slide review-card tw-relative tw-flex tw-flex-col tw-text-justify"
+                        class="tw-h-[50px] tw-w-[50px] tw-overflow-hidden tw-rounded-full tw-border-[2px] tw-border-solid tw-border-[#1c191a]"
                     >
-                        <div
-                            class="tw-h-[50px] tw-w-[50px] tw-overflow-hidden tw-rounded-full tw-border-[2px] tw-border-solid tw-border-[#1c191a]"
-                        >
-                            <img
-                                src="{% static 'home/assets/images/people/women.jpg' %}"
-                                class="tw-h-full tw-w-full tw-object-cover"
-                                alt="women"
-                            />
-                        </div>
-
-                        <p class="tw-mt-4 tw-italic tw-text-gray-600">
-                            "PortfolAI's AI analysis helped me understand market trends better than any other platform. The insights are incredibly accurate and easy to understand."
-                        </p>
-                        <p class="tw-mt-3">- Sarah Chen</p>
+                        <img
+                            src="{% static 'home/assets/images/people/women.jpg' %}"
+                            class="tw-h-full tw-w-full tw-object-cover"
+                            alt="women"
+                        />
                     </div>
 
-                    <div
-                        class="swiper-slide review-card slides tw-text-justify"
-                    >
-                        <div
-                            class="tw-h-[50px] tw-w-[50px] tw-overflow-hidden tw-rounded-full tw-border-[2px] tw-border-solid tw-border-[#1c191a]"
-                        >
-                            <img
-                                src="{% static 'home/assets/images/people/man.jpg' %}"
-                                class="tw-h-full tw-w-full tw-object-cover"
-                                alt="man"
-                            />
-                        </div>
-                        <p class="tw-mt-5 tw-italic tw-text-gray-600">
-                            "The risk-free learning environment is perfect for someone like me who wanted to understand investing without losing money. Highly recommended!"
-                        </p>
-                        <p class="tw-mt-3">- Michael Rodriguez</p>
-                    </div>
-
-                    <div
-                        class="swiper-slide review-card slides tw-text-justify"
-                    >
-                        <div
-                            class="tw-h-[50px] tw-w-[50px] tw-overflow-hidden tw-rounded-full tw-border-[2px] tw-border-solid tw-border-[#1c191a]"
-                        >
-                            <img
-                                src="{% static 'home/assets/images/people/man2.jpg' %}"
-                                class="tw-h-full tw-w-full tw-object-cover"
-                                alt="man"
-                            />
-                        </div>
-
-                        <p class="tw-mt-5 tw-italic tw-text-gray-600">
-                            "Real-time data and AI insights in one platform. This is exactly what I needed to improve my investment analysis skills."
-                        </p>
-                        <p class="tw-mt-3">- David Kim</p>
-                    </div>
+                    <p class="tw-italic tw-text-gray-600">
+                        "PortfolAI's AI analysis helped me understand market trends better than any other platform. The insights are incredibly accurate and easy to understand."
+                    </p>
+                    <p class="tw-font-semibold">- Sarah Chen</p>
                 </div>
 
-                <!-- Navigation dots -->
-                <div class="dots-container tw-mt-auto"></div>
+                <div
+                    class="tw-flex tw-w-[350px] tw-flex-col tw-gap-4 tw-rounded-xl tw-bg-white tw-p-6 tw-shadow-lg"
+                >
+                    <div
+                        class="tw-h-[50px] tw-w-[50px] tw-overflow-hidden tw-rounded-full tw-border-[2px] tw-border-solid tw-border-[#1c191a]"
+                    >
+                        <img
+                            src="{% static 'home/assets/images/people/man.jpg' %}"
+                            class="tw-h-full tw-w-full tw-object-cover"
+                            alt="man"
+                        />
+                    </div>
+                    <p class="tw-italic tw-text-gray-600">
+                        "The risk-free learning environment is perfect for someone like me who wanted to understand investing without losing money. Highly recommended!"
+                    </p>
+                    <p class="tw-font-semibold">- Michael Rodriguez</p>
+                </div>
+
+                <div
+                    class="tw-flex tw-w-[350px] tw-flex-col tw-gap-4 tw-rounded-xl tw-bg-white tw-p-6 tw-shadow-lg"
+                >
+                    <div
+                        class="tw-h-[50px] tw-w-[50px] tw-overflow-hidden tw-rounded-full tw-border-[2px] tw-border-solid tw-border-[#1c191a]"
+                    >
+                        <img
+                            src="{% static 'home/assets/images/people/man2.jpg' %}"
+                            class="tw-h-full tw-w-full tw-object-cover"
+                            alt="man"
+                        />
+                    </div>
+
+                    <p class="tw-italic tw-text-gray-600">
+                        "Real-time data and AI insights in one platform. This is exactly what I needed to improve my investment analysis skills."
+                    </p>
+                    <p class="tw-font-semibold">- David Kim</p>
+                </div>
             </div>
         </section>
 
@@ -461,19 +427,6 @@
         </footer>
     </body>
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.css"
-        integrity="sha512-rd0qOHVMOcez6pLWPVFIv7EfSdGKLt+eafXh4RO/12Fgr41hDQxfGvoi1Vy55QIVcQEujUE1LQrATCLl2Fs+ag=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-    />
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js"
-        integrity="sha512-Ysw1DcK1P+uYLqprEAzNQJP+J4hTx4t/3X2nbVwszao8wD+9afLjBQYjz7Uk4ADP+Er++mJoScI42ueGtQOzEA=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer"
-    ></script>
 
     <script src="{% static 'home/saasy.js' %}"></script>
     <script src="{% static 'home/finance/finance-dashboard.js' %}"></script>
@@ -518,52 +471,5 @@
 
         window.addEventListener("resize", responsive)
 
-        // Initialize Swiper for testimonials
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if Swiper is available
-            if (typeof Swiper !== 'undefined') {
-                const reviewSwiper = new Swiper('.review-container', {
-                    //effect: "coverflow",
-                    // grabCursor: true,
-                    loop: true,
-                    centeredSlides: true,
-                    slidesPerView: 'auto',
-                    autoplay: {
-                        delay: 7000,
-                    },
-                    pagination: {
-                        el: '.dots-container',
-                        clickable: true,
-                        renderBullet: function (index, className) {
-                            return `<span class="!tw-h-[3px] !tw-w-[40px] !tw-rounded-none ${className}"></span>`
-                        },
-                    },
-                });
-                console.log('Swiper initialized successfully');
-            } else {
-                console.error('Swiper library not loaded');
-                // Fallback: try again after a delay
-                setTimeout(function() {
-                    if (typeof Swiper !== 'undefined') {
-                        const reviewSwiper = new Swiper('.review-container', {
-                            loop: true,
-                            centeredSlides: true,
-                            slidesPerView: 'auto',
-                            autoplay: {
-                                delay: 7000,
-                            },
-                            pagination: {
-                                el: '.dots-container',
-                                clickable: true,
-                                renderBullet: function (index, className) {
-                                    return `<span class="!tw-h-[3px] !tw-w-[40px] !tw-rounded-none ${className}"></span>`
-                                },
-                            },
-                        });
-                        console.log('Swiper initialized on retry');
-                    }
-                }, 1000);
-            }
-        });
     </script>
 </html>
