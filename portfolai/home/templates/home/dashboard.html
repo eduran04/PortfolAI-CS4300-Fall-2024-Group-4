@@ -6,7 +6,7 @@
 {% block extra_css %}
 <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'home/dashboard/dashboard.css' %}">
+<link rel="stylesheet" href="{% static 'home/dashboard/dashboard.css' %}?v={{ timestamp|default:'1.0' }}">
 <style>
   /* Override base template styles for dashboard */
   body {
@@ -18,14 +18,20 @@
   #mainContent {
     padding: 0 !important;
     margin: 0 !important;
+    min-height: 100vh;
+    overflow-x: auto;
   }
   
   /* Sidebar is now visible for dashboard */
+  #sidebar {
+    display: block !important;
+    visibility: visible !important;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-900 text-slate-100">
+<div class="min-h-screen bg-slate-900 text-slate-100 w-full">
   <!-- Ticker Tape Bar -->
   <div class="bg-slate-800 border-b border-slate-700 py-2 px-4 overflow-hidden">
     <div class="flex items-center justify-between">
@@ -103,7 +109,11 @@
           </div>
 
   <!-- Main Content Grid -->
-  <div class="p-6">
+  <div class="p-6 min-h-screen">
+    <!-- TEMPORARY TEST - If you see this, the template is updating! -->
+    <div class="bg-red-500 text-white p-4 rounded-lg mb-4 text-center">
+      🚀 DASHBOARD UPDATED! If you see this red box, the changes are working!
+    </div>
     <!-- Portfolio Cards Row -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
       <!-- AAPL Card -->
@@ -538,5 +548,16 @@
 {% block extra_js %}
 <!-- ApexCharts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.40.0/apexcharts.min.js"></script>
+<script>
+// Debug script to check if elements are loaded
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Dashboard template loaded');
+  console.log('Search input:', document.getElementById('stock-search'));
+  console.log('Search button:', document.getElementById('search-btn'));
+  console.log('Search results:', document.getElementById('search-results'));
+  console.log('Sidebar:', document.getElementById('sidebar'));
+  console.log('Main content:', document.getElementById('mainContent'));
+});
+</script>
 <script src="{% static 'home/dashboard/dashboard.js' %}"></script>
 {% endblock %}
