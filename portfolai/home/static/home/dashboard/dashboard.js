@@ -1,4 +1,5 @@
 // Dashboard Charts - Adapted from admin-dashboard
+document.addEventListener('DOMContentLoaded', function() {
 
 // BAR CHART - Portfolio Performance
 const barChartOptions = {
@@ -1023,3 +1024,5 @@ function initializeTradingViewWidget() {
   // We can enhance it with real data if needed
   console.log('Ticker tape initialized');
 }
+
+}); // End DOMContentLoaded
