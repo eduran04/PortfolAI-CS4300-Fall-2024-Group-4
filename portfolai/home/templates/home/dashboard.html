@@ -91,70 +91,72 @@
              </div>
            </div>
 
-           <!-- Search Section -->
+           <!-- Compact Search Section -->
            <div class="search-section">
              <div class="search-container">
                <div class="search-input-group">
                  <input 
                    type="text" 
                    id="stock-search" 
-                   placeholder="Search stocks (e.g., AAPL, Microsoft, Tesla)" 
+                   placeholder="Search stocks..." 
                    class="search-input"
                  >
                  <button id="search-btn" class="search-btn">
                    <span class="material-icons-outlined">search</span>
-                   Search
                  </button>
                </div>
                <div id="search-results" class="search-results"></div>
              </div>
            </div>
 
+    <!-- Top Stock Portfolio Cards -->
     <div class="main-cards">
-
-      <div class="card">
-        <div class="card-inner">
-          <p>WATCHLIST</p>
-          <div class="icon icon-shape background-blue text-primary">
-            <span class="material-icons-outlined">inventory_2</span>
-          </div>
+      <div class="stock-card" data-symbol="AAPL">
+        <div class="stock-card-header">
+          <div class="stock-logo aapl-logo">AAPL</div>
+          <div class="stock-company">Apple, Inc</div>
         </div>
-        <span class="text-primary" id="watchlist-count">0</span>
+        <div class="stock-price-info">
+          <div class="stock-price" id="aapl-price">$192.53</div>
+          <div class="stock-change positive" id="aapl-change">+3.59%</div>
+        </div>
       </div>
       
-      <div class="card">
-        <div class="card-inner">
-          <p>MARKET STATUS</p>
-          <div class="icon icon-shape background-orange text-primary">
-            <span class="material-icons-outlined">trending_up</span>
-          </div>
+      <div class="stock-card" data-symbol="PYPL">
+        <div class="stock-card-header">
+          <div class="stock-logo pypl-logo">PYPL</div>
+          <div class="stock-company">PayPal, Inc</div>
         </div>
-        <span class="text-primary" id="market-status">Loading...</span>
+        <div class="stock-price-info">
+          <div class="stock-price" id="pypl-price">$192.53</div>
+          <div class="stock-change positive" id="pypl-change">+1.01%</div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-inner">
-          <p>SELECTED STOCK</p>
-          <div class="icon icon-shape background-green text-primary">
-            <span class="material-icons-outlined">show_chart</span>
-          </div>
+      <div class="stock-card" data-symbol="TSLA">
+        <div class="stock-card-header">
+          <div class="stock-logo tsla-logo">TSLA</div>
+          <div class="stock-company">Tesla, Inc</div>
         </div>
-        <span class="text-primary" id="selected-stock">None</span>
+        <div class="stock-price-info">
+          <div class="stock-price" id="tsla-price">$192.53</div>
+          <div class="stock-change positive" id="tsla-change">+1.01%</div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-inner">
-          <p>PRICE CHANGE</p>
-          <div class="icon icon-shape background-red text-primary">
-            <span class="material-icons-outlined">notification_important</span>
-          </div>
+      <div class="stock-card" data-symbol="AMZN">
+        <div class="stock-card-header">
+          <div class="stock-logo amzn-logo">AMZN</div>
+          <div class="stock-company">Amazon.com, Inc</div>
         </div>
-        <span class="text-primary" id="price-change">$0.00</span>
+        <div class="stock-price-info">
+          <div class="stock-price" id="amzn-price">$192.53</div>
+          <div class="stock-change positive" id="amzn-change">+1.01%</div>
+        </div>
       </div>
-
     </div>
 
-    <!-- Selected Stock Information -->
+    <!-- Selected Stock Information (Hidden - replaced by top cards) -->
     <div class="stock-info-section" id="stock-info-section" style="display: none;">
       <div class="stock-info-card">
         <div class="stock-header">
@@ -186,17 +188,13 @@
       </div>
     </div>
 
-    <!-- Watchlist Section -->
+    <!-- My Watchlist Section -->
     <div class="watchlist-section">
-      <div class="watchlist-header">
-        <h2 class="watchlist-title">
-          <span class="material-icons-outlined">star</span>
-          My Watchlist
-        </h2>
-        <div class="watchlist-actions">
-          <button id="clear-watchlist-btn" class="clear-btn" title="Clear all stocks">
-            <span class="material-icons-outlined">clear_all</span>
-          </button>
+      <div class="section-header">
+        <h2 class="section-title">My Watchlist</h2>
+        <div class="section-actions">
+          <button class="action-btn view-more-btn">View More</button>
+          <button id="clear-watchlist-btn" class="action-btn delete-btn">Delete</button>
         </div>
       </div>
       <div class="watchlist-container" id="watchlist-container">
@@ -214,7 +212,14 @@
     <div class="charts">
 
       <div class="charts-card">
-        <p class="chart-title">Portfolio Performance</p>
+        <div class="chart-header">
+          <h3 class="chart-title">Portfolio Performance</h3>
+          <div class="chart-tabs">
+            <button class="tab-btn active" data-period="monthly">Monthly</button>
+            <button class="tab-btn" data-period="quarterly">Quarterly</button>
+            <button class="tab-btn" data-period="annually">Annually</button>
+          </div>
+        </div>
         <div id="bar-chart"></div>
       </div>
 
@@ -223,6 +228,261 @@
         <div id="area-chart"></div>
       </div>
 
+    </div>
+
+    <!-- Trending Stocks Section -->
+    <div class="trending-stocks-section">
+      <div class="section-header">
+        <h2 class="section-title">Trending Stocks</h2>
+      </div>
+      <div class="trending-stocks-grid">
+        <div class="trending-stock-card" data-symbol="TSLA">
+          <div class="trending-stock-header">
+            <div class="trending-stock-logo tsla-logo">TSLA</div>
+            <div class="trending-stock-info">
+              <div class="trending-stock-symbol">TSLA</div>
+              <div class="trending-stock-company">Tesla, Inc</div>
+            </div>
+          </div>
+          <div class="trending-stock-price-info">
+            <div class="trending-stock-price" id="trending-tsla-price">$192.53</div>
+            <div class="trending-stock-change positive" id="trending-tsla-change">+1.01%</div>
+          </div>
+          <div class="trending-stock-actions">
+            <button class="action-btn short-btn">Short Stock</button>
+            <button class="action-btn buy-btn">Buy Stock</button>
+          </div>
+        </div>
+
+        <div class="trending-stock-card" data-symbol="AAPL">
+          <div class="trending-stock-header">
+            <div class="trending-stock-logo aapl-logo">AAPL</div>
+            <div class="trending-stock-info">
+              <div class="trending-stock-symbol">AAPL</div>
+              <div class="trending-stock-company">Apple, Inc</div>
+            </div>
+          </div>
+          <div class="trending-stock-price-info">
+            <div class="trending-stock-price" id="trending-aapl-price">$192.53</div>
+            <div class="trending-stock-change positive" id="trending-aapl-change">+3.59%</div>
+          </div>
+          <div class="trending-stock-actions">
+            <button class="action-btn short-btn">Short Stock</button>
+            <button class="action-btn buy-btn">Buy Stock</button>
+          </div>
+        </div>
+
+        <div class="trending-stock-card" data-symbol="SPOT">
+          <div class="trending-stock-header">
+            <div class="trending-stock-logo spot-logo">SPOT</div>
+            <div class="trending-stock-info">
+              <div class="trending-stock-symbol">SPOT</div>
+              <div class="trending-stock-company">Spotify, Inc</div>
+            </div>
+          </div>
+          <div class="trending-stock-price-info">
+            <div class="trending-stock-price" id="trending-spot-price">$192.53</div>
+            <div class="trending-stock-change positive" id="trending-spot-change">+1.01%</div>
+          </div>
+          <div class="trending-stock-actions">
+            <button class="action-btn short-btn">Short Stock</button>
+            <button class="action-btn buy-btn">Buy Stock</button>
+          </div>
+        </div>
+
+        <div class="trending-stock-card" data-symbol="PYPL">
+          <div class="trending-stock-header">
+            <div class="trending-stock-logo pypl-logo">PYPL</div>
+            <div class="trending-stock-info">
+              <div class="trending-stock-symbol">PYPL</div>
+              <div class="trending-stock-company">PayPal, Inc</div>
+            </div>
+          </div>
+          <div class="trending-stock-price-info">
+            <div class="trending-stock-price" id="trending-pypl-price">$192.53</div>
+            <div class="trending-stock-change positive" id="trending-pypl-change">+1.01%</div>
+          </div>
+          <div class="trending-stock-actions">
+            <button class="action-btn short-btn">Short Stock</button>
+            <button class="action-btn buy-btn">Buy Stock</button>
+          </div>
+        </div>
+
+        <div class="trending-stock-card" data-symbol="AMZN">
+          <div class="trending-stock-header">
+            <div class="trending-stock-logo amzn-logo">AMZN</div>
+            <div class="trending-stock-info">
+              <div class="trending-stock-symbol">AMZN</div>
+              <div class="trending-stock-company">Amazon.com, Inc</div>
+            </div>
+          </div>
+          <div class="trending-stock-price-info">
+            <div class="trending-stock-price" id="trending-amzn-price">$192.53</div>
+            <div class="trending-stock-change positive" id="trending-amzn-change">+1.01%</div>
+          </div>
+          <div class="trending-stock-actions">
+            <button class="action-btn short-btn">Short Stock</button>
+            <button class="action-btn buy-btn">Buy Stock</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dividend Section -->
+    <div class="dividend-section">
+      <div class="section-header">
+        <h2 class="section-title">Dividend</h2>
+        <div class="section-actions">
+          <button class="action-btn view-more-btn">View More</button>
+          <button class="action-btn delete-btn">Delete</button>
+        </div>
+      </div>
+      <div class="dividend-content">
+        <div class="dividend-item">
+          <div class="dividend-logo aapl-logo">AAPL</div>
+          <div class="dividend-info">
+            <div class="dividend-symbol">Apple Inc.</div>
+            <div class="dividend-amount">$0.24 per share</div>
+          </div>
+          <div class="dividend-date">Next: Dec 15</div>
+        </div>
+        <div class="dividend-item">
+          <div class="dividend-logo msft-logo">MSFT</div>
+          <div class="dividend-info">
+            <div class="dividend-symbol">Microsoft Corp.</div>
+            <div class="dividend-amount">$0.75 per share</div>
+          </div>
+          <div class="dividend-date">Next: Dec 12</div>
+        </div>
+        <div class="dividend-item">
+          <div class="dividend-logo jnj-logo">JNJ</div>
+          <div class="dividend-info">
+            <div class="dividend-symbol">Johnson & Johnson</div>
+            <div class="dividend-amount">$1.19 per share</div>
+          </div>
+          <div class="dividend-date">Next: Dec 10</div>
+        </div>
+        <div class="dividend-item">
+          <div class="dividend-logo pg-logo">PG</div>
+          <div class="dividend-info">
+            <div class="dividend-symbol">Procter & Gamble</div>
+            <div class="dividend-amount">$0.94 per share</div>
+          </div>
+          <div class="dividend-date">Next: Dec 20</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 5 Trends Table -->
+    <div class="trends-table-section">
+      <div class="section-header">
+        <h2 class="section-title">Top 5 Trends</h2>
+        <div class="section-actions">
+          <button class="action-btn view-more-btn">View More</button>
+          <button class="action-btn delete-btn">Delete</button>
+        </div>
+      </div>
+      <div class="trends-table-container">
+        <table class="trends-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Date</th>
+              <th>Price</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="trend-name">
+                  <div class="trend-logo nvda-logo">NVDA</div>
+                  <span>NVIDIA Corp.</span>
+                </div>
+              </td>
+              <td>Nov 23, 01:00 PM</td>
+              <td>$2,567.88</td>
+              <td>Technology</td>
+              <td><span class="status-badge rising">Rising</span></td>
+              <td>
+                <button class="action-btn view-more-btn">View More</button>
+                <button class="action-btn delete-btn">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="trend-name">
+                  <div class="trend-logo msft-logo">MSFT</div>
+                  <span>Microsoft Corp.</span>
+                </div>
+              </td>
+              <td>Nov 22, 09:00 PM</td>
+              <td>$2,567.88</td>
+              <td>Technology</td>
+              <td><span class="status-badge rising">Rising</span></td>
+              <td>
+                <button class="action-btn view-more-btn">View More</button>
+                <button class="action-btn delete-btn">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="trend-name">
+                  <div class="trend-logo googl-logo">GOOGL</div>
+                  <span>Alphabet Inc.</span>
+                </div>
+              </td>
+              <td>Oct 12, 03:54 PM</td>
+              <td>$6,754.99</td>
+              <td>Technology</td>
+              <td><span class="status-badge falling">Falling</span></td>
+              <td>
+                <button class="action-btn view-more-btn">View More</button>
+                <button class="action-btn delete-btn">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="trend-name">
+                  <div class="trend-logo meta-logo">META</div>
+                  <span>Meta Platforms</span>
+                </div>
+              </td>
+              <td>Sep 09, 02:00 AM</td>
+              <td>$1,445.41</td>
+              <td>Social Media</td>
+              <td><span class="status-badge stable">Stable</span></td>
+              <td>
+                <button class="action-btn view-more-btn">View More</button>
+                <button class="action-btn delete-btn">Delete</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="trend-name">
+                  <div class="trend-logo nflx-logo">NFLX</div>
+                  <span>Netflix Inc.</span>
+                </div>
+              </td>
+              <td>Feb 35, 08:00 PM</td>
+              <td>$5,698.55</td>
+              <td>Entertainment</td>
+              <td><span class="status-badge rising">Rising</span></td>
+              <td>
+                <button class="action-btn view-more-btn">View More</button>
+                <button class="action-btn delete-btn">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="table-pagination">
+          <button class="pagination-btn">Previous</button>
+          <span class="pagination-info">Page 1 of 10</span>
+          <button class="pagination-btn">Next</button>
+        </div>
+      </div>
     </div>
   </main>
   <!-- End Main -->
