@@ -341,8 +341,7 @@ async function selectStock(symbol, description) {
   document.getElementById('search-results').classList.add('hidden');
   document.getElementById('stock-search').value = '';
   
-  // Show stock info section
-  document.getElementById('stock-info-section').classList.remove('hidden');
+  // Stock info will be handled in a separate page later
   
   // Load stock data
   await loadStockData(symbol);
@@ -933,7 +932,7 @@ async function renderWatchlist() {
   
   // Show loading state
   watchlistGrid.innerHTML = `
-    <div class="watchlist-loading col-span-full">
+    <div class="watchlist-loading">
       <span class="material-icons-outlined">refresh</span>
       Loading watchlist data...
     </div>
@@ -970,17 +969,16 @@ async function renderWatchlist() {
     
     if (!quote) {
       return `
-        <div class="watchlist-item">
-          <div class="watchlist-item-header">
-            <div class="watchlist-symbol">${stock.symbol}</div>
-            <button class="watchlist-remove" onclick="removeFromWatchlist('${stock.symbol}')">
-              <span class="material-icons-outlined">close</span>
-              Remove
+        <div class="watchlist-item bg-slate-700 rounded-lg p-3 border border-slate-600">
+          <div class="flex justify-between items-center mb-2">
+            <div class="watchlist-symbol font-bold text-white">${stock.symbol}</div>
+            <button class="watchlist-remove bg-red-600/20 border border-red-500 text-red-400 px-2 py-1 rounded text-xs hover:bg-red-500 hover:text-white" onclick="removeFromWatchlist('${stock.symbol}')">
+              <span class="material-icons-outlined text-sm">close</span>
             </button>
           </div>
-          <div class="watchlist-company">${stock.description}</div>
-          <div class="watchlist-loading">
-            <span class="material-icons-outlined">error</span>
+          <div class="watchlist-company text-xs text-slate-400 mb-2">${stock.description}</div>
+          <div class="watchlist-loading text-xs text-red-400 flex items-center">
+            <span class="material-icons-outlined text-sm mr-1">error</span>
             Unable to load data
           </div>
         </div>
@@ -998,37 +996,18 @@ async function renderWatchlist() {
     const companyName = profile?.name || stock.description;
     
     return `
-      <div class="watchlist-item" onclick="selectStock('${stock.symbol}', '${stock.description}')">
-        <div class="watchlist-item-header">
-          <div class="watchlist-symbol">${stock.symbol}</div>
-          <button class="watchlist-remove" onclick="event.stopPropagation(); removeFromWatchlist('${stock.symbol}')">
-            <span class="material-icons-outlined">close</span>
-            Remove
+      <div class="watchlist-item bg-slate-700 rounded-lg p-3 border border-slate-600 transition-all duration-300 cursor-pointer hover:bg-slate-600" onclick="selectStock('${stock.symbol}', '${stock.description}')">
+        <div class="flex justify-between items-center mb-2">
+          <div class="watchlist-symbol font-bold text-white">${stock.symbol}</div>
+          <button class="watchlist-remove bg-red-600/20 border border-red-500 text-red-400 px-2 py-1 rounded text-xs hover:bg-red-500 hover:text-white" onclick="event.stopPropagation(); removeFromWatchlist('${stock.symbol}')">
+            <span class="material-icons-outlined text-sm">close</span>
           </button>
         </div>
-        <div class="watchlist-company">${companyName}</div>
-        <div class="watchlist-price-info">
-          <div class="watchlist-current-price">$${currentPrice.toFixed(2)}</div>
-          <div class="watchlist-price-change ${change >= 0 ? 'positive' : 'negative'}">
+        <div class="watchlist-company text-xs text-slate-400 mb-2 truncate">${companyName}</div>
+        <div class="flex justify-between items-center">
+          <div class="watchlist-current-price font-bold text-white">$${currentPrice.toFixed(2)}</div>
+          <div class="watchlist-price-change ${change >= 0 ? 'positive' : 'negative'} text-xs px-2 py-1 rounded">
             ${change >= 0 ? '+' : ''}$${change.toFixed(2)} (${change >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)
-          </div>
-        </div>
-        <div class="watchlist-details">
-          <div class="watchlist-detail">
-            <span class="watchlist-detail-label">High</span>
-            <span class="watchlist-detail-value">$${high.toFixed(2)}</span>
-          </div>
-          <div class="watchlist-detail">
-            <span class="watchlist-detail-label">Low</span>
-            <span class="watchlist-detail-value">$${low.toFixed(2)}</span>
-          </div>
-          <div class="watchlist-detail">
-            <span class="watchlist-detail-label">Open</span>
-            <span class="watchlist-detail-value">$${open.toFixed(2)}</span>
-          </div>
-          <div class="watchlist-detail">
-            <span class="watchlist-detail-label">Prev Close</span>
-            <span class="watchlist-detail-value">$${prevClose.toFixed(2)}</span>
           </div>
         </div>
       </div>
@@ -1038,122 +1017,9 @@ async function renderWatchlist() {
   watchlistGrid.innerHTML = watchlistHTML;
 }
 
-// Initialize Custom Ticker Tape Widget
+// Initialize Ticker Tape
 function initializeTradingViewWidget() {
-  const container = document.querySelector('.tradingview-widget-container__widget');
-  
-  if (!container) {
-    console.warn('Ticker tape container not found');
-    return;
-  }
-
-  // Create custom ticker tape using our Finnhub API
-  createCustomTickerTape(container);
-}
-
-function createCustomTickerTape(container) {
-  // Define popular stocks to display
-  const tickerSymbols = ['AAPL', 'GOOGL', 'MSFT', 'TSLA', 'AMZN', 'META', 'NVDA', 'NFLX'];
-  
-  // Create ticker tape HTML structure
-  container.innerHTML = `
-    <div class="custom-ticker-tape">
-      <div class="ticker-content" id="ticker-content">
-        <div class="ticker-loading">
-          <span class="material-icons-outlined">refresh</span>
-          Loading market data...
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Load ticker data
-  loadTickerData(tickerSymbols);
-}
-
-async function loadTickerData(symbols) {
-  const tickerContent = document.getElementById('ticker-content');
-  
-  try {
-    // Load data for all symbols
-    const tickerData = await Promise.all(
-      symbols.map(async (symbol) => {
-        try {
-          const response = await fetch(`/api/quote/?symbol=${encodeURIComponent(symbol)}`);
-          const data = await response.json();
-          
-          if (data && data.c) {
-            return {
-              symbol: symbol,
-              price: data.c,
-              change: data.d || 0,
-              changePercent: data.dp || 0
-            };
-          }
-          return null;
-        } catch (error) {
-          console.error(`Error loading data for ${symbol}:`, error);
-          return null;
-        }
-      })
-    );
-
-    // Filter out null results
-    const validData = tickerData.filter(item => item !== null);
-    
-    if (validData.length === 0) {
-      tickerContent.innerHTML = `
-        <div class="ticker-error">
-          <span class="material-icons-outlined">error</span>
-          Market data temporarily unavailable
-        </div>
-      `;
-      return;
-    }
-
-    // Create ticker items
-    const tickerItems = validData.map(item => {
-      const isPositive = item.change >= 0;
-      const changeClass = isPositive ? 'positive' : 'negative';
-      const changeSymbol = isPositive ? '+' : '';
-      
-      return `
-        <div class="ticker-item">
-          <div class="ticker-symbol">${item.symbol}</div>
-          <div class="ticker-price">$${item.price.toFixed(2)}</div>
-          <div class="ticker-change ${changeClass}">
-            ${changeSymbol}$${item.change.toFixed(2)} (${changeSymbol}${item.changePercent.toFixed(2)}%)
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    // Update ticker content
-    tickerContent.innerHTML = `
-      <div class="ticker-scroll">
-        ${tickerItems}
-        ${tickerItems} <!-- Duplicate for seamless scrolling -->
-      </div>
-    `;
-
-    // Start scrolling animation
-    startTickerAnimation();
-
-  } catch (error) {
-    console.error('Error loading ticker data:', error);
-    tickerContent.innerHTML = `
-      <div class="ticker-error">
-        <span class="material-icons-outlined">error</span>
-        Failed to load market data
-      </div>
-    `;
-  }
-}
-
-function startTickerAnimation() {
-  const tickerScroll = document.querySelector('.ticker-scroll');
-  if (!tickerScroll) return;
-
-  // Add CSS animation - slower speed (60 seconds)
-  tickerScroll.style.animation = 'ticker-scroll 60s linear infinite';
+  // The ticker tape is now in the HTML template
+  // We can enhance it with real data if needed
+  console.log('Ticker tape initialized');
 }

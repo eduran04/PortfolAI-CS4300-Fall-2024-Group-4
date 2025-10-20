@@ -20,251 +20,248 @@
     margin: 0 !important;
   }
   
-  #sidebar {
-    display: none; /* Hide sidebar for dashboard */
-  }
+  /* Sidebar is now visible for dashboard */
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-slate-900 text-slate-100">
-  <!-- Header -->
-  <header class="bg-slate-800 border-b border-slate-700 px-6 py-4">
+  <!-- Ticker Tape Bar -->
+  <div class="bg-slate-800 border-b border-slate-700 py-2 px-4 overflow-hidden">
     <div class="flex items-center justify-between">
-      <div class="flex items-center space-x-8">
-        <a href="{% url 'index' %}" class="text-2xl font-bold text-white hover:text-blue-400 transition-colors">
-          PORTFOLAI
-        </a>
-        <nav class="hidden md:flex space-x-6">
-          <a href="{% url 'index' %}" class="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
-            <span class="material-icons-outlined text-lg">home</span>
-            <span>HOME</span>
-          </a>
-          <a href="{% url 'dashboard' %}" class="flex items-center space-x-2 text-white bg-blue-600 px-3 py-2 rounded-md">
-            <span class="material-icons-outlined text-lg">dashboard</span>
-            <span>DASHBOARD</span>
-          </a>
-          <a href="#" class="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
-            <span class="material-icons-outlined text-lg">inventory_2</span>
-            <span>PORTFOLIOS</span>
-          </a>
-          <a href="#" class="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
-            <span class="material-icons-outlined text-lg">poll</span>
-            <span>ANALYTICS</span>
-          </a>
-          <a href="#" class="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
-            <span class="material-icons-outlined text-lg">settings</span>
-            <span>SETTINGS</span>
-          </a>
-        </nav>
+      <div class="flex-1 overflow-hidden">
+        <div class="ticker-scroll flex items-center space-x-8 whitespace-nowrap">
+          <!-- Ticker items will be populated by JavaScript -->
+          <div class="ticker-item flex items-center space-x-2">
+            <span class="ticker-symbol">AAPL</span>
+            <span class="ticker-price">$252.29</span>
+            <span class="ticker-change positive">+$4.84 (+1.96%)</span>
+          </div>
+          <div class="ticker-item flex items-center space-x-2">
+            <span class="ticker-symbol">GOOGL</span>
+            <span class="ticker-price">$253.30</span>
+            <span class="ticker-change positive">+$1.43 (+0.57%)</span>
+          </div>
+          <div class="ticker-item flex items-center space-x-2">
+            <span class="ticker-symbol">MSFT</span>
+            <span class="ticker-price">$415.26</span>
+            <span class="ticker-change negative">-$2.15 (-0.51%)</span>
+          </div>
+          <div class="ticker-item flex items-center space-x-2">
+            <span class="ticker-symbol">TSLA</span>
+            <span class="ticker-price">$248.50</span>
+            <span class="ticker-change positive">+$5.20 (+2.14%)</span>
+          </div>
+          <div class="ticker-item flex items-center space-x-2">
+            <span class="ticker-symbol">AMZN</span>
+            <span class="ticker-price">$3,456.78</span>
+            <span class="ticker-change positive">+$12.34 (+0.36%)</span>
+          </div>
+        </div>
       </div>
-      <div class="flex items-center space-x-4">
-        <button class="p-2 text-slate-300 hover:text-white transition-colors">
-          <span class="material-icons-outlined">notifications</span>
-        </button>
-        <button class="p-2 text-slate-300 hover:text-white transition-colors">
-          <span class="material-icons-outlined">email</span>
-        </button>
-        <button class="p-2 text-slate-300 hover:text-white transition-colors">
-          <span class="material-icons-outlined">account_circle</span>
-        </button>
-      </div>
+              <button type="button" aria-label="Toggle dark mode" data-tooltip="Toggle dark mode" data-side="bottom" onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))" class="btn-icon-outline size-8 ml-4">
+                <span class="hidden dark:block">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                  </svg>
+                </span>
+                <span class="block dark:hidden">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2" />
+                    <path d="M12 20v2" />
+                    <path d="m4.93 4.93 1.41 1.41" />
+                    <path d="m17.66 17.66 1.41 1.41" />
+                    <path d="M2 12h2" />
+                    <path d="M20 12h2" />
+                    <path d="m6.34 17.66-1.41 1.41" />
+                    <path d="m19.07 4.93-1.41 1.41" />
+                  </svg>
+                </span>
+              </button>
     </div>
-  </header>
-  <!-- End Header -->
+  </div>
 
-  <!-- Main Content -->
-  <main class="p-6 space-y-6">
-    <!-- TradingView Ticker Tape -->
-    <div class="card bg-slate-800 border-slate-700">
-      <div class="card-header">
-        <h2 class="card-title flex items-center space-x-2">
-          <span class="material-icons-outlined text-green-400">trending_up</span>
-          <span>Market Overview</span>
-        </h2>
-      </div>
-      <div class="card-body">
-        <div class="tradingview-widget-container">
-          <div class="tradingview-widget-container__widget"></div>
-          <div class="tradingview-widget-copyright">
-            <a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank" class="text-blue-400 hover:text-blue-300">
-              <span>Ticker tape</span>
-            </a>
-            <span class="text-slate-400"> by TradingView</span>
+          <!-- Search Bar -->
+          <div class="bg-slate-800 border-b border-slate-700 py-4">
+            <div class="max-w-2xl mx-auto px-4">
+              <div class="form">
+                <div class="flex space-x-3">
+                  <input 
+                    type="text" 
+                    id="stock-search" 
+                    placeholder="🔍 Search stocks (e.g., AAPL, Microsoft, Tesla)" 
+                    class="input flex-1 text-lg py-3 px-4"
+                  >
+                  <button id="search-btn" class="btn bg-blue-600 hover:bg-blue-700 text-white px-8 py-3">
+                    Search
+                  </button>
+                </div>
+              </div>
+              <div id="search-results" class="search-results mt-4"></div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Search Section -->
-    <div class="card bg-slate-800 border-slate-700">
-      <div class="card-body">
-        <div class="max-w-2xl mx-auto">
-          <div class="flex space-x-3">
-            <input 
-              type="text" 
-              id="stock-search" 
-              placeholder="Search stocks (e.g., AAPL, Microsoft, Tesla)" 
-              class="input flex-1 bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
-            >
-            <button id="search-btn" class="btn bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md flex items-center space-x-2 transition-colors">
-              <span class="material-icons-outlined">search</span>
-              <span>Search</span>
-            </button>
-          </div>
-          <div id="search-results" class="search-results mt-4"></div>
-        </div>
-      </div>
-    </div>
+  <!-- Main Content Grid -->
+  <main class="p-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column: Watchlist + News -->
+      <div class="space-y-6">
+                <!-- Watchlist Card -->
+                <div class="card h-96">
+                  <header>
+                    <h2 class="card-title flex items-center space-x-2">
+                      <span class="material-icons-outlined text-yellow-400">star</span>
+                      <span>Watchlist</span>
+                    </h2>
+                  </header>
+                  <section class="overflow-y-auto">
+                    <div id="watchlist-container">
+                      <div class="watchlist-empty text-center py-8" id="watchlist-empty">
+                        <span class="material-icons-outlined text-4xl text-slate-500 mb-2">star_border</span>
+                        <p class="text-sm text-slate-400">No stocks in watchlist</p>
+                      </div>
+                      <div class="watchlist-grid space-y-3 hidden" id="watchlist-grid">
+                        <!-- Watchlist items will be populated here -->
+                      </div>
+                    </div>
+                  </section>
+                </div>
 
-    <!-- Stats Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="card bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500">
-        <div class="card-body">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-blue-100 text-sm font-medium uppercase tracking-wide">WATCHLIST</p>
-              <p class="text-3xl font-bold text-white mt-2" id="watchlist-count">0</p>
+        <!-- News Card -->
+        <div class="card h-96">
+          <header>
+            <h2 class="card-title flex items-center space-x-2">
+              <span class="material-icons-outlined text-blue-400">newspaper</span>
+              <span>News</span>
+            </h2>
+          </header>
+          <section class="overflow-y-auto">
+            <div class="space-y-4">
+              <div class="border-b border-slate-600 pb-3">
+                <h4 class="text-sm font-semibold text-white mb-1">Market Rally Continues</h4>
+                <p class="text-xs text-slate-400">Stocks surge on positive earnings reports...</p>
+              </div>
+              <div class="border-b border-slate-600 pb-3">
+                <h4 class="text-sm font-semibold text-white mb-1">Tech Stocks Lead Gains</h4>
+                <p class="text-xs text-slate-400">Major tech companies report strong Q4 results...</p>
+              </div>
+              <div class="border-b border-slate-600 pb-3">
+                <h4 class="text-sm font-semibold text-white mb-1">Fed Signals Rate Stability</h4>
+                <p class="text-xs text-slate-400">Federal Reserve maintains current interest rates...</p>
+              </div>
+              <div class="border-b border-slate-600 pb-3">
+                <h4 class="text-sm font-semibold text-white mb-1">Energy Sector Recovery</h4>
+                <p class="text-xs text-slate-400">Oil prices stabilize after recent volatility...</p>
+              </div>
             </div>
-            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-              <span class="material-icons-outlined text-white text-xl">inventory_2</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="card bg-gradient-to-br from-orange-600 to-orange-700 border-orange-500">
-        <div class="card-body">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-orange-100 text-sm font-medium uppercase tracking-wide">MARKET STATUS</p>
-              <p class="text-3xl font-bold text-white mt-2" id="market-status">Loading...</p>
-            </div>
-            <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-              <span class="material-icons-outlined text-white text-xl">trending_up</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card bg-gradient-to-br from-green-600 to-green-700 border-green-500">
-        <div class="card-body">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-green-100 text-sm font-medium uppercase tracking-wide">SELECTED STOCK</p>
-              <p class="text-3xl font-bold text-white mt-2" id="selected-stock">None</p>
-            </div>
-            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-              <span class="material-icons-outlined text-white text-xl">show_chart</span>
-            </div>
-          </div>
+          </section>
         </div>
       </div>
 
-      <div class="card bg-gradient-to-br from-red-600 to-red-700 border-red-500">
-        <div class="card-body">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-red-100 text-sm font-medium uppercase tracking-wide">PRICE CHANGE</p>
-              <p class="text-3xl font-bold text-white mt-2" id="price-change">$0.00</p>
-            </div>
-            <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-              <span class="material-icons-outlined text-white text-xl">notification_important</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Selected Stock Information -->
-    <div class="stock-info-section hidden" id="stock-info-section">
-      <div class="card bg-slate-800 border-slate-700">
-        <div class="card-body">
-          <div class="flex justify-between items-center mb-6 pb-6 border-b border-slate-600">
-            <div>
-              <h3 class="text-3xl font-bold text-white" id="stock-symbol-display">-</h3>
-              <p class="text-slate-400 text-lg" id="stock-company-display">-</p>
-            </div>
-            <div class="text-right">
-              <div class="text-4xl font-bold text-white" id="current-price-display">$0.00</div>
-              <div class="text-xl font-semibold" id="price-change-display">$0.00 (0.00%)</div>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-slate-700 rounded-lg p-4">
-              <div class="text-slate-400 text-sm font-medium uppercase tracking-wide">High</div>
-              <div class="text-white text-lg font-bold" id="stock-high">$0.00</div>
-            </div>
-            <div class="bg-slate-700 rounded-lg p-4">
-              <div class="text-slate-400 text-sm font-medium uppercase tracking-wide">Low</div>
-              <div class="text-white text-lg font-bold" id="stock-low">$0.00</div>
-            </div>
-            <div class="bg-slate-700 rounded-lg p-4">
-              <div class="text-slate-400 text-sm font-medium uppercase tracking-wide">Open</div>
-              <div class="text-white text-lg font-bold" id="stock-open">$0.00</div>
-            </div>
-            <div class="bg-slate-700 rounded-lg p-4">
-              <div class="text-slate-400 text-sm font-medium uppercase tracking-wide">Previous Close</div>
-              <div class="text-white text-lg font-bold" id="stock-prev-close">$0.00</div>
-            </div>
-          </div>
+      <!-- Right Column: Portfolio Chart -->
+      <div class="lg:col-span-2">
+        <div class="card h-96">
+          <header>
+            <h2 class="card-title flex items-center space-x-2">
+              <span class="material-icons-outlined text-green-400">show_chart</span>
+              <span>Portfolio Performance</span>
+            </h2>
+          </header>
+          <section>
+            <div id="bar-chart" class="h-80"></div>
+          </section>
         </div>
       </div>
     </div>
 
-    <!-- Watchlist Section -->
-    <div class="card bg-slate-800 border-slate-700">
-      <div class="card-header">
-        <div class="flex justify-between items-center">
+    <!-- Bottom Section: Top 5 Trends Table -->
+    <div class="mt-6">
+      <div class="card">
+        <header>
           <h2 class="card-title flex items-center space-x-2">
-            <span class="material-icons-outlined text-yellow-400">star</span>
-            <span>My Watchlist</span>
+            <span class="material-icons-outlined text-purple-400">trending_up</span>
+            <span>Top 5 Trends</span>
           </h2>
-          <button id="clear-watchlist-btn" class="btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center space-x-2 transition-colors" title="Clear all stocks">
-            <span class="material-icons-outlined">clear_all</span>
-            <span>Clear All</span>
-          </button>
-        </div>
-      </div>
-      <div class="card-body">
-        <div id="watchlist-container">
-          <div class="watchlist-empty text-center py-12" id="watchlist-empty">
-            <span class="material-icons-outlined text-6xl text-slate-500 mb-4">star_border</span>
-            <p class="text-xl font-semibold text-white mb-2">No stocks in watchlist</p>
-            <p class="text-slate-400">Search and add stocks to your watchlist</p>
+        </header>
+        <section>
+          <div class="overflow-x-auto">
+            <table class="table w-full">
+              <thead>
+                <tr>
+                  <th class="text-left">Symbol</th>
+                  <th class="text-right">Price</th>
+                  <th class="text-right">Change</th>
+                  <th class="text-right">Volume</th>
+                  <th class="text-right">Market Cap</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-semibold">AAPL</td>
+                  <td class="text-right">$252.29</td>
+                  <td class="text-right text-green-400">+$4.84 (+1.96%)</td>
+                  <td class="text-right text-slate-300">45.2M</td>
+                  <td class="text-right text-slate-300">$3.89T</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">GOOGL</td>
+                  <td class="text-right">$253.30</td>
+                  <td class="text-right text-green-400">+$1.43 (+0.57%)</td>
+                  <td class="text-right text-slate-300">28.7M</td>
+                  <td class="text-right text-slate-300">$1.67T</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">MSFT</td>
+                  <td class="text-right">$415.26</td>
+                  <td class="text-right text-red-400">-$2.15 (-0.51%)</td>
+                  <td class="text-right text-slate-300">22.1M</td>
+                  <td class="text-right text-slate-300">$3.09T</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">TSLA</td>
+                  <td class="text-right">$248.50</td>
+                  <td class="text-right text-green-400">+$5.20 (+2.14%)</td>
+                  <td class="text-right text-slate-300">67.8M</td>
+                  <td class="text-right text-slate-300">$789.2B</td>
+                </tr>
+                <tr>
+                  <td class="font-semibold">AMZN</td>
+                  <td class="text-right">$3,456.78</td>
+                  <td class="text-right text-green-400">+$12.34 (+0.36%)</td>
+                  <td class="text-right text-slate-300">3.2M</td>
+                  <td class="text-right text-slate-300">$1.81T</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="watchlist-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden" id="watchlist-grid">
-            <!-- Watchlist items will be populated here -->
-          </div>
-        </div>
+        </section>
       </div>
     </div>
 
-    <!-- Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="card bg-slate-800 border-slate-700">
-        <div class="card-header">
-          <h3 class="card-title text-center">Portfolio Performance</h3>
-        </div>
-        <div class="card-body">
-          <div id="bar-chart"></div>
-        </div>
-      </div>
-
-      <div class="card bg-slate-800 border-slate-700">
-        <div class="card-header">
-          <h3 class="card-title text-center">
-            Stock Analysis Trends - <span class="text-blue-400" id="chart-stock-symbol">Select a stock to view trends</span>
-          </h3>
-        </div>
-        <div class="card-body">
-          <div id="area-chart"></div>
-        </div>
-      </div>
-    </div>
   </main>
   <!-- End Main -->
 </div>
+
+        <!-- Theme Persistence Script -->
+        <script>
+        (() => {
+          try {
+            const stored = localStorage.getItem('themeMode');
+            if (stored ? stored === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches) {
+              document.documentElement.classList.add('dark');
+            }
+          } catch (_) {}
+          const apply = dark => {
+            document.documentElement.classList.toggle('dark', dark);
+            try { localStorage.setItem('themeMode', dark ? 'dark' : 'light'); } catch (_) {}
+          };
+          document.addEventListener('basecoat:theme', (event) => {
+            const mode = event.detail?.mode;
+            apply(mode === 'dark' ? true : mode === 'light' ? false : !document.documentElement.classList.contains('dark'));
+          });
+        })();
+        </script>
 {% endblock %}
 
 {% block extra_js %}
