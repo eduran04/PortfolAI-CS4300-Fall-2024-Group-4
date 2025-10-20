@@ -104,79 +104,43 @@
 
   <!-- Main Content Grid -->
   <main class="p-6">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Left Column: Watchlist + News -->
-      <div class="space-y-6">
-                <!-- Watchlist Card -->
-                <div class="card h-96">
-                  <header>
-                    <h2 class="card-title flex items-center space-x-2">
-                      <span class="material-icons-outlined text-yellow-400">star</span>
-                      <span>Watchlist</span>
-                    </h2>
-                  </header>
-                  <section class="overflow-y-auto">
-                    <div id="watchlist-container">
-                      <div class="watchlist-empty text-center py-8" id="watchlist-empty">
-                        <span class="material-icons-outlined text-4xl text-slate-500 mb-2">star_border</span>
-                        <p class="text-sm text-slate-400">No stocks in watchlist</p>
-                      </div>
-                      <div class="watchlist-grid space-y-3 hidden" id="watchlist-grid">
-                        <!-- Watchlist items will be populated here -->
-                      </div>
-                    </div>
-                  </section>
-                </div>
-
-        <!-- News Card -->
-        <div class="card h-96">
-          <header>
-            <h2 class="card-title flex items-center space-x-2">
-              <span class="material-icons-outlined text-blue-400">newspaper</span>
-              <span>News</span>
-            </h2>
-          </header>
-          <section class="overflow-y-auto">
-            <div class="space-y-4">
-              <div class="border-b border-slate-600 pb-3">
-                <h4 class="text-sm font-semibold text-white mb-1">Market Rally Continues</h4>
-                <p class="text-xs text-slate-400">Stocks surge on positive earnings reports...</p>
-              </div>
-              <div class="border-b border-slate-600 pb-3">
-                <h4 class="text-sm font-semibold text-white mb-1">Tech Stocks Lead Gains</h4>
-                <p class="text-xs text-slate-400">Major tech companies report strong Q4 results...</p>
-              </div>
-              <div class="border-b border-slate-600 pb-3">
-                <h4 class="text-sm font-semibold text-white mb-1">Fed Signals Rate Stability</h4>
-                <p class="text-xs text-slate-400">Federal Reserve maintains current interest rates...</p>
-              </div>
-              <div class="border-b border-slate-600 pb-3">
-                <h4 class="text-sm font-semibold text-white mb-1">Energy Sector Recovery</h4>
-                <p class="text-xs text-slate-400">Oil prices stabilize after recent volatility...</p>
-              </div>
+    <!-- Top Row: 3 Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      <!-- Watchlist Card (Left) -->
+      <div class="card">
+        <header>
+          <h2 class="card-title flex items-center space-x-2">
+            <span class="material-icons-outlined text-yellow-400">star</span>
+            <span>Watchlist</span>
+          </h2>
+        </header>
+        <section class="h-64 overflow-y-auto">
+          <div id="watchlist-container">
+            <div class="watchlist-empty text-center py-8" id="watchlist-empty">
+              <span class="material-icons-outlined text-4xl text-slate-500 mb-2">star_border</span>
+              <p class="text-sm text-slate-400">No stocks in watchlist</p>
             </div>
-          </section>
-        </div>
+            <div class="watchlist-grid space-y-3 hidden" id="watchlist-grid">
+              <!-- Watchlist items will be populated here -->
+            </div>
+          </div>
+        </section>
       </div>
 
-      <!-- Right Column: Portfolio Chart -->
-      <div class="lg:col-span-2">
-        <div class="card h-96">
-          <header>
-            <h2 class="card-title flex items-center space-x-2">
-              <span class="material-icons-outlined text-green-400">show_chart</span>
-              <span>Portfolio Performance</span>
-            </h2>
-          </header>
-          <section>
-            <div id="bar-chart" class="h-80"></div>
-          </section>
-        </div>
+      <!-- Portfolio Chart Card (Center) -->
+      <div class="card">
+        <header>
+          <h2 class="card-title flex items-center space-x-2">
+            <span class="material-icons-outlined text-green-400">show_chart</span>
+            <span>Portfolio Performance</span>
+          </h2>
+        </header>
+        <section class="h-64">
+          <div id="bar-chart" class="h-full"></div>
+        </section>
       </div>
-    </div>
 
-    <!-- Bottom Section: Top 5 Trends Table -->
-    <div class="mt-6">
+      <!-- Top 5 Trends Card (Right) -->
       <div class="card">
         <header>
           <h2 class="card-title flex items-center space-x-2">
@@ -184,7 +148,79 @@
             <span>Top 5 Trends</span>
           </h2>
         </header>
-        <section>
+        <section class="h-64 overflow-y-auto">
+          <div class="space-y-2">
+            <div class="flex justify-between items-center py-2 border-b border-slate-600">
+              <span class="font-semibold text-sm">AAPL</span>
+              <span class="text-sm">$252.29</span>
+              <span class="text-green-400 text-xs">+1.96%</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-slate-600">
+              <span class="font-semibold text-sm">GOOGL</span>
+              <span class="text-sm">$253.30</span>
+              <span class="text-green-400 text-xs">+0.57%</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-slate-600">
+              <span class="font-semibold text-sm">MSFT</span>
+              <span class="text-sm">$415.26</span>
+              <span class="text-red-400 text-xs">-0.51%</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-slate-600">
+              <span class="font-semibold text-sm">TSLA</span>
+              <span class="text-sm">$248.50</span>
+              <span class="text-green-400 text-xs">+2.14%</span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+              <span class="font-semibold text-sm">AMZN</span>
+              <span class="text-sm">$3,456.78</span>
+              <span class="text-green-400 text-xs">+0.36%</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Bottom Row: 2 Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- News Card (Left, 1 column) -->
+      <div class="card">
+        <header>
+          <h2 class="card-title flex items-center space-x-2">
+            <span class="material-icons-outlined text-blue-400">newspaper</span>
+            <span>News</span>
+          </h2>
+        </header>
+        <section class="h-64 overflow-y-auto">
+          <div class="space-y-4">
+            <div class="border-b border-slate-600 pb-3">
+              <h4 class="text-sm font-semibold text-white mb-1">Market Rally Continues</h4>
+              <p class="text-xs text-slate-400">Stocks surge on positive earnings reports...</p>
+            </div>
+            <div class="border-b border-slate-600 pb-3">
+              <h4 class="text-sm font-semibold text-white mb-1">Tech Stocks Lead Gains</h4>
+              <p class="text-xs text-slate-400">Major tech companies report strong Q4 results...</p>
+            </div>
+            <div class="border-b border-slate-600 pb-3">
+              <h4 class="text-sm font-semibold text-white mb-1">Fed Signals Rate Stability</h4>
+              <p class="text-xs text-slate-400">Federal Reserve maintains current interest rates...</p>
+            </div>
+            <div class="border-b border-slate-600 pb-3">
+              <h4 class="text-sm font-semibold text-white mb-1">Energy Sector Recovery</h4>
+              <p class="text-xs text-slate-400">Oil prices stabilize after recent volatility...</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Stock Analysis Card (Right, 2 columns) -->
+      <div class="lg:col-span-2 card">
+        <header>
+          <h2 class="card-title flex items-center space-x-2">
+            <span class="material-icons-outlined text-orange-400">analytics</span>
+            <span>Stock Analysis</span>
+          </h2>
+        </header>
+        <section class="h-64">
           <div class="overflow-x-auto">
             <table class="table w-full">
               <thead>
