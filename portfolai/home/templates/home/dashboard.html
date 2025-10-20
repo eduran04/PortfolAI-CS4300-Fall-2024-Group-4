@@ -6,617 +6,231 @@
 {% block extra_css %}
 <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'home/dashboard/dashboard.css' %}?v={{ timestamp|default:'1.0' }}">
+<link rel="stylesheet" href="{% static 'home/dashboard/dashboard.css' %}">
 <style>
   /* Override base template styles for dashboard */
   body {
     background-color: #23252e !important;
     color: #8a8fa7 !important;
     font-family: 'Lato', sans-serif !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: grid !important;
-    grid-template-columns: auto 1fr !important;
-    min-height: 100vh !important;
-    flex-direction: unset !important;
   }
   
   #mainContent {
     padding: 0 !important;
     margin: 0 !important;
-    min-height: 100vh;
-    overflow-x: auto;
-    background-color: #0f172a !important;
-    width: 100% !important;
-    display: block !important;
   }
   
-  /* Sidebar is now visible for dashboard */
   #sidebar {
-    display: block !important;
-    visibility: visible !important;
-    position: sticky !important;
-    top: 0 !important;
-    height: 100vh !important;
-    width: 250px !important;
-    background-color: #11121a !important;
-    border-right: 1px solid #42434a !important;
-    z-index: 1000 !important;
-  }
-  
-  /* Override any conflicting sidebar styles */
-  nav#sidebar {
-    display: block !important;
-    visibility: visible !important;
-  }
-  
-  /* Ensure dashboard content displays properly */
-  .dashboard-container {
-    width: 100% !important;
-    min-height: 100vh !important;
-    background-color: #0f172a !important;
-  }
-  
-  /* Fix any flex conflicts */
-  .tw-flex {
-    display: flex !important;
-  }
-  
-  .tw-flex-col {
-    flex-direction: column !important;
+    display: none; /* Hide sidebar for dashboard */
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container min-h-screen bg-slate-900 text-slate-100 w-full" style="width: 100%; min-height: 100vh;">
-  <!-- Ticker Tape Bar -->
-  <div class="bg-slate-800 border-b border-slate-700 py-2 px-4 overflow-hidden">
-    <div class="flex items-center justify-between">
-      <div class="flex-1 overflow-hidden">
-        <div class="ticker-scroll flex items-center space-x-8 whitespace-nowrap">
-          <!-- Ticker items will be populated by JavaScript -->
-          <div class="ticker-item flex items-center space-x-2">
-            <span class="ticker-symbol">AAPL</span>
-            <span class="ticker-price">$252.29</span>
-            <span class="ticker-change positive">+$4.84 (+1.96%)</span>
-          </div>
-          <div class="ticker-item flex items-center space-x-2">
-            <span class="ticker-symbol">GOOGL</span>
-            <span class="ticker-price">$253.30</span>
-            <span class="ticker-change positive">+$1.43 (+0.57%)</span>
-          </div>
-          <div class="ticker-item flex items-center space-x-2">
-            <span class="ticker-symbol">MSFT</span>
-            <span class="ticker-price">$415.26</span>
-            <span class="ticker-change negative">-$2.15 (-0.51%)</span>
-          </div>
-          <div class="ticker-item flex items-center space-x-2">
-            <span class="ticker-symbol">TSLA</span>
-            <span class="ticker-price">$248.50</span>
-            <span class="ticker-change positive">+$5.20 (+2.14%)</span>
-          </div>
-          <div class="ticker-item flex items-center space-x-2">
-            <span class="ticker-symbol">AMZN</span>
-            <span class="ticker-price">$3,456.78</span>
-            <span class="ticker-change positive">+$12.34 (+0.36%)</span>
-          </div>
-        </div>
-      </div>
-              <button type="button" aria-label="Toggle dark mode" data-tooltip="Toggle dark mode" data-side="bottom" onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))" class="btn-icon-outline size-8 ml-4">
-                <span class="hidden dark:block">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-                  </svg>
-                </span>
-                <span class="block dark:hidden">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="4" />
-                    <path d="M12 2v2" />
-                    <path d="M12 20v2" />
-                    <path d="m4.93 4.93 1.41 1.41" />
-                    <path d="m17.66 17.66 1.41 1.41" />
-                    <path d="M2 12h2" />
-                    <path d="M20 12h2" />
-                    <path d="m6.34 17.66-1.41 1.41" />
-                    <path d="m19.07 4.93-1.41 1.41" />
-                  </svg>
-                </span>
-              </button>
+<div class="grid-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">
+      <a href="{% url 'index' %}" style="text-decoration: none; color: inherit;">PORTFOLAI</a>
     </div>
-  </div>
-
-          <!-- Search Bar -->
-          <div class="bg-slate-800 border-b border-slate-700 py-4">
-            <div class="max-w-2xl mx-auto px-4">
-              <div class="form">
-                <div class="flex space-x-3">
-                  <input 
-                    type="text" 
-                    id="stock-search" 
-                    placeholder="🔍 Search stocks (e.g., AAPL, Microsoft, Tesla)" 
-                    class="input flex-1 text-lg py-3 px-4"
-                  >
-                  <button id="search-btn" class="btn bg-blue-600 hover:bg-blue-700 text-white px-8 py-3">
-                    Search
-                  </button>
-                </div>
-              </div>
-              <div id="search-results" class="search-results mt-4"></div>
-            </div>
-          </div>
-
-  <!-- Main Content Grid -->
-  <div class="p-6 min-h-screen">
-    <!-- TEMPORARY TEST - If you see this, the template is updating! -->
-    <div class="bg-red-500 text-white p-4 rounded-lg mb-4 text-center">
-      🚀 DASHBOARD UPDATED! If you see this red box, the changes are working!
+    <div class="header-left">
+      <ul class="list">
+        <li class="list-item">
+          <a href="{% url 'index' %}">
+            <span class="material-icons-outlined">home</span> HOME
+          </a>
+        </li>
+        <li class="list-item active">
+          <a href="{% url 'dashboard' %}">
+            <span class="material-icons-outlined">dashboard</span> DASHBOARD
+          </a>
+        </li>
+        <li class="list-item">
+          <a href="#">
+            <span class="material-icons-outlined">inventory_2</span> PORTFOLIOS
+          </a>
+        </li>
+        <li class="list-item">
+          <a href="#">
+            <span class="material-icons-outlined">poll</span> ANALYTICS
+          </a>
+        </li>
+        <li class="list-item">
+          <a href="#">
+            <span class="material-icons-outlined">settings</span> SETTINGS
+          </a>
+        </li>
+      </ul>
     </div>
-    <!-- Portfolio Cards Row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-      <!-- AAPL Card -->
-      <div class="card bg-gradient-to-br from-blue-600 to-blue-700">
-        <section class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-              <span class="text-2xl font-bold text-white">A</span>
-            </div>
-            <span class="text-green-400 text-sm font-semibold">+11.01%</span>
-          </div>
-          <h3 class="text-white font-semibold text-lg mb-1">AAPL</h3>
-          <p class="text-white/80 text-sm mb-2">Apple, Inc</p>
-          <p class="text-white text-2xl font-bold">$1,232.00</p>
-        </section>
-      </div>
-
-      <!-- PYPL Card -->
-      <div class="card bg-gradient-to-br from-purple-600 to-purple-700">
-        <section class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-              <span class="text-2xl font-bold text-white">P</span>
-            </div>
-            <span class="text-green-400 text-sm font-semibold">+9.05%</span>
-          </div>
-          <h3 class="text-white font-semibold text-lg mb-1">PYPL</h3>
-          <p class="text-white/80 text-sm mb-2">Paypal, Inc</p>
-          <p class="text-white text-2xl font-bold">$965.00</p>
-        </section>
-      </div>
-
-      <!-- TSLA Card -->
-      <div class="card bg-gradient-to-br from-red-600 to-red-700">
-        <section class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-              <span class="text-2xl font-bold text-white">T</span>
-            </div>
-            <span class="text-green-400 text-sm font-semibold">+11.01%</span>
-          </div>
-          <h3 class="text-white font-semibold text-lg mb-1">TSLA</h3>
-          <p class="text-white/80 text-sm mb-2">Tesla, Inc</p>
-          <p class="text-white text-2xl font-bold">$1,232.00</p>
-        </section>
-      </div>
-
-      <!-- AMZN Card -->
-      <div class="card bg-gradient-to-br from-orange-600 to-orange-700">
-        <section class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-              <span class="text-2xl font-bold text-white">A</span>
-            </div>
-            <span class="text-green-400 text-sm font-semibold">+11.01%</span>
-          </div>
-          <h3 class="text-white font-semibold text-lg mb-1">AMZN</h3>
-          <p class="text-white/80 text-sm mb-2">Amazon.com, Inc</p>
-          <p class="text-white text-2xl font-bold">$2,567.99</p>
-        </section>
-      </div>
+    <div class="header-right">
+      <span class="material-icons-outlined">notifications</span>
+      <span class="material-icons-outlined">email</span>
+      <span class="material-icons-outlined">account_circle</span>
     </div>
+  </header>
+  <!-- End Header -->
 
-    <!-- Portfolio Performance Chart -->
-    <div class="card mb-6">
-      <header class="p-6 border-b border-slate-600">
-        <div class="flex items-center justify-between">
-          <h2 class="card-title text-xl font-semibold text-white">Portfolio Performance</h2>
-          <div class="flex space-x-2">
-            <button class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium">Monthly</button>
-            <button class="px-4 py-2 bg-slate-700 text-slate-300 rounded-md text-sm font-medium hover:bg-slate-600">Quarterly</button>
-            <button class="px-4 py-2 bg-slate-700 text-slate-300 rounded-md text-sm font-medium hover:bg-slate-600">Annually</button>
-          </div>
-        </div>
-        <p class="text-slate-400 text-sm mt-2">Here is your performance stats of each month</p>
-      </header>
-      <section class="p-6">
-        <div id="bar-chart" class="h-80"></div>
-      </section>
-    </div>
+         <!-- Main -->
+         <main class="main-container">
+           <!-- TradingView Ticker Tape -->
+           <div class="ticker-tape-section">
+             <div class="ticker-tape-header">
+               <h2 class="ticker-tape-title">
+                 <span class="material-icons-outlined">trending_up</span>
+                 Market Overview
+               </h2>
+             </div>
+             <div class="tradingview-widget-container">
+               <div class="tradingview-widget-container__widget"></div>
+               <div class="tradingview-widget-copyright">
+                 <a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank">
+                   <span class="blue-text">Ticker tape</span>
+                 </a>
+                 <span class="trademark"> by TradingView</span>
+               </div>
+             </div>
+           </div>
 
-    <!-- Middle Section: 3 Cards -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-      <!-- Trending Stocks -->
+           <!-- Search Section -->
+           <div class="search-section">
+             <div class="search-container">
+               <div class="search-input-group">
+                 <input 
+                   type="text" 
+                   id="stock-search" 
+                   placeholder="Search stocks (e.g., AAPL, Microsoft, Tesla)" 
+                   class="search-input"
+                 >
+                 <button id="search-btn" class="search-btn">
+                   <span class="material-icons-outlined">search</span>
+                   Search
+                 </button>
+               </div>
+               <div id="search-results" class="search-results"></div>
+             </div>
+           </div>
+
+    <div class="main-cards">
+
       <div class="card">
-        <header class="p-6 border-b border-slate-600">
-          <h2 class="card-title text-lg font-semibold text-white">Trending Stocks</h2>
-        </header>
-        <section class="p-6">
-          <div class="space-y-4">
-            <div class="flex items-center justify-between p-4 bg-slate-700 rounded-lg">
-              <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
-                  <span class="text-white font-bold text-sm">T</span>
-                </div>
-                <div>
-                  <h4 class="text-white font-semibold">TSLA</h4>
-                  <p class="text-slate-400 text-sm">Tesla, Inc</p>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-white font-semibold">$192.53</p>
-                <p class="text-green-400 text-sm">+1.01%</p>
-              </div>
-            </div>
-            <div class="flex space-x-2">
-              <button class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700">Short Stock</button>
-              <button class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700">Buy Stock</button>
-            </div>
-            
-            <div class="flex items-center justify-between p-4 bg-slate-700 rounded-lg">
-              <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                  <span class="text-white font-bold text-sm">A</span>
-                </div>
-                <div>
-                  <h4 class="text-white font-semibold">AAPL</h4>
-                  <p class="text-slate-400 text-sm">Apple, Inc</p>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-white font-semibold">$192.53</p>
-                <p class="text-green-400 text-sm">+3.59%</p>
-              </div>
-            </div>
-            <div class="flex space-x-2">
-              <button class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700">Short Stock</button>
-              <button class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700">Buy Stock</button>
-            </div>
-
-            <div class="flex items-center justify-between p-4 bg-slate-700 rounded-lg">
-              <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                  <span class="text-white font-bold text-sm">S</span>
-                </div>
-                <div>
-                  <h4 class="text-white font-semibold">SPOT</h4>
-                  <p class="text-slate-400 text-sm">Spotify, Inc</p>
-                </div>
-              </div>
-              <div class="text-right">
-                <p class="text-white font-semibold">$192.53</p>
-                <p class="text-green-400 text-sm">+1.01%</p>
-              </div>
-            </div>
-            <div class="flex space-x-2">
-              <button class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700">Short Stock</button>
-              <button class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700">Buy Stock</button>
-            </div>
+        <div class="card-inner">
+          <p>WATCHLIST</p>
+          <div class="icon icon-shape background-blue text-primary">
+            <span class="material-icons-outlined">inventory_2</span>
           </div>
-        </section>
+        </div>
+        <span class="text-primary" id="watchlist-count">0</span>
+      </div>
+      
+      <div class="card">
+        <div class="card-inner">
+          <p>MARKET STATUS</p>
+          <div class="icon icon-shape background-orange text-primary">
+            <span class="material-icons-outlined">trending_up</span>
+          </div>
+        </div>
+        <span class="text-primary" id="market-status">Loading...</span>
       </div>
 
-      <!-- Dividend -->
       <div class="card">
-        <header class="p-6 border-b border-slate-600">
-          <div class="flex items-center justify-between">
-            <h2 class="card-title text-lg font-semibold text-white">Dividend</h2>
-            <div class="flex space-x-2">
-              <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
-              <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
-            </div>
+        <div class="card-inner">
+          <p>SELECTED STOCK</p>
+          <div class="icon icon-shape background-green text-primary">
+            <span class="material-icons-outlined">show_chart</span>
           </div>
-        </header>
-        <section class="p-6">
-          <div class="text-center">
-            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span class="material-icons-outlined text-green-600 text-3xl">trending_up</span>
-            </div>
-            <h3 class="text-white text-xl font-semibold mb-2">$2,450.00</h3>
-            <p class="text-slate-400 text-sm">Total Dividend</p>
-            <div class="mt-4 space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-slate-400">This Month</span>
-                <span class="text-white">$245.00</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-slate-400">Last Month</span>
-                <span class="text-white">$198.50</span>
-              </div>
-            </div>
-          </div>
-        </section>
+        </div>
+        <span class="text-primary" id="selected-stock">None</span>
       </div>
 
-      <!-- My Watchlist -->
       <div class="card">
-        <header class="p-6 border-b border-slate-600">
-          <div class="flex items-center justify-between">
-            <h2 class="card-title text-lg font-semibold text-white">My Watchlist</h2>
-            <div class="flex space-x-2">
-              <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
-              <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
-            </div>
+        <div class="card-inner">
+          <p>PRICE CHANGE</p>
+          <div class="icon icon-shape background-red text-primary">
+            <span class="material-icons-outlined">notification_important</span>
           </div>
-        </header>
-        <section class="p-6">
-          <div id="watchlist-container">
-            <div class="watchlist-empty text-center py-8 hidden" id="watchlist-empty">
-              <span class="material-icons-outlined text-4xl text-slate-500 mb-2">star_border</span>
-              <p class="text-sm text-slate-400">No stocks in watchlist</p>
-            </div>
-            <div class="space-y-3" id="watchlist-grid">
-              <div class="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
-                <div class="flex items-center space-x-3">
-                  <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-xs">A</span>
-                  </div>
-                  <div>
-                    <h4 class="text-white font-semibold text-sm">AAPL</h4>
-                    <p class="text-slate-400 text-xs">Apple, Inc</p>
-                  </div>
-                </div>
-                <div class="text-right">
-                  <p class="text-white font-semibold text-sm">$4,008.65</p>
-                  <p class="text-green-400 text-xs">+11.01%</p>
-                </div>
-              </div>
-              
-              <div class="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
-                <div class="flex items-center space-x-3">
-                  <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-xs">S</span>
-                  </div>
-                  <div>
-                    <h4 class="text-white font-semibold text-sm">SPOT</h4>
-                    <p class="text-slate-400 text-xs">Spotify.com</p>
-                  </div>
-                </div>
-                <div class="text-right">
-                  <p class="text-white font-semibold text-sm">$11,689.00</p>
-                  <p class="text-green-400 text-xs">+9.48%</p>
-                </div>
-              </div>
+        </div>
+        <span class="text-primary" id="price-change">$0.00</span>
+      </div>
 
-              <div class="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
-                <div class="flex items-center space-x-3">
-                  <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-xs">A</span>
-                  </div>
-                  <div>
-                    <h4 class="text-white font-semibold text-sm">ABNB</h4>
-                    <p class="text-slate-400 text-xs">Airbnb, Inc</p>
-                  </div>
-                </div>
-                <div class="text-right">
-                  <p class="text-white font-semibold text-sm">$32,227.00</p>
-                  <p class="text-green-400 text-xs">+0.29%</p>
-                </div>
-              </div>
-            </div>
+    </div>
+
+    <!-- Selected Stock Information -->
+    <div class="stock-info-section" id="stock-info-section" style="display: none;">
+      <div class="stock-info-card">
+        <div class="stock-header">
+          <div class="stock-symbol" id="stock-symbol-display">-</div>
+          <div class="stock-company" id="stock-company-display">-</div>
+        </div>
+        <div class="stock-price-info">
+          <div class="current-price" id="current-price-display">$0.00</div>
+          <div class="price-change" id="price-change-display">$0.00 (0.00%)</div>
+        </div>
+        <div class="stock-details">
+          <div class="detail-item">
+            <span class="detail-label">High:</span>
+            <span class="detail-value" id="stock-high">$0.00</span>
           </div>
-        </section>
+          <div class="detail-item">
+            <span class="detail-label">Low:</span>
+            <span class="detail-value" id="stock-low">$0.00</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Open:</span>
+            <span class="detail-value" id="stock-open">$0.00</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Previous Close:</span>
+            <span class="detail-value" id="stock-prev-close">$0.00</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Latest Transactions Table -->
-    <div class="card">
-      <header class="p-6 border-b border-slate-600">
-        <h2 class="card-title text-lg font-semibold text-white">Latest Transactions</h2>
-      </header>
-      <section class="p-6">
-        <div class="overflow-x-auto">
-          <table class="table w-full">
-            <thead>
-              <tr class="border-b border-slate-600">
-                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-300">Name</th>
-                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-300">Date</th>
-                <th class="text-right py-3 px-4 text-sm font-semibold text-slate-300">Price</th>
-                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-300">Category</th>
-                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-300">Status</th>
-                <th class="text-center py-3 px-4 text-sm font-semibold text-slate-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="border-b border-slate-700 hover:bg-slate-700/50">
-                <td class="py-3 px-4">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
-                      <span class="text-white font-bold text-xs">P</span>
-                    </div>
-                    <span class="text-white font-medium">Bought PYPL</span>
-                  </div>
-                </td>
-                <td class="py-3 px-4 text-slate-300">Nov 23, 01:00 PM</td>
-                <td class="py-3 px-4 text-right text-white">$2,567.88</td>
-                <td class="py-3 px-4 text-slate-300">Finance</td>
-                <td class="py-3 px-4">
-                  <span class="px-2 py-1 bg-green-900 text-green-400 rounded-full text-xs">Success</span>
-                </td>
-                <td class="py-3 px-4 text-center">
-                  <div class="flex space-x-2 justify-center">
-                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
-                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
-                  </div>
-                </td>
-              </tr>
-              <tr class="border-b border-slate-700 hover:bg-slate-700/50">
-                <td class="py-3 px-4">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                      <span class="text-white font-bold text-xs">A</span>
-                    </div>
-                    <span class="text-white font-medium">Bought AAPL</span>
-                  </div>
-                </td>
-                <td class="py-3 px-4 text-slate-300">Nov 22, 09:00 PM</td>
-                <td class="py-3 px-4 text-right text-white">$2,567.88</td>
-                <td class="py-3 px-4 text-slate-300">Technology</td>
-                <td class="py-3 px-4">
-                  <span class="px-2 py-1 bg-yellow-900 text-yellow-400 rounded-full text-xs">Pending</span>
-                </td>
-                <td class="py-3 px-4 text-center">
-                  <div class="flex space-x-2 justify-center">
-                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
-                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
-                  </div>
-                </td>
-              </tr>
-              <tr class="border-b border-slate-700 hover:bg-slate-700/50">
-                <td class="py-3 px-4">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                      <span class="text-white font-bold text-xs">K</span>
-                    </div>
-                    <span class="text-white font-medium">Sell KKST</span>
-                  </div>
-                </td>
-                <td class="py-3 px-4 text-slate-300">Oct 12, 03:54 PM</td>
-                <td class="py-3 px-4 text-right text-white">$6,754.99</td>
-                <td class="py-3 px-4 text-slate-300">Finance</td>
-                <td class="py-3 px-4">
-                  <span class="px-2 py-1 bg-green-900 text-green-400 rounded-full text-xs">Success</span>
-                </td>
-                <td class="py-3 px-4 text-center">
-                  <div class="flex space-x-2 justify-center">
-                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
-                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
-                  </div>
-                </td>
-              </tr>
-              <tr class="border-b border-slate-700 hover:bg-slate-700/50">
-                <td class="py-3 px-4">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                      <span class="text-white font-bold text-xs">F</span>
-                    </div>
-                    <span class="text-white font-medium">Bought FB</span>
-                  </div>
-                </td>
-                <td class="py-3 px-4 text-slate-300">Sep 09, 02:00 AM</td>
-                <td class="py-3 px-4 text-right text-white">$1,445.41</td>
-                <td class="py-3 px-4 text-slate-300">Social Media</td>
-                <td class="py-3 px-4">
-                  <span class="px-2 py-1 bg-green-900 text-green-400 rounded-full text-xs">Success</span>
-                </td>
-                <td class="py-3 px-4 text-center">
-                  <div class="flex space-x-2 justify-center">
-                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
-                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
-                  </div>
-                </td>
-              </tr>
-              <tr class="hover:bg-slate-700/50">
-                <td class="py-3 px-4">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-                      <span class="text-white font-bold text-xs">A</span>
-                    </div>
-                    <span class="text-white font-medium">Sell AMZN</span>
-                  </div>
-                </td>
-                <td class="py-3 px-4 text-slate-300">Feb 35, 08:00 PM</td>
-                <td class="py-3 px-4 text-right text-white">$5,698.55</td>
-                <td class="py-3 px-4 text-slate-300">E-commerce</td>
-                <td class="py-3 px-4">
-                  <span class="px-2 py-1 bg-red-900 text-red-400 rounded-full text-xs">Failed</span>
-                </td>
-                <td class="py-3 px-4 text-center">
-                  <div class="flex space-x-2 justify-center">
-                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
-                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    <!-- Watchlist Section -->
+    <div class="watchlist-section">
+      <div class="watchlist-header">
+        <h2 class="watchlist-title">
+          <span class="material-icons-outlined">star</span>
+          My Watchlist
+        </h2>
+        <div class="watchlist-actions">
+          <button id="clear-watchlist-btn" class="clear-btn" title="Clear all stocks">
+            <span class="material-icons-outlined">clear_all</span>
+          </button>
         </div>
-        
-        <!-- Pagination -->
-        <div class="flex items-center justify-between mt-6">
-          <p class="text-slate-400 text-sm">Previous Page 1 of 10</p>
-          <div class="flex space-x-2">
-            <button class="px-3 py-2 bg-blue-600 text-white rounded-md text-sm">1</button>
-            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">2</button>
-            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">3</button>
-            <span class="px-3 py-2 text-slate-400 text-sm">...</span>
-            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">8</button>
-            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">9</button>
-            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">10</button>
-            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">Next</button>
-          </div>
+      </div>
+      <div class="watchlist-container" id="watchlist-container">
+        <div class="watchlist-empty" id="watchlist-empty">
+          <span class="material-icons-outlined">star_border</span>
+          <p>No stocks in watchlist</p>
+          <small>Search and add stocks to your watchlist</small>
         </div>
-      </section>
+        <div class="watchlist-grid" id="watchlist-grid" style="display: none;">
+          <!-- Watchlist items will be populated here -->
+        </div>
+      </div>
     </div>
 
-  </div>
-  <!-- End Main Content -->
+    <div class="charts">
+
+      <div class="charts-card">
+        <p class="chart-title">Portfolio Performance</p>
+        <div id="bar-chart"></div>
+      </div>
+
+      <div class="charts-card">
+        <p class="chart-title">Stock Analysis Trends - <span id="chart-stock-symbol">Select a stock to view trends</span></p>
+        <div id="area-chart"></div>
+      </div>
+
+    </div>
+  </main>
+  <!-- End Main -->
 </div>
-
-        <!-- Theme Persistence Script -->
-        <script>
-        (() => {
-          try {
-            const stored = localStorage.getItem('themeMode');
-            if (stored ? stored === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches) {
-              document.documentElement.classList.add('dark');
-            }
-          } catch (_) {}
-          const apply = dark => {
-            document.documentElement.classList.toggle('dark', dark);
-            try { localStorage.setItem('themeMode', dark ? 'dark' : 'light'); } catch (_) {}
-          };
-          document.addEventListener('basecoat:theme', (event) => {
-            const mode = event.detail?.mode;
-            apply(mode === 'dark' ? true : mode === 'light' ? false : !document.documentElement.classList.contains('dark'));
-          });
-        })();
-        </script>
 {% endblock %}
 
 {% block extra_js %}
 <!-- ApexCharts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.40.0/apexcharts.min.js"></script>
-<script>
-// Debug script to check if elements are loaded
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Dashboard template loaded');
-  console.log('Search input:', document.getElementById('stock-search'));
-  console.log('Search button:', document.getElementById('search-btn'));
-  console.log('Search results:', document.getElementById('search-results'));
-  console.log('Sidebar:', document.getElementById('sidebar'));
-  console.log('Main content:', document.getElementById('mainContent'));
-  
-  // Check body styles
-  const body = document.body;
-  console.log('Body display:', getComputedStyle(body).display);
-  console.log('Body grid-template-columns:', getComputedStyle(body).gridTemplateColumns);
-  console.log('Body flex-direction:', getComputedStyle(body).flexDirection);
-  
-  // Check sidebar styles
-  const sidebar = document.getElementById('sidebar');
-  if (sidebar) {
-    console.log('Sidebar display:', getComputedStyle(sidebar).display);
-    console.log('Sidebar width:', getComputedStyle(sidebar).width);
-    console.log('Sidebar visibility:', getComputedStyle(sidebar).visibility);
-  }
-  
-  // Check main content styles
-  const mainContent = document.getElementById('mainContent');
-  if (mainContent) {
-    console.log('Main content display:', getComputedStyle(mainContent).display);
-    console.log('Main content width:', getComputedStyle(mainContent).width);
-  }
-});
-</script>
 <script src="{% static 'home/dashboard/dashboard.js' %}"></script>
 {% endblock %}
