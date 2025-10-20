@@ -13,6 +13,12 @@
     background-color: #23252e !important;
     color: #8a8fa7 !important;
     font-family: 'Lato', sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    min-height: 100vh !important;
+    flex-direction: unset !important;
   }
   
   #mainContent {
@@ -20,18 +26,50 @@
     margin: 0 !important;
     min-height: 100vh;
     overflow-x: auto;
+    background-color: #0f172a !important;
+    width: 100% !important;
+    display: block !important;
   }
   
   /* Sidebar is now visible for dashboard */
   #sidebar {
     display: block !important;
     visibility: visible !important;
+    position: sticky !important;
+    top: 0 !important;
+    height: 100vh !important;
+    width: 250px !important;
+    background-color: #11121a !important;
+    border-right: 1px solid #42434a !important;
+    z-index: 1000 !important;
+  }
+  
+  /* Override any conflicting sidebar styles */
+  nav#sidebar {
+    display: block !important;
+    visibility: visible !important;
+  }
+  
+  /* Ensure dashboard content displays properly */
+  .dashboard-container {
+    width: 100% !important;
+    min-height: 100vh !important;
+    background-color: #0f172a !important;
+  }
+  
+  /* Fix any flex conflicts */
+  .tw-flex {
+    display: flex !important;
+  }
+  
+  .tw-flex-col {
+    flex-direction: column !important;
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-slate-900 text-slate-100 w-full">
+<div class="dashboard-container min-h-screen bg-slate-900 text-slate-100 w-full" style="width: 100%; min-height: 100vh;">
   <!-- Ticker Tape Bar -->
   <div class="bg-slate-800 border-b border-slate-700 py-2 px-4 overflow-hidden">
     <div class="flex items-center justify-between">
@@ -557,6 +595,27 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('Search results:', document.getElementById('search-results'));
   console.log('Sidebar:', document.getElementById('sidebar'));
   console.log('Main content:', document.getElementById('mainContent'));
+  
+  // Check body styles
+  const body = document.body;
+  console.log('Body display:', getComputedStyle(body).display);
+  console.log('Body grid-template-columns:', getComputedStyle(body).gridTemplateColumns);
+  console.log('Body flex-direction:', getComputedStyle(body).flexDirection);
+  
+  // Check sidebar styles
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar) {
+    console.log('Sidebar display:', getComputedStyle(sidebar).display);
+    console.log('Sidebar width:', getComputedStyle(sidebar).width);
+    console.log('Sidebar visibility:', getComputedStyle(sidebar).visibility);
+  }
+  
+  // Check main content styles
+  const mainContent = document.getElementById('mainContent');
+  if (mainContent) {
+    console.log('Main content display:', getComputedStyle(mainContent).display);
+    console.log('Main content width:', getComputedStyle(mainContent).width);
+  }
 });
 </script>
 <script src="{% static 'home/dashboard/dashboard.js' %}"></script>
