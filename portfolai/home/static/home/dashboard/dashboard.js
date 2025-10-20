@@ -278,13 +278,13 @@ async function performSearch() {
   const query = searchInput.value.trim();
   
   if (!query) {
-    searchResults.style.display = 'none';
+    searchResults.classList.add('hidden');
     return;
   }
   
   // Show loading state
   searchResults.innerHTML = '<div class="loading">Searching stocks...</div>';
-  searchResults.style.display = 'block';
+  searchResults.classList.remove('hidden');
   
   try {
     const response = await fetch(`/api/search/?q=${encodeURIComponent(query)}`);
@@ -315,7 +315,7 @@ function displaySearchResults(results) {
     const isInWatchlist = watchlist.some(item => item.symbol === stock.symbol);
     return `
       <div class="search-result-item">
-        <div onclick="selectStock('${stock.symbol}', '${stock.description}')" style="flex: 1; cursor: pointer;">
+        <div onclick="selectStock('${stock.symbol}', '${stock.description}')" class="flex-1 cursor-pointer">
           <div class="search-result-symbol">${stock.symbol}</div>
           <div class="search-result-description">${stock.description}</div>
           <div class="search-result-exchange">${stock.type || 'Stock'}</div>
@@ -338,11 +338,11 @@ async function selectStock(symbol, description) {
   updateSelectedStock();
   
   // Hide search results
-  document.getElementById('search-results').style.display = 'none';
+  document.getElementById('search-results').classList.add('hidden');
   document.getElementById('stock-search').value = '';
   
   // Show stock info section
-  document.getElementById('stock-info-section').style.display = 'block';
+  document.getElementById('stock-info-section').classList.remove('hidden');
   
   // Load stock data
   await loadStockData(symbol);
@@ -874,7 +874,7 @@ function toggleWatchlist(symbol, description) {
   
   // Update search results if visible
   const searchResults = document.getElementById('search-results');
-  if (searchResults.style.display !== 'none') {
+  if (!searchResults.classList.contains('hidden')) {
     // Re-render search results to update button states
     const searchInput = document.getElementById('stock-search');
     if (searchInput.value.trim()) {
@@ -923,17 +923,17 @@ async function renderWatchlist() {
   const watchlistEmpty = document.getElementById('watchlist-empty');
   
   if (watchlist.length === 0) {
-    watchlistGrid.style.display = 'none';
-    watchlistEmpty.style.display = 'flex';
+    watchlistGrid.classList.add('hidden');
+    watchlistEmpty.classList.remove('hidden');
     return;
   }
   
-  watchlistEmpty.style.display = 'none';
-  watchlistGrid.style.display = 'grid';
+  watchlistEmpty.classList.add('hidden');
+  watchlistGrid.classList.remove('hidden');
   
   // Show loading state
   watchlistGrid.innerHTML = `
-    <div class="watchlist-loading">
+    <div class="watchlist-loading col-span-full">
       <span class="material-icons-outlined">refresh</span>
       Loading watchlist data...
     </div>

@@ -27,202 +27,240 @@
 {% endblock %}
 
 {% block content %}
-<div class="grid-container">
+<div class="min-h-screen bg-slate-900 text-slate-100">
   <!-- Header -->
-  <header class="header">
-    <div class="logo">
-      <a href="{% url 'index' %}" style="text-decoration: none; color: inherit;">PORTFOLAI</a>
-    </div>
-    <div class="header-left">
-      <ul class="list">
-        <li class="list-item">
-          <a href="{% url 'index' %}">
-            <span class="material-icons-outlined">home</span> HOME
+  <header class="bg-slate-800 border-b border-slate-700 px-6 py-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-8">
+        <a href="{% url 'index' %}" class="text-2xl font-bold text-white hover:text-blue-400 transition-colors">
+          PORTFOLAI
+        </a>
+        <nav class="hidden md:flex space-x-6">
+          <a href="{% url 'index' %}" class="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
+            <span class="material-icons-outlined text-lg">home</span>
+            <span>HOME</span>
           </a>
-        </li>
-        <li class="list-item active">
-          <a href="{% url 'dashboard' %}">
-            <span class="material-icons-outlined">dashboard</span> DASHBOARD
+          <a href="{% url 'dashboard' %}" class="flex items-center space-x-2 text-white bg-blue-600 px-3 py-2 rounded-md">
+            <span class="material-icons-outlined text-lg">dashboard</span>
+            <span>DASHBOARD</span>
           </a>
-        </li>
-        <li class="list-item">
-          <a href="#">
-            <span class="material-icons-outlined">inventory_2</span> PORTFOLIOS
+          <a href="#" class="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
+            <span class="material-icons-outlined text-lg">inventory_2</span>
+            <span>PORTFOLIOS</span>
           </a>
-        </li>
-        <li class="list-item">
-          <a href="#">
-            <span class="material-icons-outlined">poll</span> ANALYTICS
+          <a href="#" class="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
+            <span class="material-icons-outlined text-lg">poll</span>
+            <span>ANALYTICS</span>
           </a>
-        </li>
-        <li class="list-item">
-          <a href="#">
-            <span class="material-icons-outlined">settings</span> SETTINGS
+          <a href="#" class="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
+            <span class="material-icons-outlined text-lg">settings</span>
+            <span>SETTINGS</span>
           </a>
-        </li>
-      </ul>
-    </div>
-    <div class="header-right">
-      <span class="material-icons-outlined">notifications</span>
-      <span class="material-icons-outlined">email</span>
-      <span class="material-icons-outlined">account_circle</span>
+        </nav>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button class="p-2 text-slate-300 hover:text-white transition-colors">
+          <span class="material-icons-outlined">notifications</span>
+        </button>
+        <button class="p-2 text-slate-300 hover:text-white transition-colors">
+          <span class="material-icons-outlined">email</span>
+        </button>
+        <button class="p-2 text-slate-300 hover:text-white transition-colors">
+          <span class="material-icons-outlined">account_circle</span>
+        </button>
+      </div>
     </div>
   </header>
   <!-- End Header -->
 
-         <!-- Main -->
-         <main class="main-container">
-           <!-- TradingView Ticker Tape -->
-           <div class="ticker-tape-section">
-             <div class="ticker-tape-header">
-               <h2 class="ticker-tape-title">
-                 <span class="material-icons-outlined">trending_up</span>
-                 Market Overview
-               </h2>
-             </div>
-             <div class="tradingview-widget-container">
-               <div class="tradingview-widget-container__widget"></div>
-               <div class="tradingview-widget-copyright">
-                 <a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank">
-                   <span class="blue-text">Ticker tape</span>
-                 </a>
-                 <span class="trademark"> by TradingView</span>
-               </div>
-             </div>
-           </div>
-
-           <!-- Search Section -->
-           <div class="search-section">
-             <div class="search-container">
-               <div class="search-input-group">
-                 <input 
-                   type="text" 
-                   id="stock-search" 
-                   placeholder="Search stocks (e.g., AAPL, Microsoft, Tesla)" 
-                   class="search-input"
-                 >
-                 <button id="search-btn" class="search-btn">
-                   <span class="material-icons-outlined">search</span>
-                   Search
-                 </button>
-               </div>
-               <div id="search-results" class="search-results"></div>
-             </div>
-           </div>
-
-    <div class="main-cards">
-
-      <div class="card">
-        <div class="card-inner">
-          <p>WATCHLIST</p>
-          <div class="icon icon-shape background-blue text-primary">
-            <span class="material-icons-outlined">inventory_2</span>
+  <!-- Main Content -->
+  <main class="p-6 space-y-6">
+    <!-- TradingView Ticker Tape -->
+    <div class="card bg-slate-800 border-slate-700">
+      <div class="card-header">
+        <h2 class="card-title flex items-center space-x-2">
+          <span class="material-icons-outlined text-green-400">trending_up</span>
+          <span>Market Overview</span>
+        </h2>
+      </div>
+      <div class="card-body">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <div class="tradingview-widget-copyright">
+            <a href="https://www.tradingview.com/markets/" rel="noopener nofollow" target="_blank" class="text-blue-400 hover:text-blue-300">
+              <span>Ticker tape</span>
+            </a>
+            <span class="text-slate-400"> by TradingView</span>
           </div>
         </div>
-        <span class="text-primary" id="watchlist-count">0</span>
+      </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="card bg-slate-800 border-slate-700">
+      <div class="card-body">
+        <div class="max-w-2xl mx-auto">
+          <div class="flex space-x-3">
+            <input 
+              type="text" 
+              id="stock-search" 
+              placeholder="Search stocks (e.g., AAPL, Microsoft, Tesla)" 
+              class="input flex-1 bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
+            >
+            <button id="search-btn" class="btn bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-md flex items-center space-x-2 transition-colors">
+              <span class="material-icons-outlined">search</span>
+              <span>Search</span>
+            </button>
+          </div>
+          <div id="search-results" class="search-results mt-4"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="card bg-gradient-to-br from-blue-600 to-blue-700 border-blue-500">
+        <div class="card-body">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-blue-100 text-sm font-medium uppercase tracking-wide">WATCHLIST</p>
+              <p class="text-3xl font-bold text-white mt-2" id="watchlist-count">0</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+              <span class="material-icons-outlined text-white text-xl">inventory_2</span>
+            </div>
+          </div>
+        </div>
       </div>
       
-      <div class="card">
-        <div class="card-inner">
-          <p>MARKET STATUS</p>
-          <div class="icon icon-shape background-orange text-primary">
-            <span class="material-icons-outlined">trending_up</span>
+      <div class="card bg-gradient-to-br from-orange-600 to-orange-700 border-orange-500">
+        <div class="card-body">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-orange-100 text-sm font-medium uppercase tracking-wide">MARKET STATUS</p>
+              <p class="text-3xl font-bold text-white mt-2" id="market-status">Loading...</p>
+            </div>
+            <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+              <span class="material-icons-outlined text-white text-xl">trending_up</span>
+            </div>
           </div>
         </div>
-        <span class="text-primary" id="market-status">Loading...</span>
       </div>
 
-      <div class="card">
-        <div class="card-inner">
-          <p>SELECTED STOCK</p>
-          <div class="icon icon-shape background-green text-primary">
-            <span class="material-icons-outlined">show_chart</span>
+      <div class="card bg-gradient-to-br from-green-600 to-green-700 border-green-500">
+        <div class="card-body">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-green-100 text-sm font-medium uppercase tracking-wide">SELECTED STOCK</p>
+              <p class="text-3xl font-bold text-white mt-2" id="selected-stock">None</p>
+            </div>
+            <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+              <span class="material-icons-outlined text-white text-xl">show_chart</span>
+            </div>
           </div>
         </div>
-        <span class="text-primary" id="selected-stock">None</span>
       </div>
 
-      <div class="card">
-        <div class="card-inner">
-          <p>PRICE CHANGE</p>
-          <div class="icon icon-shape background-red text-primary">
-            <span class="material-icons-outlined">notification_important</span>
+      <div class="card bg-gradient-to-br from-red-600 to-red-700 border-red-500">
+        <div class="card-body">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-red-100 text-sm font-medium uppercase tracking-wide">PRICE CHANGE</p>
+              <p class="text-3xl font-bold text-white mt-2" id="price-change">$0.00</p>
+            </div>
+            <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+              <span class="material-icons-outlined text-white text-xl">notification_important</span>
+            </div>
           </div>
         </div>
-        <span class="text-primary" id="price-change">$0.00</span>
       </div>
-
     </div>
 
     <!-- Selected Stock Information -->
-    <div class="stock-info-section" id="stock-info-section" style="display: none;">
-      <div class="stock-info-card">
-        <div class="stock-header">
-          <div class="stock-symbol" id="stock-symbol-display">-</div>
-          <div class="stock-company" id="stock-company-display">-</div>
-        </div>
-        <div class="stock-price-info">
-          <div class="current-price" id="current-price-display">$0.00</div>
-          <div class="price-change" id="price-change-display">$0.00 (0.00%)</div>
-        </div>
-        <div class="stock-details">
-          <div class="detail-item">
-            <span class="detail-label">High:</span>
-            <span class="detail-value" id="stock-high">$0.00</span>
+    <div class="stock-info-section hidden" id="stock-info-section">
+      <div class="card bg-slate-800 border-slate-700">
+        <div class="card-body">
+          <div class="flex justify-between items-center mb-6 pb-6 border-b border-slate-600">
+            <div>
+              <h3 class="text-3xl font-bold text-white" id="stock-symbol-display">-</h3>
+              <p class="text-slate-400 text-lg" id="stock-company-display">-</p>
+            </div>
+            <div class="text-right">
+              <div class="text-4xl font-bold text-white" id="current-price-display">$0.00</div>
+              <div class="text-xl font-semibold" id="price-change-display">$0.00 (0.00%)</div>
+            </div>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Low:</span>
-            <span class="detail-value" id="stock-low">$0.00</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Open:</span>
-            <span class="detail-value" id="stock-open">$0.00</span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Previous Close:</span>
-            <span class="detail-value" id="stock-prev-close">$0.00</span>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-slate-700 rounded-lg p-4">
+              <div class="text-slate-400 text-sm font-medium uppercase tracking-wide">High</div>
+              <div class="text-white text-lg font-bold" id="stock-high">$0.00</div>
+            </div>
+            <div class="bg-slate-700 rounded-lg p-4">
+              <div class="text-slate-400 text-sm font-medium uppercase tracking-wide">Low</div>
+              <div class="text-white text-lg font-bold" id="stock-low">$0.00</div>
+            </div>
+            <div class="bg-slate-700 rounded-lg p-4">
+              <div class="text-slate-400 text-sm font-medium uppercase tracking-wide">Open</div>
+              <div class="text-white text-lg font-bold" id="stock-open">$0.00</div>
+            </div>
+            <div class="bg-slate-700 rounded-lg p-4">
+              <div class="text-slate-400 text-sm font-medium uppercase tracking-wide">Previous Close</div>
+              <div class="text-white text-lg font-bold" id="stock-prev-close">$0.00</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Watchlist Section -->
-    <div class="watchlist-section">
-      <div class="watchlist-header">
-        <h2 class="watchlist-title">
-          <span class="material-icons-outlined">star</span>
-          My Watchlist
-        </h2>
-        <div class="watchlist-actions">
-          <button id="clear-watchlist-btn" class="clear-btn" title="Clear all stocks">
+    <div class="card bg-slate-800 border-slate-700">
+      <div class="card-header">
+        <div class="flex justify-between items-center">
+          <h2 class="card-title flex items-center space-x-2">
+            <span class="material-icons-outlined text-yellow-400">star</span>
+            <span>My Watchlist</span>
+          </h2>
+          <button id="clear-watchlist-btn" class="btn bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center space-x-2 transition-colors" title="Clear all stocks">
             <span class="material-icons-outlined">clear_all</span>
+            <span>Clear All</span>
           </button>
         </div>
       </div>
-      <div class="watchlist-container" id="watchlist-container">
-        <div class="watchlist-empty" id="watchlist-empty">
-          <span class="material-icons-outlined">star_border</span>
-          <p>No stocks in watchlist</p>
-          <small>Search and add stocks to your watchlist</small>
-        </div>
-        <div class="watchlist-grid" id="watchlist-grid" style="display: none;">
-          <!-- Watchlist items will be populated here -->
+      <div class="card-body">
+        <div id="watchlist-container">
+          <div class="watchlist-empty text-center py-12" id="watchlist-empty">
+            <span class="material-icons-outlined text-6xl text-slate-500 mb-4">star_border</span>
+            <p class="text-xl font-semibold text-white mb-2">No stocks in watchlist</p>
+            <p class="text-slate-400">Search and add stocks to your watchlist</p>
+          </div>
+          <div class="watchlist-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden" id="watchlist-grid">
+            <!-- Watchlist items will be populated here -->
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="charts">
-
-      <div class="charts-card">
-        <p class="chart-title">Portfolio Performance</p>
-        <div id="bar-chart"></div>
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card bg-slate-800 border-slate-700">
+        <div class="card-header">
+          <h3 class="card-title text-center">Portfolio Performance</h3>
+        </div>
+        <div class="card-body">
+          <div id="bar-chart"></div>
+        </div>
       </div>
 
-      <div class="charts-card">
-        <p class="chart-title">Stock Analysis Trends - <span id="chart-stock-symbol">Select a stock to view trends</span></p>
-        <div id="area-chart"></div>
+      <div class="card bg-slate-800 border-slate-700">
+        <div class="card-header">
+          <h3 class="card-title text-center">
+            Stock Analysis Trends - <span class="text-blue-400" id="chart-stock-symbol">Select a stock to view trends</span>
+          </h3>
+        </div>
+        <div class="card-body">
+          <div id="area-chart"></div>
+        </div>
       </div>
-
     </div>
   </main>
   <!-- End Main -->
