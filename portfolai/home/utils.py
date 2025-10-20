@@ -11,6 +11,11 @@ from decouple import config
 FINNHUB_API_KEY = config('FINNHUB_API_KEY', default='')
 FINNHUB_BASE_URL = 'https://finnhub.io/api/v1'
 
+# Debug logging for API key
+print(f"DEBUG: FINNHUB_API_KEY loaded: {'YES' if FINNHUB_API_KEY else 'NO'}")
+if not FINNHUB_API_KEY:
+    print("WARNING: FINNHUB_API_KEY is empty or not set!")
+
 def get_stock_quote(symbol):
     """
     Get real-time stock quote from Finnhub API
