@@ -104,175 +104,410 @@
 
   <!-- Main Content Grid -->
   <div class="p-6">
-    <!-- Top Row: 3 Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-      <!-- Watchlist Card (Left) -->
-      <div class="card">
-        <header>
-          <h2 class="card-title flex items-center space-x-2">
-            <span class="material-icons-outlined text-yellow-400">star</span>
-            <span>Watchlist</span>
-          </h2>
-        </header>
-        <section class="h-64 overflow-y-auto">
-          <div id="watchlist-container">
-            <div class="watchlist-empty text-center py-8" id="watchlist-empty">
-              <span class="material-icons-outlined text-4xl text-slate-500 mb-2">star_border</span>
-              <p class="text-sm text-slate-400">No stocks in watchlist</p>
+    <!-- Portfolio Cards Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <!-- AAPL Card -->
+      <div class="card bg-gradient-to-br from-blue-600 to-blue-700">
+        <section class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <span class="text-2xl font-bold text-white">A</span>
             </div>
-            <div class="watchlist-grid space-y-3 hidden" id="watchlist-grid">
-              <!-- Watchlist items will be populated here -->
+            <span class="text-green-400 text-sm font-semibold">+11.01%</span>
+          </div>
+          <h3 class="text-white font-semibold text-lg mb-1">AAPL</h3>
+          <p class="text-white/80 text-sm mb-2">Apple, Inc</p>
+          <p class="text-white text-2xl font-bold">$1,232.00</p>
+        </section>
+      </div>
+
+      <!-- PYPL Card -->
+      <div class="card bg-gradient-to-br from-purple-600 to-purple-700">
+        <section class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <span class="text-2xl font-bold text-white">P</span>
+            </div>
+            <span class="text-green-400 text-sm font-semibold">+9.05%</span>
+          </div>
+          <h3 class="text-white font-semibold text-lg mb-1">PYPL</h3>
+          <p class="text-white/80 text-sm mb-2">Paypal, Inc</p>
+          <p class="text-white text-2xl font-bold">$965.00</p>
+        </section>
+      </div>
+
+      <!-- TSLA Card -->
+      <div class="card bg-gradient-to-br from-red-600 to-red-700">
+        <section class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <span class="text-2xl font-bold text-white">T</span>
+            </div>
+            <span class="text-green-400 text-sm font-semibold">+11.01%</span>
+          </div>
+          <h3 class="text-white font-semibold text-lg mb-1">TSLA</h3>
+          <p class="text-white/80 text-sm mb-2">Tesla, Inc</p>
+          <p class="text-white text-2xl font-bold">$1,232.00</p>
+        </section>
+      </div>
+
+      <!-- AMZN Card -->
+      <div class="card bg-gradient-to-br from-orange-600 to-orange-700">
+        <section class="p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <span class="text-2xl font-bold text-white">A</span>
+            </div>
+            <span class="text-green-400 text-sm font-semibold">+11.01%</span>
+          </div>
+          <h3 class="text-white font-semibold text-lg mb-1">AMZN</h3>
+          <p class="text-white/80 text-sm mb-2">Amazon.com, Inc</p>
+          <p class="text-white text-2xl font-bold">$2,567.99</p>
+        </section>
+      </div>
+    </div>
+
+    <!-- Portfolio Performance Chart -->
+    <div class="card mb-6">
+      <header class="p-6 border-b border-slate-600">
+        <div class="flex items-center justify-between">
+          <h2 class="card-title text-xl font-semibold text-white">Portfolio Performance</h2>
+          <div class="flex space-x-2">
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium">Monthly</button>
+            <button class="px-4 py-2 bg-slate-700 text-slate-300 rounded-md text-sm font-medium hover:bg-slate-600">Quarterly</button>
+            <button class="px-4 py-2 bg-slate-700 text-slate-300 rounded-md text-sm font-medium hover:bg-slate-600">Annually</button>
+          </div>
+        </div>
+        <p class="text-slate-400 text-sm mt-2">Here is your performance stats of each month</p>
+      </header>
+      <section class="p-6">
+        <div id="bar-chart" class="h-80"></div>
+      </section>
+    </div>
+
+    <!-- Middle Section: 3 Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <!-- Trending Stocks -->
+      <div class="card">
+        <header class="p-6 border-b border-slate-600">
+          <h2 class="card-title text-lg font-semibold text-white">Trending Stocks</h2>
+        </header>
+        <section class="p-6">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-slate-700 rounded-lg">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
+                  <span class="text-white font-bold text-sm">T</span>
+                </div>
+                <div>
+                  <h4 class="text-white font-semibold">TSLA</h4>
+                  <p class="text-slate-400 text-sm">Tesla, Inc</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-white font-semibold">$192.53</p>
+                <p class="text-green-400 text-sm">+1.01%</p>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+              <button class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700">Short Stock</button>
+              <button class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700">Buy Stock</button>
+            </div>
+            
+            <div class="flex items-center justify-between p-4 bg-slate-700 rounded-lg">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <span class="text-white font-bold text-sm">A</span>
+                </div>
+                <div>
+                  <h4 class="text-white font-semibold">AAPL</h4>
+                  <p class="text-slate-400 text-sm">Apple, Inc</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-white font-semibold">$192.53</p>
+                <p class="text-green-400 text-sm">+3.59%</p>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+              <button class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700">Short Stock</button>
+              <button class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700">Buy Stock</button>
+            </div>
+
+            <div class="flex items-center justify-between p-4 bg-slate-700 rounded-lg">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <span class="text-white font-bold text-sm">S</span>
+                </div>
+                <div>
+                  <h4 class="text-white font-semibold">SPOT</h4>
+                  <p class="text-slate-400 text-sm">Spotify, Inc</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-white font-semibold">$192.53</p>
+                <p class="text-green-400 text-sm">+1.01%</p>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+              <button class="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-red-700">Short Stock</button>
+              <button class="flex-1 bg-green-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-green-700">Buy Stock</button>
             </div>
           </div>
         </section>
       </div>
 
-      <!-- Portfolio Chart Card (Center) -->
+      <!-- Dividend -->
       <div class="card">
-        <header>
-          <h2 class="card-title flex items-center space-x-2">
-            <span class="material-icons-outlined text-green-400">show_chart</span>
-            <span>Portfolio Performance</span>
-          </h2>
+        <header class="p-6 border-b border-slate-600">
+          <div class="flex items-center justify-between">
+            <h2 class="card-title text-lg font-semibold text-white">Dividend</h2>
+            <div class="flex space-x-2">
+              <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
+              <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
+            </div>
+          </div>
         </header>
-        <section class="h-64">
-          <div id="bar-chart" class="h-full"></div>
+        <section class="p-6">
+          <div class="text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span class="material-icons-outlined text-green-600 text-3xl">trending_up</span>
+            </div>
+            <h3 class="text-white text-xl font-semibold mb-2">$2,450.00</h3>
+            <p class="text-slate-400 text-sm">Total Dividend</p>
+            <div class="mt-4 space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">This Month</span>
+                <span class="text-white">$245.00</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-slate-400">Last Month</span>
+                <span class="text-white">$198.50</span>
+              </div>
+            </div>
+          </div>
         </section>
       </div>
 
-      <!-- Top 5 Trends Card (Right) -->
+      <!-- My Watchlist -->
       <div class="card">
-        <header>
-          <h2 class="card-title flex items-center space-x-2">
-            <span class="material-icons-outlined text-purple-400">trending_up</span>
-            <span>Top 5 Trends</span>
-          </h2>
+        <header class="p-6 border-b border-slate-600">
+          <div class="flex items-center justify-between">
+            <h2 class="card-title text-lg font-semibold text-white">My Watchlist</h2>
+            <div class="flex space-x-2">
+              <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
+              <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
+            </div>
+          </div>
         </header>
-        <section class="h-64 overflow-y-auto">
-          <div class="space-y-2">
-            <div class="flex justify-between items-center py-2 border-b border-slate-600">
-              <span class="font-semibold text-sm">AAPL</span>
-              <span class="text-sm">$252.29</span>
-              <span class="text-green-400 text-xs">+1.96%</span>
+        <section class="p-6">
+          <div id="watchlist-container">
+            <div class="watchlist-empty text-center py-8 hidden" id="watchlist-empty">
+              <span class="material-icons-outlined text-4xl text-slate-500 mb-2">star_border</span>
+              <p class="text-sm text-slate-400">No stocks in watchlist</p>
             </div>
-            <div class="flex justify-between items-center py-2 border-b border-slate-600">
-              <span class="font-semibold text-sm">GOOGL</span>
-              <span class="text-sm">$253.30</span>
-              <span class="text-green-400 text-xs">+0.57%</span>
-            </div>
-            <div class="flex justify-between items-center py-2 border-b border-slate-600">
-              <span class="font-semibold text-sm">MSFT</span>
-              <span class="text-sm">$415.26</span>
-              <span class="text-red-400 text-xs">-0.51%</span>
-            </div>
-            <div class="flex justify-between items-center py-2 border-b border-slate-600">
-              <span class="font-semibold text-sm">TSLA</span>
-              <span class="text-sm">$248.50</span>
-              <span class="text-green-400 text-xs">+2.14%</span>
-            </div>
-            <div class="flex justify-between items-center py-2">
-              <span class="font-semibold text-sm">AMZN</span>
-              <span class="text-sm">$3,456.78</span>
-              <span class="text-green-400 text-xs">+0.36%</span>
+            <div class="space-y-3" id="watchlist-grid">
+              <div class="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-xs">A</span>
+                  </div>
+                  <div>
+                    <h4 class="text-white font-semibold text-sm">AAPL</h4>
+                    <p class="text-slate-400 text-xs">Apple, Inc</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-white font-semibold text-sm">$4,008.65</p>
+                  <p class="text-green-400 text-xs">+11.01%</p>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-xs">S</span>
+                  </div>
+                  <div>
+                    <h4 class="text-white font-semibold text-sm">SPOT</h4>
+                    <p class="text-slate-400 text-xs">Spotify.com</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-white font-semibold text-sm">$11,689.00</p>
+                  <p class="text-green-400 text-xs">+9.48%</p>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
+                <div class="flex items-center space-x-3">
+                  <div class="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center">
+                    <span class="text-white font-bold text-xs">A</span>
+                  </div>
+                  <div>
+                    <h4 class="text-white font-semibold text-sm">ABNB</h4>
+                    <p class="text-slate-400 text-xs">Airbnb, Inc</p>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-white font-semibold text-sm">$32,227.00</p>
+                  <p class="text-green-400 text-xs">+0.29%</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
       </div>
     </div>
 
-    <!-- Bottom Row: 2 Cards -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- News Card (Left, 1 column) -->
-      <div class="card">
-        <header>
-          <h2 class="card-title flex items-center space-x-2">
-            <span class="material-icons-outlined text-blue-400">newspaper</span>
-            <span>News</span>
-          </h2>
-        </header>
-        <section class="h-64 overflow-y-auto">
-          <div class="space-y-4">
-            <div class="border-b border-slate-600 pb-3">
-              <h4 class="text-sm font-semibold text-white mb-1">Market Rally Continues</h4>
-              <p class="text-xs text-slate-400">Stocks surge on positive earnings reports...</p>
-            </div>
-            <div class="border-b border-slate-600 pb-3">
-              <h4 class="text-sm font-semibold text-white mb-1">Tech Stocks Lead Gains</h4>
-              <p class="text-xs text-slate-400">Major tech companies report strong Q4 results...</p>
-            </div>
-            <div class="border-b border-slate-600 pb-3">
-              <h4 class="text-sm font-semibold text-white mb-1">Fed Signals Rate Stability</h4>
-              <p class="text-xs text-slate-400">Federal Reserve maintains current interest rates...</p>
-            </div>
-            <div class="border-b border-slate-600 pb-3">
-              <h4 class="text-sm font-semibold text-white mb-1">Energy Sector Recovery</h4>
-              <p class="text-xs text-slate-400">Oil prices stabilize after recent volatility...</p>
-            </div>
+    <!-- Latest Transactions Table -->
+    <div class="card">
+      <header class="p-6 border-b border-slate-600">
+        <h2 class="card-title text-lg font-semibold text-white">Latest Transactions</h2>
+      </header>
+      <section class="p-6">
+        <div class="overflow-x-auto">
+          <table class="table w-full">
+            <thead>
+              <tr class="border-b border-slate-600">
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-300">Name</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-300">Date</th>
+                <th class="text-right py-3 px-4 text-sm font-semibold text-slate-300">Price</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-300">Category</th>
+                <th class="text-left py-3 px-4 text-sm font-semibold text-slate-300">Status</th>
+                <th class="text-center py-3 px-4 text-sm font-semibold text-slate-300">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-slate-700 hover:bg-slate-700/50">
+                <td class="py-3 px-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                      <span class="text-white font-bold text-xs">P</span>
+                    </div>
+                    <span class="text-white font-medium">Bought PYPL</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-slate-300">Nov 23, 01:00 PM</td>
+                <td class="py-3 px-4 text-right text-white">$2,567.88</td>
+                <td class="py-3 px-4 text-slate-300">Finance</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-1 bg-green-900 text-green-400 rounded-full text-xs">Success</span>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <div class="flex space-x-2 justify-center">
+                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
+                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr class="border-b border-slate-700 hover:bg-slate-700/50">
+                <td class="py-3 px-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                      <span class="text-white font-bold text-xs">A</span>
+                    </div>
+                    <span class="text-white font-medium">Bought AAPL</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-slate-300">Nov 22, 09:00 PM</td>
+                <td class="py-3 px-4 text-right text-white">$2,567.88</td>
+                <td class="py-3 px-4 text-slate-300">Technology</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-1 bg-yellow-900 text-yellow-400 rounded-full text-xs">Pending</span>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <div class="flex space-x-2 justify-center">
+                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
+                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr class="border-b border-slate-700 hover:bg-slate-700/50">
+                <td class="py-3 px-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <span class="text-white font-bold text-xs">K</span>
+                    </div>
+                    <span class="text-white font-medium">Sell KKST</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-slate-300">Oct 12, 03:54 PM</td>
+                <td class="py-3 px-4 text-right text-white">$6,754.99</td>
+                <td class="py-3 px-4 text-slate-300">Finance</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-1 bg-green-900 text-green-400 rounded-full text-xs">Success</span>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <div class="flex space-x-2 justify-center">
+                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
+                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr class="border-b border-slate-700 hover:bg-slate-700/50">
+                <td class="py-3 px-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <span class="text-white font-bold text-xs">F</span>
+                    </div>
+                    <span class="text-white font-medium">Bought FB</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-slate-300">Sep 09, 02:00 AM</td>
+                <td class="py-3 px-4 text-right text-white">$1,445.41</td>
+                <td class="py-3 px-4 text-slate-300">Social Media</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-1 bg-green-900 text-green-400 rounded-full text-xs">Success</span>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <div class="flex space-x-2 justify-center">
+                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
+                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
+                  </div>
+                </td>
+              </tr>
+              <tr class="hover:bg-slate-700/50">
+                <td class="py-3 px-4">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                      <span class="text-white font-bold text-xs">A</span>
+                    </div>
+                    <span class="text-white font-medium">Sell AMZN</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-slate-300">Feb 35, 08:00 PM</td>
+                <td class="py-3 px-4 text-right text-white">$5,698.55</td>
+                <td class="py-3 px-4 text-slate-300">E-commerce</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-1 bg-red-900 text-red-400 rounded-full text-xs">Failed</span>
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <div class="flex space-x-2 justify-center">
+                    <button class="text-blue-400 text-sm hover:text-blue-300">View More</button>
+                    <button class="text-red-400 text-sm hover:text-red-300">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-6">
+          <p class="text-slate-400 text-sm">Previous Page 1 of 10</p>
+          <div class="flex space-x-2">
+            <button class="px-3 py-2 bg-blue-600 text-white rounded-md text-sm">1</button>
+            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">2</button>
+            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">3</button>
+            <span class="px-3 py-2 text-slate-400 text-sm">...</span>
+            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">8</button>
+            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">9</button>
+            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">10</button>
+            <button class="px-3 py-2 bg-slate-700 text-slate-300 rounded-md text-sm hover:bg-slate-600">Next</button>
           </div>
-        </section>
-      </div>
-
-      <!-- Stock Analysis Card (Right, 2 columns) -->
-      <div class="lg:col-span-2 card">
-        <header>
-          <h2 class="card-title flex items-center space-x-2">
-            <span class="material-icons-outlined text-orange-400">analytics</span>
-            <span>Stock Analysis</span>
-          </h2>
-        </header>
-        <section class="h-64">
-          <div class="overflow-x-auto">
-            <table class="table w-full">
-              <thead>
-                <tr>
-                  <th class="text-left">Symbol</th>
-                  <th class="text-right">Price</th>
-                  <th class="text-right">Change</th>
-                  <th class="text-right">Volume</th>
-                  <th class="text-right">Market Cap</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="font-semibold">AAPL</td>
-                  <td class="text-right">$252.29</td>
-                  <td class="text-right text-green-400">+$4.84 (+1.96%)</td>
-                  <td class="text-right text-slate-300">45.2M</td>
-                  <td class="text-right text-slate-300">$3.89T</td>
-                </tr>
-                <tr>
-                  <td class="font-semibold">GOOGL</td>
-                  <td class="text-right">$253.30</td>
-                  <td class="text-right text-green-400">+$1.43 (+0.57%)</td>
-                  <td class="text-right text-slate-300">28.7M</td>
-                  <td class="text-right text-slate-300">$1.67T</td>
-                </tr>
-                <tr>
-                  <td class="font-semibold">MSFT</td>
-                  <td class="text-right">$415.26</td>
-                  <td class="text-right text-red-400">-$2.15 (-0.51%)</td>
-                  <td class="text-right text-slate-300">22.1M</td>
-                  <td class="text-right text-slate-300">$3.09T</td>
-                </tr>
-                <tr>
-                  <td class="font-semibold">TSLA</td>
-                  <td class="text-right">$248.50</td>
-                  <td class="text-right text-green-400">+$5.20 (+2.14%)</td>
-                  <td class="text-right text-slate-300">67.8M</td>
-                  <td class="text-right text-slate-300">$789.2B</td>
-                </tr>
-                <tr>
-                  <td class="font-semibold">AMZN</td>
-                  <td class="text-right">$3,456.78</td>
-                  <td class="text-right text-green-400">+$12.34 (+0.36%)</td>
-                  <td class="text-right text-slate-300">3.2M</td>
-                  <td class="text-right text-slate-300">$1.81T</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
 
   </div>
