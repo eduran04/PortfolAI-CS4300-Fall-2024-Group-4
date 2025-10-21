@@ -2,7 +2,12 @@
 
 Django-based web application for stock analysis and portfolio management with real-time market data.
 
-**Repository:** https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4
+[![CI Pipeline](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ci.yml/badge.svg)](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ci.yml)
+[![AI Code Review](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ai-code-review.yml/badge.svg)](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ai-code-review.yml)
+[![Deployed on Render](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?logo=render)](https://portfolai.onrender.com)
+
+**Repository:** https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4  
+**Live Demo:** https://portfolai.onrender.com
 
 ## Setup Guide
 
@@ -58,10 +63,26 @@ Visit ➜ http://localhost:3000/
 
 8. Running Tests
 
-To run all tests:
+To run all tests with coverage:
 
+```bash
+cd portfolai
+pytest -v --cov=core --cov-report=term-missing
 ```
-pytest -v
+
+To run tests with HTML coverage report:
+
+```bash
+cd portfolai
+pytest --cov=core --cov-report=html
+open htmlcov/index.html
+```
+
+To check coverage threshold (must be 80%+):
+
+```bash
+cd portfolai
+coverage report --fail-under=80
 ```
 
 ## Project Structure

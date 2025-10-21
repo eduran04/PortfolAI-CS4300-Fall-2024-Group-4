@@ -190,3 +190,149 @@ class APITests(TestCase):
         self.assertEqual(response.status_code, 400)
         data = response.json()
         self.assertIn('error', data)
+
+    def test_portfolai_analysis_fallback(self):
+        """Test PortfolAI analysis with fallback when OpenAI is not available"""
+        url = reverse('portfolai_analysis')
+        response = self.client.get(url, {'symbol': 'AAPL'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('symbol', data)
+        self.assertIn('analysis', data)
+        self.assertEqual(data['symbol'], 'AAPL')
+        self.assertTrue(data.get('fallback', False))
+
+    def test_get_stock_data_fallback(self):
+        """Test stock data with fallback when API is not available"""
+        with patch('core.views.settings.FINNHUB_API_KEY', None):
+            url = reverse('get_stock_data')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
+            self.assertIn('fallback', data)
+            self.assertTrue(data['fallback'])
+
+    def test_get_market_movers_fallback(self):
+        """Test market movers with fallback when API is not available"""
+        with patch('core.views.settings.FINNHUB_API_KEY', None):
+            url = reverse('get_market_movers')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('gainers', data)
+            self.assertIn('losers', data)
+            self.assertTrue(data.get('fallback', False))
+
+    def test_get_news_fallback(self):
+        """Test news with fallback when API is not available"""
+        with patch('core.views.settings.NEWS_API_KEY', None):
+            url = reverse('get_news')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('articles', data)
+            self.assertTrue(data.get('fallback', False))
+
+    def test_dashboard_view(self):
+        """Test dashboard view renders correctly"""
+        url = reverse('dashboard')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'PortfolAI')
+
+    def test_get_stock_data_invalid_symbol(self):
+        """Test stock data with invalid symbol"""
+        url = reverse('get_stock_data')
+        response = self.client.get(url, {'symbol': 'INVALID123'})
+        
+        # Should return 404 or 500 depending on API response
+        self.assertIn(response.status_code, [404, 500])
+
+    def test_get_stock_data_empty_response(self):
+        """Test stock data with empty API response"""
+        with patch('core.views.finnhub_client') as mock_finnhub:
+            mock_finnhub.quote.return_value = None
+            
+            url = reverse('get_stock_data')
+            response = self.client.get(url, {'symbol': 'TEST'})
+            
+            self.assertEqual(response.status_code, 500)
+
+    def test_get_market_movers_api_error(self):
+        """Test market movers with API error"""
+        with patch('core.views.finnhub_client') as mock_finnhub:
+            mock_finnhub.quote.side_effect = Exception("API Error")
+            
+            url = reverse('get_market_movers')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertTrue(data.get('fallback', False))
+
+    def test_get_news_empty_response(self):
+        """Test news with empty API response"""
+        with patch('core.views.newsapi') as mock_newsapi:
+            mock_newsapi.get_top_headlines.return_value = None
+            
+            url = reverse('get_news')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertTrue(data.get('fallback', False))
+
+    def test_portfolai_analysis_api_error(self):
+        """Test PortfolAI analysis with API error"""
+        with patch('core.views.openai_client') as mock_openai:
+            mock_openai.chat.completions.create.side_effect = Exception("OpenAI Error")
+            
+            url = reverse('portfolai_analysis')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 500)
+            data = response.json()
+            self.assertIn('error', data)
+
+    def test_stock_summary_endpoint(self):
+        """Test stock summary endpoint"""
+        with patch('core.views.finnhub_client') as mock_finnhub, \
+             patch('core.views.openai_client') as mock_openai:
+            
+            mock_finnhub.quote.return_value = self.mock_finnhub_quote
+            mock_finnhub.company_profile2.return_value = self.mock_finnhub_company
+            
+            mock_response = type('MockResponse', (), {
+                'choices': [type('MockChoice', (), {
+                    'message': type('MockMessage', (), {
+                        'content': 'Test analysis'
+                    })()
+                })()]
+            })()
+            mock_openai.chat.completions.create.return_value = mock_response
+            
+            url = reverse('stock_summary')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
+            self.assertIn('analysis', data)
+
+    def test_stock_summary_api_error(self):
+        """Test stock summary with API error"""
+        with patch('core.views.finnhub_client') as mock_finnhub:
+            mock_finnhub.quote.side_effect = Exception("API Error")
+            
+            url = reverse('stock_summary')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 500)
+            data = response.json()
+            self.assertIn('error', data)
