@@ -1050,3 +1050,92 @@ class APITests(TestCase):
                 self.assertIn('losers', data)
                 self.assertIsInstance(data['gainers'], list)
                 self.assertIsInstance(data['losers'], list)
+
+    def test_get_market_movers_exception_fallback(self):
+        """Test market movers exception handling with fallback data"""
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.finnhub_client') as mock_finnhub:
+                # Mock to trigger the exception handler
+                mock_finnhub.quote.side_effect = Exception("Market data error")
+                
+                url = reverse('get_market_movers')
+                response = self.client.get(url)
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('gainers', data)
+                self.assertIn('losers', data)
+                self.assertTrue(data.get('fallback', False))
+
+    def test_get_news_with_symbol_specific_news(self):
+        """Test news with symbol-specific news using get_everything"""
+        with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
+            with patch('core.views.newsapi') as mock_newsapi:
+                # Mock successful get_everything call
+                mock_articles = {
+                    'articles': [
+                        {'title': 'AAPL News', 'url': 'http://example.com', 'publishedAt': '2024-01-01T10:00:00Z', 'source': {'name': 'Test Source'}, 'description': 'Test description'}
+                    ]
+                }
+                mock_newsapi.get_everything.return_value = mock_articles
+                
+                url = reverse('get_news')
+                response = self.client.get(url, {'symbol': 'AAPL'})
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('articles', data)
+                self.assertEqual(len(data['articles']), 1)
+
+    def test_get_news_with_symbol_news_fallback(self):
+        """Test news with symbol when get_everything fails, falls back to headlines"""
+        with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
+            with patch('core.views.newsapi') as mock_newsapi:
+                # Mock get_everything to fail, headlines to succeed
+                mock_newsapi.get_everything.side_effect = Exception("Everything API failed")
+                mock_newsapi.get_top_headlines.return_value = {
+                    'articles': [
+                        {'title': 'Business News', 'url': 'http://example.com', 'publishedAt': '2024-01-01T10:00:00Z', 'source': {'name': 'Test Source'}, 'description': 'Test description'}
+                    ]
+                }
+                
+                url = reverse('get_news')
+                response = self.client.get(url, {'symbol': 'AAPL'})
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('articles', data)
+                self.assertEqual(len(data['articles']), 1)
+
+    def test_portfolai_analysis_with_successful_apis(self):
+        """Test PortfolAI analysis with successful API calls"""
+        with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
+            with patch('core.views.finnhub_client') as mock_finnhub:
+                with patch('core.views.newsapi') as mock_newsapi:
+                    with patch('core.views.openai_client') as mock_openai:
+                        # Mock successful API responses
+                        mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0}
+                        mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.'}
+                        mock_newsapi.get_everything.return_value = {
+                            'articles': [
+                                {'title': 'AAPL News', 'url': 'http://example.com', 'publishedAt': '2024-01-01T10:00:00Z', 'source': {'name': 'Test Source'}, 'description': 'Test description'}
+                            ]
+                        }
+                        
+                        # Mock OpenAI response
+                        mock_response = type('obj', (object,), {
+                            'choices': [type('obj', (object,), {
+                                'message': type('obj', (object,), {
+                                    'content': 'Test AI analysis'
+                                })
+                            })]
+                        })
+                        mock_openai.chat.completions.create.return_value = mock_response
+                        
+                        url = reverse('portfolai_analysis')
+                        response = self.client.get(url, {'symbol': 'AAPL'})
+                        
+                        self.assertEqual(response.status_code, 200)
+                        data = response.json()
+                        self.assertIn('symbol', data)
+                        self.assertIn('analysis', data)
