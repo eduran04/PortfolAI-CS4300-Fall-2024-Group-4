@@ -22,8 +22,37 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="{% static 'landing/tailwind-build.css' %}">
     <link rel="stylesheet" href="{% static 'landing/saasy-custom.css' %}" />
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+    
+    <!-- Fallback styles for Render deployment -->
+    <style>
+        .carousel-container {
+            overflow: hidden;
+            width: 100%;
+        }
+        .carousel {
+            display: flex;
+            animation: scroll 20s linear infinite;
+        }
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .carousel-img {
+            flex-shrink: 0;
+            margin-right: 1rem;
+        }
+        .reveal-up {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #7e22ce, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
 </head>
 <body class="tw-flex tw-min-h-[100vh] tw-flex-col tw-bg-black tw-text-white">
     
@@ -115,17 +144,36 @@
             </div>
         </section>
 
-        <!-- Brand Logos Section - Hidden for now -->
-        <!-- 
-        <section class="tw-relative tw-flex tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-8">
-            <h2 class="reveal-up tw-text-3xl max-md:tw-text-xl">Trusted by investors worldwide</h2>
+        <section
+            class="tw-relative tw-flex tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-8"
+        >
+            <h2 class="reveal-up tw-text-3xl max-md:tw-text-xl">
+                Track Your Investment Portfolio
+            </h2>
+
             <div class="reveal-up carousel-container">
-                <div class="carousel lg:w-place-content-center tw-mt-6 tw-flex tw-w-full tw-gap-5 max-md:tw-gap-2">
-                    <!-- Brand logos will be added here later -->
+                <div
+                    class="carousel lg:w-place-content-center tw-mt-6 tw-flex tw-w-full tw-gap-5 max-md:tw-gap-2"
+                >
+                    <!-- Stock tracking capabilities -->
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-indigo-600 tw-rounded">
+                        <span class="tw-text-white tw-text-sm tw-font-medium">Real-Time Data</span>
+                    </div>
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-purple-600 tw-rounded">
+                        <span class="tw-text-white tw-text-sm tw-font-medium">AI Analysis</span>
+                    </div>
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-blue-600 tw-rounded">
+                        <span class="tw-text-white tw-text-sm tw-font-medium">Market Trends</span>
+                    </div>
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-green-600 tw-rounded">
+                        <span class="tw-text-white tw-text-sm tw-font-medium">Portfolio Insights</span>
+                    </div>
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-red-600 tw-rounded">
+                        <span class="tw-text-white tw-text-sm tw-font-medium">Risk Assessment</span>
+                    </div>
                 </div>
             </div>
         </section>
-        -->
 
         <section
             id="key-benefits"
