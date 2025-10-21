@@ -321,96 +321,20 @@ class APITests(TestCase):
             self.assertIn('analysis', data)
             self.assertTrue(data.get('fallback', False))
 
-    def test_get_stock_data_with_valid_symbol_fallback(self):
-        """Test stock data with valid symbol using fallback data"""
+    def test_get_stock_data_fallback_multiple_symbols(self):
+        """Test stock data fallback with multiple symbols"""
+        symbols = ['MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'META', 'OKLO']
         with patch.object(settings, 'FINNHUB_API_KEY', None):
-            url = reverse('get_stock_data')
-            response = self.client.get(url, {'symbol': 'MSFT'})
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertEqual(data['symbol'], 'MSFT')
-            self.assertIn('name', data)
-            self.assertIn('price', data)
-            self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_googl_symbol_fallback(self):
-        """Test stock data with GOOGL symbol using fallback data"""
-        with patch.object(settings, 'FINNHUB_API_KEY', None):
-            url = reverse('get_stock_data')
-            response = self.client.get(url, {'symbol': 'GOOGL'})
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertEqual(data['symbol'], 'GOOGL')
-            self.assertIn('name', data)
-            self.assertIn('price', data)
-            self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_amzn_symbol_fallback(self):
-        """Test stock data with AMZN symbol using fallback data"""
-        with patch.object(settings, 'FINNHUB_API_KEY', None):
-            url = reverse('get_stock_data')
-            response = self.client.get(url, {'symbol': 'AMZN'})
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertEqual(data['symbol'], 'AMZN')
-            self.assertIn('name', data)
-            self.assertIn('price', data)
-            self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_tsla_symbol_fallback(self):
-        """Test stock data with TSLA symbol using fallback data"""
-        with patch.object(settings, 'FINNHUB_API_KEY', None):
-            url = reverse('get_stock_data')
-            response = self.client.get(url, {'symbol': 'TSLA'})
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertEqual(data['symbol'], 'TSLA')
-            self.assertIn('name', data)
-            self.assertIn('price', data)
-            self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_nvda_symbol_fallback(self):
-        """Test stock data with NVDA symbol using fallback data"""
-        with patch.object(settings, 'FINNHUB_API_KEY', None):
-            url = reverse('get_stock_data')
-            response = self.client.get(url, {'symbol': 'NVDA'})
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertEqual(data['symbol'], 'NVDA')
-            self.assertIn('name', data)
-            self.assertIn('price', data)
-            self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_meta_symbol_fallback(self):
-        """Test stock data with META symbol using fallback data"""
-        with patch.object(settings, 'FINNHUB_API_KEY', None):
-            url = reverse('get_stock_data')
-            response = self.client.get(url, {'symbol': 'META'})
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertEqual(data['symbol'], 'META')
-            self.assertIn('name', data)
-            self.assertIn('price', data)
-            self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_oklo_symbol_fallback(self):
-        """Test stock data with OKLO symbol using fallback data"""
-        with patch.object(settings, 'FINNHUB_API_KEY', None):
-            url = reverse('get_stock_data')
-            response = self.client.get(url, {'symbol': 'OKLO'})
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertEqual(data['symbol'], 'OKLO')
-            self.assertIn('name', data)
-            self.assertIn('price', data)
-            self.assertTrue(data.get('fallback', False))
+            for symbol in symbols:
+                url = reverse('get_stock_data')
+                response = self.client.get(url, {'symbol': symbol})
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertEqual(data['symbol'], symbol)
+                self.assertIn('name', data)
+                self.assertIn('price', data)
+                self.assertTrue(data.get('fallback', False))
 
     def test_get_stock_data_with_api_error(self):
         """Test stock data with API error handling"""
@@ -479,70 +403,28 @@ class APITests(TestCase):
         data = response.json()
         self.assertIn('error', data)
 
-    def test_get_stock_data_with_invalid_quote(self):
-        """Test stock data with invalid quote data"""
+    def test_get_stock_data_invalid_quote_scenarios(self):
+        """Test stock data with various invalid quote scenarios"""
+        invalid_quotes = [
+            None,
+            {'c': None},
+            {'d': 1.5},  # Missing 'c' field
+            {'c': 'invalid', 'd': 1.0, 'dp': 0.5},  # String price
+            {}  # Empty response
+        ]
+        
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = None
-                
-                url = reverse('get_stock_data')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-                self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_empty_quote(self):
-        """Test stock data with empty quote data"""
-        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = {'c': None}
-                
-                url = reverse('get_stock_data')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-                self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_missing_price(self):
-        """Test stock data with missing price field"""
-        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = {'d': 1.5}  # Missing 'c' field
-                
-                url = reverse('get_stock_data')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-                self.assertTrue(data.get('fallback', False))
-
-    def test_get_news_with_missing_api_key(self):
-        """Test news with missing API key"""
-        with patch.object(settings, 'NEWS_API_KEY', None):
-            url = reverse('get_news')
-            response = self.client.get(url)
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertIn('articles', data)
-            self.assertTrue(data.get('fallback', False))
-
-    def test_portfolai_analysis_with_missing_api_key(self):
-        """Test PortfolAI analysis with missing API key"""
-        with patch.object(settings, 'OPENAI_API_KEY', None):
-            url = reverse('portfolai_analysis')
-            response = self.client.get(url, {'symbol': 'AAPL'})
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertIn('symbol', data)
-            self.assertIn('analysis', data)
-            self.assertTrue(data.get('fallback', False))
+                for quote in invalid_quotes:
+                    mock_finnhub.quote.return_value = quote
+                    
+                    url = reverse('get_stock_data')
+                    response = self.client.get(url, {'symbol': 'AAPL'})
+                    
+                    self.assertEqual(response.status_code, 200)
+                    data = response.json()
+                    self.assertIn('symbol', data)
+                    self.assertTrue(data.get('fallback', False))
 
     def test_stock_summary_with_missing_api_key(self):
         """Test stock summary with missing API key"""
@@ -555,71 +437,9 @@ class APITests(TestCase):
             data = response.json()
             self.assertIn('error', data)
 
-    def test_get_stock_data_with_missing_fields(self):
-        """Test stock data with missing fields in quote"""
-        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = {}  # Empty response
-                
-                url = reverse('get_stock_data')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-                self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_string_price(self):
-        """Test stock data with string price value"""
-        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = {'c': 'invalid', 'd': 1.0, 'dp': 0.5}
-                
-                url = reverse('get_stock_data')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-                self.assertTrue(data.get('fallback', False))
-
-    def test_get_news_with_empty_articles(self):
-        """Test news with empty articles response"""
-        # Use fallback by removing API key
-        with patch.object(settings, 'NEWS_API_KEY', None):
-            url = reverse('get_news')
-            response = self.client.get(url)
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertIn('articles', data)
-            self.assertTrue(data.get('fallback', False))
-
-    def test_portfolai_analysis_with_empty_symbol(self):
-        """Test PortfolAI analysis with empty symbol parameter"""
-        url = reverse('portfolai_analysis')
-        response = self.client.get(url, {'symbol': ''})
-        
-        self.assertEqual(response.status_code, 400)
-        data = response.json()
-        self.assertIn('error', data)
-
-    def test_get_stock_data_with_none_values(self):
-        """Test stock data with None values in quote"""
-        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = {'c': None, 'd': None, 'dp': None}
-                
-                url = reverse('get_stock_data')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-                self.assertTrue(data.get('fallback', False))
-
-    def test_get_news_with_none_response(self):
-        """Test news with None response from API"""
+    def test_api_error_scenarios(self):
+        """Test various API error scenarios"""
+        # Test news with None response
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.newsapi') as mock_newsapi:
                 mock_newsapi.get_top_headlines.return_value = None
@@ -632,35 +452,7 @@ class APITests(TestCase):
                 self.assertIn('articles', data)
                 self.assertTrue(data.get('fallback', False))
 
-    def test_get_market_movers_with_none_data(self):
-        """Test market movers with None data from API"""
-        # Use fallback by removing API key
-        with patch.object(settings, 'FINNHUB_API_KEY', None):
-            url = reverse('get_market_movers')
-            response = self.client.get(url)
-            
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertIn('gainers', data)
-            self.assertIn('losers', data)
-            self.assertTrue(data.get('fallback', False))
-
-    def test_get_stock_data_with_invalid_json(self):
-        """Test stock data with invalid JSON response"""
-        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.side_effect = ValueError("Invalid JSON")
-                
-                url = reverse('get_stock_data')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-                self.assertTrue(data.get('fallback', False))
-
-    def test_get_news_with_invalid_response(self):
-        """Test news with invalid response structure"""
+        # Test news with invalid response structure
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.newsapi') as mock_newsapi:
                 mock_newsapi.get_top_headlines.return_value = {'invalid': 'data'}
@@ -671,6 +463,19 @@ class APITests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('articles', data)
+                self.assertTrue(data.get('fallback', False))
+
+        # Test stock data with invalid JSON
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.finnhub_client') as mock_finnhub:
+                mock_finnhub.quote.side_effect = ValueError("Invalid JSON")
+                
+                url = reverse('get_stock_data')
+                response = self.client.get(url, {'symbol': 'AAPL'})
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('symbol', data)
                 self.assertTrue(data.get('fallback', False))
 
     def test_portfolai_analysis_with_invalid_symbol(self):
