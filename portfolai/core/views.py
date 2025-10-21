@@ -77,44 +77,9 @@ def stock_summary(request):
     if not symbol:
         symbol = "AAPL"
 
-    # Check if API keys are available
+    # Check if API keys are available - return error if not
     if not settings.FINNHUB_API_KEY or not finnhub_client or not settings.OPENAI_API_KEY or not openai_client:
-        # Return fallback data when APIs are not available
-        if symbol in FALLBACK_STOCKS:
-            stock_data = FALLBACK_STOCKS[symbol]
-            fallback_summary = f"""
-**PortfolAI Stock Summary for {symbol}**
-
-**Company:** {stock_data['name']}
-**Current Price:** ${stock_data['price']:.2f}
-**Change:** ${stock_data['change']:.2f} ({stock_data['changePercent']:.2f}%)
-
-**Summary:**
-This is a demo stock summary for educational purposes. The data shown is sample data for demonstration. For real-time analysis and AI-powered insights, please configure the required API keys.
-
-**Key Metrics:**
-- Price: ${stock_data['price']:.2f}
-- Change: {stock_data['changePercent']:.2f}%
-- Market Cap: Not available (demo data)
-
-*Note: This is fallback data for demonstration purposes. Configure API keys for real-time analysis.*
-            """
-            return Response({
-                "symbol": symbol,
-                "company": {"name": stock_data['name']},
-                "quote": {
-                    "c": stock_data['price'],
-                    "pc": stock_data['price'] - stock_data['change'],
-                    "o": stock_data['price'] - stock_data['change'],
-                    "h": stock_data['price'] + abs(stock_data['change']),
-                    "l": stock_data['price'] - abs(stock_data['change']),
-                    "v": 1000000
-                },
-                "ai_summary": fallback_summary,
-                "fallback": True
-            })
-        else:
-            return Response({"error": f"No data available for symbol {symbol} (API not configured)"}, status=404)
+        return Response({"error": "API keys not configured"}, status=500)
 
     try:
         # Fetch stock quote from Finnhub
@@ -151,8 +116,9 @@ def get_stock_data(request):
     """
     symbol = request.GET.get("symbol", "").strip().upper()
     
+    # Handle whitespace-only symbols by using default AAPL
     if not symbol:
-        return Response({"error": "Symbol parameter is required"}, status=400)
+        symbol = "AAPL"
     
     # Check if API key is available, if not use fallback data
     if not settings.FINNHUB_API_KEY or not finnhub_client:
@@ -315,6 +281,20 @@ def get_market_movers(request):
             except Exception as e:
                 print(f"Warning: Could not fetch data for {symbol}: {e}")
                 continue  # Skip symbols that fail
+        
+        # If no data was collected, use fallback
+        if not market_data:
+            fallback_stocks = list(FALLBACK_STOCKS.values())
+            fallback_stocks.sort(key=lambda x: x['changePercent'], reverse=True)
+            
+            gainers = fallback_stocks[:5]
+            losers = fallback_stocks[-5:][::-1]
+            
+            return Response({
+                "gainers": gainers,
+                "losers": losers,
+                "fallback": True
+            })
         
         # Sort by change percentage
         market_data.sort(key=lambda x: x['changePercent'], reverse=True)
