@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+from unittest.mock import patch
 
 
 class APITests(TestCase):
@@ -65,3 +66,189 @@ class APITests(TestCase):
         data = response.json()
         self.assertIn('gainers', data)
         self.assertIn('losers', data)
+
+    def test_get_stock_data_with_symbol_fallback(self):
+        """Test stock data with symbol using fallback data"""
+        url = reverse('get_stock_data')
+        response = self.client.get(url, {'symbol': 'AAPL'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('symbol', data)
+        self.assertIn('name', data)
+        self.assertIn('price', data)
+
+    def test_get_news_with_symbol(self):
+        """Test news endpoint with symbol parameter"""
+        url = reverse('get_news')
+        response = self.client.get(url, {'symbol': 'AAPL'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('articles', data)
+
+    def test_portfolai_analysis_with_symbol_fallback(self):
+        """Test PortfolAI analysis with symbol using fallback"""
+        url = reverse('portfolai_analysis')
+        response = self.client.get(url, {'symbol': 'AAPL'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('symbol', data)
+        self.assertIn('analysis', data)
+
+    def test_stock_summary_endpoint(self):
+        """Test stock summary endpoint"""
+        url = reverse('stock_summary')
+        response = self.client.get(url, {'symbol': 'AAPL'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('symbol', data)
+        self.assertIn('analysis', data)
+
+    def test_stock_summary_no_symbol(self):
+        """Test stock summary without symbol"""
+        url = reverse('stock_summary')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_get_stock_data_empty_symbol(self):
+        """Test stock data with empty symbol"""
+        url = reverse('get_stock_data')
+        response = self.client.get(url, {'symbol': ''})
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_portfolai_analysis_empty_symbol(self):
+        """Test PortfolAI analysis with empty symbol"""
+        url = reverse('portfolai_analysis')
+        response = self.client.get(url, {'symbol': ''})
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_stock_summary_empty_symbol(self):
+        """Test stock summary with empty symbol"""
+        url = reverse('stock_summary')
+        response = self.client.get(url, {'symbol': ''})
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_get_stock_data_whitespace_symbol(self):
+        """Test stock data with whitespace symbol"""
+        url = reverse('get_stock_data')
+        response = self.client.get(url, {'symbol': '   '})
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_portfolai_analysis_whitespace_symbol(self):
+        """Test PortfolAI analysis with whitespace symbol"""
+        url = reverse('portfolai_analysis')
+        response = self.client.get(url, {'symbol': '   '})
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_stock_summary_whitespace_symbol(self):
+        """Test stock summary with whitespace symbol"""
+        url = reverse('stock_summary')
+        response = self.client.get(url, {'symbol': '   '})
+        
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_get_stock_data_lowercase_symbol(self):
+        """Test stock data with lowercase symbol (should be converted to uppercase)"""
+        url = reverse('get_stock_data')
+        response = self.client.get(url, {'symbol': 'aapl'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['symbol'], 'AAPL')
+
+    def test_portfolai_analysis_lowercase_symbol(self):
+        """Test PortfolAI analysis with lowercase symbol"""
+        url = reverse('portfolai_analysis')
+        response = self.client.get(url, {'symbol': 'aapl'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['symbol'], 'AAPL')
+
+    def test_stock_summary_lowercase_symbol(self):
+        """Test stock summary with lowercase symbol"""
+        url = reverse('stock_summary')
+        response = self.client.get(url, {'symbol': 'aapl'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['symbol'], 'AAPL')
+
+    def test_get_news_response_structure(self):
+        """Test news response has correct structure"""
+        url = reverse('get_news')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('articles', data)
+        self.assertIn('totalResults', data)
+        self.assertIsInstance(data['articles'], list)
+
+    def test_get_market_movers_response_structure(self):
+        """Test market movers response has correct structure"""
+        url = reverse('get_market_movers')
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('gainers', data)
+        self.assertIn('losers', data)
+        self.assertIsInstance(data['gainers'], list)
+        self.assertIsInstance(data['losers'], list)
+
+    def test_get_stock_data_response_structure(self):
+        """Test stock data response has correct structure"""
+        url = reverse('get_stock_data')
+        response = self.client.get(url, {'symbol': 'AAPL'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('symbol', data)
+        self.assertIn('name', data)
+        self.assertIn('price', data)
+        self.assertIn('change', data)
+        self.assertIn('changePercent', data)
+
+    def test_portfolai_analysis_response_structure(self):
+        """Test PortfolAI analysis response has correct structure"""
+        url = reverse('portfolai_analysis')
+        response = self.client.get(url, {'symbol': 'AAPL'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('symbol', data)
+        self.assertIn('analysis', data)
+
+    def test_stock_summary_response_structure(self):
+        """Test stock summary response has correct structure"""
+        url = reverse('stock_summary')
+        response = self.client.get(url, {'symbol': 'AAPL'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('symbol', data)
+        self.assertIn('analysis', data)
