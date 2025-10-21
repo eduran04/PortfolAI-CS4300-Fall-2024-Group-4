@@ -69,50 +69,36 @@ pytest -v
 ```
 PortfolAI-CS4300-Fall-2024-Group-4/
 ├── portfolai/                              # Main Django project directory
-│   ├── home/                               # Django app for homepage and dashboard
+│   ├── core/                               # Django app for core functionality
 │   │   ├── __init__.py
 │   │   ├── admin.py                        # Django admin configuration
 │   │   ├── apps.py                         # App configuration
 │   │   ├── models.py                       # Database models
 │   │   ├── tests.py                        # Unit tests
-│   │   ├── urls.py                         # URL routing for home app
 │   │   ├── views.py                        # View functions and API endpoints
-│   │   ├── utils.py                        # Finnhub API utility functions
-│   │   ├── migrations/                     # Database migration files
-│   │   │   └── __init__.py
-│   │   ├── static/home/                    # Static files for home app
-│   │   │   ├── dashboard/                  # Dashboard-specific assets
-│   │   │   │   ├── dashboard.css          # Dashboard styles
-│   │   │   │   ├── dashboard.js           # Dashboard JavaScript
-│   │   │   │   └── sidebar.js             # Sidebar functionality
-│   │   │   ├── tailwind-build.css         # Compiled Tailwind CSS
-│   │   │   ├── saasy-custom.css           # Custom CSS styles
-│   │   │   ├── saasy.js                   # JavaScript functionality
-│   │   │   └── assets/                    # Image and media assets (logo.png, images/, etc.)
-│   │   └── templates/home/                 # HTML templates
-│   │       ├── base.html                   # Base template
-│   │       ├── index.html                  # Landing page template
-│   │       ├── dashboard.html              # Dashboard template
-│   │       └── landing_base.html           # Landing page base template
-│   ├── portfolai/                          # Django project settings
+│   │   └── migrations/                     # Database migration files
+│   │       └── __init__.py
+│   ├── mysite/                             # Django project settings
 │   │   ├── __init__.py
 │   │   ├── asgi.py                         # ASGI configuration
 │   │   ├── settings.py                     # Django settings
 │   │   ├── urls.py                         # Main URL configuration
 │   │   └── wsgi.py                         # WSGI configuration
+│   ├── templates/                          # HTML templates
+│   │   ├── base.html                       # Base template
+│   │   ├── landing.html                    # Landing page template
+│   │   └── home.html                       # Dashboard template
+│   ├── static/                             # Static files
+│   │   ├── landing/                        # Landing page assets
+│   │   ├── script.js                       # Main JavaScript file
+│   │   └── style.css                       # Custom CSS styles
 │   ├── manage.py                           # Django management script
 │   ├── db.sqlite3                          # SQLite database file
-│   ├── requirements.txt                    # Python dependencies
-│   ├── requirements-test.txt               # Test dependencies
-│   ├── test_api.py                         # Comprehensive test suite
-│   ├── run_tests.py                        # Test runner script
-│   ├── conftest.py                         # Pytest configuration
-│   ├── pytest.ini                          # Pytest settings
-│   ├── pyproject.toml                    # Modern Python project configuration
-│   ├── TESTING.md                          # Testing documentation
-│   └── .gitignore                          # Git ignore rules
+│   └── requirements.txt                    # Python dependencies
 ├── .gitignore                              # Root git ignore rules
 ├── README.md                               # Project documentation
-└── LICENSE                                 # Project license
+├── LICENSE                                 # Project license
+├── Reflection1.txt                         # Team reflection document
+└── render.yaml                             # Deployment configuration
 ```
 
