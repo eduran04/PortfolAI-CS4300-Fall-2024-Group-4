@@ -1,0 +1,755 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PortfolAI - AI-Powered Platform</title>
+    <meta name="description" content="AI-powered platform. Get smart insights, clean data, and intelligent tools — no trading, no risk, no paywalls. Start exploring free." />
+    <meta name="author" content="PortfolAI" />
+
+    <meta property="og:title" content="PortfolAI - AI-Powered Platform" />
+    <meta property="og:description" content="AI-powered platform. Get smart insights without the clutter — no trading, no risk." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@portfolai" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    
+    <link rel="shortcut icon" href="{% static 'landing/assets/logo.png' %}" type="image/x-icon" />
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'landing/tailwind-build.css' %}">
+    <link rel="stylesheet" href="{% static 'landing/saasy-custom.css' %}" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+</head>
+<body class="tw-flex tw-min-h-[100vh] tw-flex-col tw-bg-black tw-text-white">
+    
+    <!-- Header -->
+    <header class="tw-max-w-lg:tw-px-4 tw-max-w-lg:tw-mr-auto tw-absolute tw-top-0 tw-z-20 tw-flex tw-h-[60px] tw-w-full tw-bg-opacity-0 tw-px-[5%] lg:tw-justify-around">
+        <a class="tw-h-[50px] tw-w-[50px] tw-p-[4px]" href="{% url 'landing' %}">
+            <img src="{% static 'landing/assets/logo.png' %}" alt="PortfolAI logo" class="tw-object tw-h-full tw-w-full" />
+        </a>
+        <div class="collapsible-header animated-collapse max-lg:tw-shadow-md" id="collapsed-header-items">
+            <div class="tw-flex tw-h-full tw-w-max tw-gap-5 tw-text-base max-lg:tw-mt-[30px] max-lg:tw-flex-col max-lg:tw-place-items-end max-lg:tw-gap-5 lg:tw-mx-auto lg:tw-place-items-center">
+                <a class="header-links" href="#key-benefits"> Key Benefits </a>
+                <a class="header-links" href="#solutions"> Solutions </a>
+                <a class="header-links" href="#features"> Features </a>
+                <a class="header-links" href="#news"> News </a>
+            </div>
+                <div class="tw-mx-4 tw-flex tw-place-items-center tw-gap-[20px] tw-text-base max-md:tw-w-full max-md:tw-flex-col max-md:tw-place-content-center">
+                <a href="{% url 'dashboard' %}" aria-label="signup" class="tw-rounded-full tw-bg-white tw-px-3 tw-py-2 tw-text-black tw-transition-transform tw-duration-[0.3s] hover:tw-translate-x-2">
+                    <span>Get started</span>
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        <button class="bi bi-list tw-absolute tw-right-3 tw-top-3 tw-z-50 tw-text-3xl tw-text-white lg:tw-hidden" onclick="toggleHeader()" aria-label="menu" id="collapse-btn"></button>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <section
+            class="hero-section tw-relative tw-flex tw-min-h-[100vh] tw-w-full tw-max-w-[100vw] tw-flex-col tw-overflow-hidden max-md:tw-mt-[50px]"
+            id="hero-section"
+        >
+            <div
+                class="tw-flex tw-h-full tw-min-h-[100vh] tw-w-full tw-flex-col tw-place-content-center tw-gap-6 tw-p-[5%] max-xl:tw-place-items-center max-lg:tw-p-4"
+            >
+                <div
+                    class="tw-flex tw-flex-col tw-place-content-center tw-items-center"
+                >
+                    <div
+                        class="reveal-up gradient-text tw-text-center tw-text-6xl tw-font-semibold tw-uppercase tw-leading-[80px] max-lg:tw-text-4xl max-md:tw-leading-snug"
+                    >
+                        <span class=""> Smarter stock </span>
+                        <br />
+                        <span class=""> analysis for everyone </span>
+                    </div>
+                    <div
+                        class="reveal-up tw-mt-10 tw-max-w-[450px] tw-p-2 tw-text-center tw-text-gray-300 max-lg:tw-max-w-full"
+                    >
+                        AI-powered stock analysis platform. Get smart insights, clean data, and intelligent tools — no trading, no risk, no paywalls.
+                    </div>
+
+                    <div
+                        class="reveal-up tw-mt-10 tw-flex tw-place-items-center tw-gap-4"
+                    >
+                <a
+                    class="btn tw-bg-[#7e22ce85] tw-shadow-lg tw-shadow-primary tw-transition-transform tw-duration-[0.3s] hover:tw-scale-x-[1.03]"
+                    href="{% url 'dashboard' %}"
+                >
+                    Dashboard
+                </a>
+                        <a
+                            class="btn tw-flex tw-gap-2 !tw-bg-black !tw-text-white tw-transition-colors tw-duration-[0.3s] hover:!tw-bg-white hover:!tw-text-black"
+                            href=""
+                        >
+                            <i class="bi bi-play-circle-fill"></i>
+                            <span>Learn more</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div
+                    class="reveal-up tw-relative tw-mt-8 tw-flex tw-w-full tw-place-content-center tw-place-items-center"
+                    id="dashboard-container"
+                >
+                    <div
+                        class="tw-relative tw-max-w-[80%] tw-overflow-hidden tw-rounded-xl tw-bg-transparent max-md:tw-max-w-full"
+                        id="dashboard"
+                    >
+                        <img
+                            src="{% static 'landing/assets/images/home/dash.png' %}"
+                            alt="PortfolAI Dashboard"
+                            class="tw-h-full tw-w-full tw-object-cover tw-opacity-90 max-lg:tw-object-contain"
+                        />
+                    </div>
+
+                    <div
+                        class="hero-img-bg-grad tw-absolute tw-left-[20%] tw-top-5 tw-h-[200px] tw-w-[200px]"
+                    ></div>
+                </div>
+            </div>
+        </section>
+
+        <section
+            class="tw-relative tw-flex tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-8"
+        >
+            <h2 class="reveal-up tw-text-3xl max-md:tw-text-xl">
+                Trusted by investors worldwide
+            </h2>
+
+            <div class="reveal-up carousel-container">
+                <div
+                    class="carousel lg:w-place-content-center tw-mt-6 tw-flex tw-w-full tw-gap-5 max-md:tw-gap-2"
+                >
+                    <!-- add the brands using your app  -->
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px]">
+                        <img
+                            src="{% static 'landing/assets/images/brand-logos/google.svg' %}"
+                            alt="Google"
+                            class="tw-h-full tw-w-full tw-object-contain tw-grayscale tw-transition-colors hover:tw-grayscale-0"
+                            srcset=""
+                        />
+                    </div>
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px]">
+                        <img
+                            src="{% static 'landing/assets/images/brand-logos/microsoft.svg' %}"
+                            alt="Microsoft"
+                            class="tw-h-full tw-w-full tw-object-contain tw-grayscale tw-transition-colors hover:tw-grayscale-0"
+                            srcset=""
+                        />
+                    </div>
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px]">
+                        <img
+                            src="{% static 'landing/assets/images/brand-logos/adobe.svg' %}"
+                            alt="Adobe"
+                            class="tw-h-full tw-w-full tw-object-contain tw-grayscale tw-transition-colors hover:tw-grayscale-0"
+                            srcset=""
+                        />
+                    </div>
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px]">
+                        <img
+                            src="{% static 'landing/assets/images/brand-logos/airbnb.svg' %}"
+                            alt="Airbnb"
+                            class="tw-h-full tw-w-full tw-object-contain tw-grayscale tw-transition-colors hover:tw-grayscale-0"
+                            srcset=""
+                        />
+                    </div>
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px]">
+                        <img
+                            src="{% static 'landing/assets/images/brand-logos/stripe.svg' %}"
+                            alt="Stripe"
+                            class="tw-h-full tw-w-full tw-object-contain tw-grayscale tw-transition-colors hover:tw-grayscale-0"
+                            srcset=""
+                        />
+            </div>
+                    <div class="carousel-img tw-h-[30px] tw-w-[150px]">
+                        <img
+                            src="{% static 'landing/assets/images/brand-logos/reddit.svg' %}"
+                            alt="Reddit"
+                            class="tw-h-full tw-w-full tw-object-contain tw-grayscale tw-transition-colors hover:tw-grayscale-0"
+                            srcset=""
+                        />
+        </div>
+                </div>
+            </div>
+        </section>
+
+        <section
+            id="key-benefits"
+            class="tw-relative tw-flex tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-6"
+        >
+            <div
+                class="tw-mt-8 tw-flex tw-flex-col tw-place-items-center tw-gap-5"
+            >
+                <div
+                    class="reveal-up tw-mt-5 tw-flex tw-flex-col tw-gap-3 tw-text-center"
+                >
+                    <h2
+                        class="tw-text-4xl tw-font-medium tw-text-gray-200 max-md:tw-text-3xl"
+                    >
+                        Key benefits
+                    </h2>
+                </div>
+                <div
+                    class="tw-mt-6 tw-flex tw-max-w-[80%] tw-flex-wrap tw-place-content-center tw-gap-8 max-lg:tw-flex-col"
+                >
+                    <div
+                        class="reveal-up tw-flex tw-h-[400px] tw-w-[450px] tw-flex-col tw-gap-3 tw-text-center max-md:tw-w-[320px]"
+                    >
+                        <div
+                            class="border-gradient tw-h-[200px] tw-w-full tw-overflow-hidden max-md:tw-h-[150px]"
+                        >
+                            <div
+                                class="tw-flex tw-h-full tw-w-full tw-place-content-center tw-place-items-end tw-p-2"
+                            >
+                                <i
+                                    class="bi bi-rocket-takeoff-fill tw-text-7xl tw-text-gray-200 max-md:tw-text-5xl"
+                                ></i>
+                            </div>
+                        </div>
+                        <div class="tw-flex tw-flex-col tw-gap-4 tw-p-2">
+                            <h3
+                                class="tw-mt-8 tw-text-2xl tw-font-normal max-md:tw-text-xl"
+                            >
+                                AI-Powered Analysis
+                            </h3>
+                            <div class="tw-text-gray-300">
+                                Get intelligent insights and recommendations powered by advanced machine learning algorithms.
+                                        </div>
+                                        </div>
+                                    </div>
+                    <div
+                        class="reveal-up tw-flex tw-h-[400px] tw-w-[450px] tw-flex-col tw-gap-3 tw-text-center max-md:tw-w-[320px]"
+                    >
+                        <div
+                            class="border-gradient tw-h-[200px] tw-w-full tw-overflow-hidden max-md:tw-text-[150px]"
+                        >
+                            <div
+                                class="tw-flex tw-h-full tw-w-full tw-place-content-center tw-place-items-end tw-p-2"
+                            >
+                                <i
+                                    class="bi bi-layout-sidebar-inset tw-text-7xl tw-text-gray-200 max-md:tw-text-5xl"
+                                ></i>
+                                        </div>
+                                    </div>
+                        <div class="tw-flex tw-flex-col tw-gap-4 tw-p-2">
+                            <h3
+                                class="tw-mt-8 tw-text-2xl tw-font-normal max-md:tw-text-xl"
+                            >
+                                No Risk Trading
+                            </h3>
+                            <div class="tw-text-gray-300">
+                                Analyze without the risk. No trading, no financial exposure, just pure analysis and learning.
+                                        </div>
+                                        </div>
+                                    </div>
+                    <div
+                        class="reveal-up tw-flex tw-h-[400px] tw-w-[450px] tw-flex-col tw-gap-3 tw-text-center max-md:tw-w-[320px]"
+                    >
+                        <div
+                            class="border-gradient tw-h-[200px] tw-w-full tw-overflow-hidden max-md:tw-h-[150px]"
+                        >
+                            <div
+                                class="tw-flex tw-h-full tw-w-full tw-place-content-center tw-place-items-end tw-p-2"
+                            >
+                                <i
+                                    class="bi bi-lightning-charge-fill tw-text-7xl tw-text-gray-200 max-md:tw-text-5xl"
+                                ></i>
+                                        </div>
+                                    </div>
+                        <div class="tw-flex tw-flex-col tw-gap-4 tw-p-2">
+                            <h3
+                                class="tw-mt-8 tw-text-2xl tw-font-normal max-md:tw-text-xl"
+                            >
+                                Real-time Data
+                            </h3>
+                            <div class="tw-text-gray-300">
+                                Access live market data and instant analysis to make informed decisions quickly.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </section>
+
+        <section
+            id="features"
+            class="tw-relative tw-flex tw-min-h-[80vh] tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-6"
+        >
+            <div
+                class="tw-mt-8 tw-flex tw-flex-col tw-place-items-center tw-gap-5"
+            >
+                <div
+                    class="reveal-up tw-mt-5 tw-flex tw-flex-col tw-gap-3 tw-text-center"
+                >
+                    <h2
+                        class="tw-text-4xl tw-font-medium tw-text-gray-200 max-md:tw-text-2xl"
+                    >
+                        Features loved by everyone
+                    </h2>
+                </div>
+                <div
+                    class="tw-mt-6 tw-flex tw-max-w-[80%] tw-flex-wrap tw-place-content-center tw-gap-8 max-lg:tw-flex-col"
+                >
+                    <div
+                        class="reveal-up tw-flex tw-h-[200px] tw-w-[450px] tw-gap-8 tw-rounded-xl tw-border-[1px] tw-border-outlineColor tw-bg-secondary tw-p-8 max-md:tw-w-[320px]"
+                    >
+                        <div class="tw-text-4xl max-md:tw-text-2xl">
+                            <i class="bi bi-globe"></i>
+                        </div>
+
+                        <div class="tw-flex tw-flex-col tw-gap-4">
+                            <h3 class="tw-text-2xl max-md:tw-text-xl">
+                                Market Insights
+                            </h3>
+                            <p class="tw-text-gray-300 max-md:tw-text-sm">
+                                Get comprehensive market analysis with real-time data, trends, and AI-powered insights to make informed decisions.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="reveal-up tw-flex tw-h-[200px] tw-w-[450px] tw-gap-8 tw-rounded-xl tw-border-[1px] tw-border-outlineColor tw-bg-secondary tw-p-8 max-md:tw-w-[320px]"
+                    >
+                        <div class="tw-text-4xl max-md:tw-text-2xl">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+
+                        <div class="tw-flex tw-flex-col tw-gap-4">
+                            <h3 class="tw-text-2xl max-md:tw-text-xl">
+                                Trend Deep Dive
+                            </h3>
+                            <p class="tw-text-gray-300 max-md:tw-text-sm">
+                                Dive deep into market trends with advanced analytics, pattern recognition, and detailed trend analysis tools.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="reveal-up tw-flex tw-h-[200px] tw-w-[450px] tw-gap-8 tw-rounded-xl tw-border-[1px] tw-border-outlineColor tw-bg-secondary tw-p-8 max-md:tw-w-[320px]"
+                    >
+                        <div class="tw-text-4xl max-md:tw-text-2xl">
+                            <i class="bi bi-robot"></i>
+                        </div>
+
+                        <div class="tw-flex tw-flex-col tw-gap-4">
+                            <h3 class="tw-text-2xl max-md:tw-text-xl">
+                                AI Assistant Portfolio
+                            </h3>
+                            <p class="tw-text-gray-300 max-md:tw-text-sm">
+                                Meet Portfolio, your personal AI assistant that provides intelligent insights, answers questions, and guides your investment decisions.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="reveal-up tw-flex tw-h-[200px] tw-w-[450px] tw-gap-8 tw-rounded-xl tw-border-[1px] tw-border-outlineColor tw-bg-secondary tw-p-8 max-md:tw-w-[320px]"
+                    >
+                        <div class="tw-text-4xl max-md:tw-text-2xl">
+                            <i class="bi bi-globe-americas"></i>
+                        </div>
+
+                        <div class="tw-flex tw-flex-col tw-gap-4">
+                            <h3 class="tw-text-2xl max-md:tw-text-xl">
+                                World Event Impacts
+                            </h3>
+                            <p class="tw-text-gray-300 max-md:tw-text-sm">
+                                Understand how global events, news, and economic indicators impact your investments with real-time analysis.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="reveal-up tw-flex tw-h-[200px] tw-w-[450px] tw-gap-8 tw-rounded-xl tw-border-[1px] tw-border-outlineColor tw-bg-secondary tw-p-8 max-md:tw-w-[320px]"
+                    >
+                        <div class="tw-text-4xl max-md:tw-text-2xl">
+                            <i class="bi bi-bookmark-star"></i>
+                        </div>
+
+                        <div class="tw-flex tw-flex-col tw-gap-4">
+                            <h3 class="tw-text-2xl max-md:tw-text-xl">
+                                Smart Watchlist
+                            </h3>
+                            <p class="tw-text-gray-300 max-md:tw-text-sm">
+                                Create and manage personalized watchlists with intelligent tracking, alerts, and performance monitoring.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        class="reveal-up tw-flex tw-h-[200px] tw-w-[450px] tw-gap-8 tw-rounded-xl tw-border-[1px] tw-border-outlineColor tw-bg-secondary tw-p-8 max-md:tw-w-[320px]"
+                    >
+                        <div class="tw-text-4xl max-md:tw-text-2xl">
+                            <i class="bi bi-search"></i>
+                        </div>
+
+                        <div class="tw-flex tw-flex-col tw-gap-4">
+                            <h3 class="tw-text-2xl max-md:tw-text-xl">
+                                Stock Lookup
+                            </h3>
+                            <p class="tw-text-sm tw-text-gray-300">
+                                Instantly search and analyze any stock with comprehensive data, charts, and AI-powered insights at your fingertips.
+                            </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+        <section
+            id="solutions"
+            class="tw-relative tw-flex tw-min-h-[80vh] tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-6"
+        >
+            <div
+                class="reveal-up tw-flex tw-min-h-[60vh] tw-place-content-center tw-place-items-center tw-gap-[10%] max-lg:tw-flex-col max-lg:tw-gap-10"
+            >
+                <div class="tw-flex">
+                    <div
+                        class="tw-max-h-[650px] tw-max-w-[850px] tw-overflow-hidden tw-rounded-lg tw-shadow-lg tw-shadow-[rgba(170,49,233,0.44021358543417366)]"
+                    >
+                        <img
+                            src="{% static 'landing/assets/images/home/dash.png' %}"
+                            alt="PortfolAI Dashboard"
+                            class="tw-h-full tw-w-full tw-object-cover"
+                        />
+                    </div>
+                </div>
+                <div
+                    class="tw-mt-6 tw-flex tw-max-w-[450px] tw-flex-col tw-gap-4"
+                >
+                    <h3 class="tw-text-4xl tw-font-medium max-md:tw-text-2xl">
+                        AI-Powered Analysis
+                    </h3>
+
+                    <div class="tw-mt-4 tw-flex tw-flex-col tw-gap-3">
+                        <h4 class="tw-text-xl tw-font-medium">
+                            <i class="bi bi-check-all !tw-text-2xl"></i>
+                            Machine Learning
+                        </h4>
+                        <span
+                            class="tw-text-lg tw-text-gray-300 max-md:tw-text-base"
+                        >
+                            Advanced algorithms analyze market patterns and provide intelligent stock recommendations.
+                        </span>
+                    </div>
+                    <div class="tw-mt-4 tw-flex tw-flex-col tw-gap-3">
+                        <h4 class="tw-text-xl tw-font-medium">
+                            <i class="bi bi-check-all !tw-text-2xl"></i>
+                            Real-time Processing
+                        </h4>
+                        <span
+                            class="tw-text-lg tw-text-gray-300 max-md:tw-text-base"
+                        >
+                            Get instant analysis and insights as market conditions change throughout the day.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section
+            class="tw-relative tw-flex tw-min-h-[80vh] tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-6"
+        >
+            <div
+                class="reveal-up tw-flex tw-min-h-[60vh] tw-place-content-center tw-place-items-center tw-gap-[10%] max-lg:tw-flex-col max-lg:tw-gap-10"
+            >
+                <div
+                    class="tw-mt-6 tw-flex tw-max-w-[450px] tw-flex-col tw-gap-4"
+                >
+                    <h3 class="tw-text-4xl tw-font-medium max-md:tw-text-2xl">
+                        Comprehensive Insights
+                    </h3>
+
+                    <div class="tw-mt-4 tw-flex tw-flex-col tw-gap-3">
+                        <h4 class="tw-text-xl tw-font-medium">
+                            <i class="bi bi-check-all !tw-text-2xl"></i>
+                            Easy to Use
+                        </h4>
+                        <span
+                            class="tw-text-lg tw-text-gray-300 max-md:tw-text-base"
+                        >
+                            Intuitive interface designed for both beginners and experienced investors.
+                        </span>
+                    </div>
+                    <div class="tw-mt-4 tw-flex tw-flex-col tw-gap-3">
+                        <h4 class="tw-text-xl tw-font-medium">
+                            <i class="bi bi-check-all !tw-text-2xl"></i>
+                            All in One Platform
+                        </h4>
+                        <span
+                            class="tw-text-lg tw-text-gray-300 max-md:tw-text-base"
+                        >
+                            Everything you need for analysis in one comprehensive platform.
+                        </span>
+                    </div>
+                </div>
+
+                <div class="tw-flex">
+                    <div
+                        class="tw-max-h-[650px] tw-max-w-[850px] tw-overflow-hidden tw-rounded-lg tw-shadow-lg tw-shadow-[rgba(170,49,233,0.44021358543417366)]"
+                    >
+                        <img
+                            src="{% static 'landing/assets/images/home/insights.png' %}"
+                            alt="PortfolAI Insights"
+                            class="tw-h-full tw-w-full tw-object-cover"
+                        />
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+        <section
+            class="tw-flex tw-w-full tw-flex-col tw-place-content-center tw-place-items-center tw-gap-[10%] tw-p-[5%] tw-px-[10%]"
+        >
+            <h3
+                class="tw-text-4xl tw-font-medium tw-text-gray-300 max-md:tw-text-2xl"
+            >
+                FAQ
+            </h3>
+            <div
+                class="tw-mt-5 tw-flex tw-min-h-[300px] tw-w-full tw-max-w-[850px] tw-flex-col tw-gap-4"
+            >
+                <div
+                    class="faq tw-w-full tw-rounded-md tw-border-[1px] tw-border-solid tw-border-[#1F2123] tw-bg-[#080808]"
+                >
+                    <div
+                        class="faq-accordion tw-flex tw-w-full tw-select-none tw-text-xl max-md:tw-text-lg"
+                    >
+                        <span>Is PortfolAI really free to use?</span>
+                        <i class="bi bi-plus tw-ml-auto tw-font-semibold"></i>
+                    </div>
+                    <div class="content">
+                        Yes! Our basic features are completely free forever. You can analyze stocks, get market insights, and learn about investing without any cost.
+                    </div>
+                </div>
+
+                <div
+                    class="faq tw-w-full tw-rounded-md tw-border-[1px] tw-border-solid tw-border-[#1F2123] tw-bg-[#080808]"
+                >
+                    <div
+                        class="faq-accordion tw-flex tw-w-full tw-select-none tw-text-xl max-md:tw-text-lg"
+                    >
+                        <span>Do I need to connect my bank account?</span>
+                        <i class="bi bi-plus tw-ml-auto tw-font-semibold"></i>
+                    </div>
+                    <div class="content">
+                        No! PortfolAI is purely for analysis and learning. We don't require any financial information or bank connections. It's completely risk-free.
+                    </div>
+                </div>
+
+                <div
+                    class="faq tw-w-full tw-rounded-md tw-border-[1px] tw-border-solid tw-border-[#1F2123] tw-bg-[#080808]"
+                >
+                    <div
+                        class="faq-accordion tw-flex tw-w-full tw-select-none tw-text-xl max-md:tw-text-lg"
+                    >
+                        <span>How accurate are the AI predictions?</span>
+                        <i class="bi bi-plus tw-ml-auto tw-font-semibold"></i>
+                    </div>
+                    <div class="content">
+                        Our AI provides analysis and insights based on historical data and market patterns. While we strive for accuracy, all investment decisions should be made carefully and with proper research.
+                    </div>
+                </div>
+
+                <div
+                    class="faq tw-w-full tw-rounded-md tw-border-[1px] tw-border-solid tw-border-[#1F2123] tw-bg-[#080808]"
+                >
+                    <div
+                        class="faq-accordion tw-flex tw-w-full tw-select-none tw-text-xl max-md:tw-text-lg"
+                    >
+                        <span>Can I use this to gamble my life savings</span>
+                        <i class="bi bi-plus tw-ml-auto tw-font-semibold"></i>
+                    </div>
+                    <div class="content">
+                        Absolutely Not! PortfolAI is not meant for gambling and is only meant to learn about market analysis without financial risk.
+                </div>
+            </div>
+        </div>
+
+            <div
+                class="tw-mt-20 tw-flex tw-flex-col tw-place-items-center tw-gap-4"
+            >
+                <div class="tw-text-3xl max-md:tw-text-2xl">
+                    Still have questions?
+                </div>
+                <a
+                    href="http://"
+                    class="btn !tw-rounded-full !tw-border-[1px] !tw-border-solid !tw-border-gray-300 !tw-bg-transparent tw-transition-colors tw-duration-[0.3s]"
+                >
+                    Contact
+                </a>
+        </div>
+    </section>
+
+        <section
+            id="news"
+            class="tw-mt-5 tw-flex tw-min-h-[80vh] tw-w-full tw-flex-col tw-place-content-center tw-place-items-center tw-p-[2%] max-lg:tw-p-3"
+        >
+            <h3
+                class="reveal-up tw-text-center tw-text-4xl tw-font-medium max-md:tw-text-2xl"
+            >
+                Latest Market Insights
+            </h3>
+            <!-- articles -->
+            <div
+                class="reveal-up tw-mt-10 tw-flex tw-flex-wrap tw-place-content-center tw-gap-10 max-lg:tw-flex-col"
+            >
+                <a
+                    href=""
+                    class="tw-flex tw-h-[400px] tw-w-[400px] tw-flex-col tw-gap-4 tw-overflow-clip tw-rounded-lg tw-p-4 max-lg:tw-w-[300px]"
+                >
+                    <div
+                        class="tw-h-[250px] tw-w-full tw-overflow-hidden tw-rounded-md"
+                    >
+                        <img
+                            src="{% static 'landing/assets/images/home/forest.jpg' %}"
+                            alt="article image"
+                            class="tw-h-full tw-w-full tw-object-cover tw-transition-transform tw-duration-[0.3s] hover:tw-scale-[1.04]"
+                            srcset=""
+                        />
+                    </div>
+                    <h3
+                        class="tw-mt-2 tw-text-2xl tw-font-semibold max-md:tw-text-xl"
+                    >
+                        AI Stock Analysis Guide
+                    </h3>
+                    <p class="tw-text-gray-400">
+                        Learn how to use AI-powered tools to analyze stocks and make better investment decisions.
+                    </p>
+                    <span>
+                        <span>Learn more</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </span>
+                </a>
+                <a
+                    href=""
+                    class="tw-flex tw-h-[400px] tw-w-[400px] tw-flex-col tw-gap-4 tw-overflow-clip tw-rounded-lg tw-p-4 max-lg:tw-w-[300px]"
+                >
+                    <div
+                        class="tw-h-[250px] tw-w-full tw-overflow-hidden tw-rounded-md"
+                    >
+                        <img
+                            src="{% static 'landing/assets/images/home/mountain.jpg' %}"
+                            alt="article image"
+                            class="tw-h-full tw-w-full tw-object-cover tw-transition-transform tw-duration-[0.3s] hover:tw-scale-[1.04]"
+                            srcset=""
+                        />
+                    </div>
+                    <h3
+                        class="tw-mt-2 tw-text-2xl tw-font-semibold max-md:tw-text-xl"
+                    >
+                        Market Trends 2024
+                    </h3>
+                    <p class="tw-text-gray-400">
+                        Discover the latest market trends and how AI is revolutionizing analysis.
+                    </p>
+                    <span>
+                        <span>Learn more</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </span>
+                </a>
+                <a
+                    href=""
+                    class="tw-flex tw-h-[400px] tw-w-[400px] tw-flex-col tw-gap-4 tw-overflow-clip tw-rounded-lg tw-p-4 max-lg:tw-w-[300px]"
+                >
+                    <div
+                        class="tw-h-[250px] tw-w-full tw-overflow-hidden tw-rounded-md"
+                    >
+                        <img
+                            src="{% static 'landing/assets/images/home/photography.jpg' %}"
+                            alt="article image"
+                            class="tw-h-full tw-w-full tw-object-cover tw-transition-transform tw-duration-[0.3s] hover:tw-scale-[1.04]"
+                            srcset=""
+                        />
+                    </div>
+                    <h3
+                        class="tw-mt-2 tw-text-2xl tw-font-semibold max-md:tw-text-xl"
+                    >
+                        Portfolio Optimization
+                    </h3>
+                    <p class="tw-text-gray-400">
+                        Master the art of portfolio optimization with AI-driven insights and risk management.
+                    </p>
+                    <span>
+                        <span>Learn more</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </span>
+                </a>
+        </div>
+    </section>
+
+        <footer
+            class="tw-mt-auto tw-flex tw-w-full tw-place-content-around tw-gap-3 tw-p-[5%] tw-px-[10%] tw-text-white max-md:tw-flex-col"
+        >
+            <div
+                class="tw-flex tw-h-full tw-w-[250px] tw-flex-col tw-place-items-center tw-gap-6 max-md:tw-w-full"
+            >
+                <img
+                    src="{% static 'landing/assets/logo.png' %}"
+                    alt="PortfolAI logo"
+                    srcset=""
+                    class="tw-max-w-[120px]"
+                />
+                <div>
+                    AI-Powered Stock Analysis
+                    <br />
+                    No Risk, No Trading
+                    <br />
+                    Learn & Analyze
+                </div>
+                <div class="tw-mt-3 tw-text-lg tw-font-semibold">Follow us</div>
+                <div class="tw-flex tw-gap-4 tw-text-2xl">
+                    <a href="" aria-label="Facebook">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                    <a
+                        href="https://twitter.com/@portfolai"
+                        aria-label="Twitter"
+                    >
+                        <i class="bi bi-twitter"></i>
+                    </a>
+                    <a
+                        href="https://instagram.com/"
+                        class="tw-h-[40px] tw-w-[40px]"
+                        aria-label="Instagram"
+                    >
+                        <i class="bi bi-instagram"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="tw-flex tw-h-full tw-w-[250px] tw-flex-col tw-gap-4">
+                <h2 class="tw-text-3xl max-md:tw-text-xl">Analysis</h2>
+                <div class="tw-flex tw-flex-col tw-gap-3 max-md:tw-text-sm">
+                    <a href="{% url 'dashboard' %}" class="footer-link">Stock Analysis</a>
+                    <a href="" class="footer-link">Portfolio Tools</a>
+                    <a href="" class="footer-link">AI Insights</a>
+                    <a href="" class="footer-link">Contact</a>
+                </div>
+            </div>
+
+            <div class="tw-flex tw-h-full tw-w-[250px] tw-flex-col tw-gap-4">
+                <h2 class="tw-text-3xl max-md:tw-text-xl">Resources</h2>
+                <div class="tw-flex tw-flex-col tw-gap-3 max-md:tw-text-sm">
+                    <a href="" class="footer-link">About us</a>
+                    <a href="" class="footer-link">FAQ</a>
+                    <a href="" class="footer-link">Contact Us</a>
+                    <a href="" class="footer-link">Blogs</a>
+                    <a href="" class="footer-link">Privacy policy</a>
+            </div>
+        </div>
+    </footer>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/ScrollTrigger.min.js"></script>
+    <script src="{% static 'landing/saasy.js' %}"></script>
+</body>
+</html>
