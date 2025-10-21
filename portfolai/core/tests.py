@@ -309,7 +309,7 @@ class APITests(TestCase):
     def test_portfolai_analysis_fallback(self):
         """Test PortfolAI analysis with fallback when API keys are not available"""
         with patch.object(settings, 'OPENAI_API_KEY', None):
-        url = reverse('portfolai_analysis')
+            url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': 'AAPL'})
             
             self.assertEqual(response.status_code, 200)
