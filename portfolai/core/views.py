@@ -1,3 +1,31 @@
+"""
+PortfolAI API Views - Core Application Endpoints
+===============================================
+
+This module contains all API endpoints for the PortfolAI application:
+
+FEATURE 1: REAL-TIME STOCK DATA RETRIEVAL
+- get_stock_data() - /api/stock-data/ - Core stock data with fallback
+- stock_summary() - /api/stock/ - Advanced stock data + AI analysis
+
+FEATURE 2: MARKET MOVERS DASHBOARD  
+- get_market_movers() - /api/market-movers/ - Top gainers/losers
+
+FEATURE 3: FINANCIAL NEWS FEED
+- get_news() - /api/news/ - Financial news with symbol filtering
+
+FEATURE 4: AI-POWERED STOCK ANALYSIS
+- portfolai_analysis() - /api/portfolai-analysis/ - OpenAI-powered analysis
+
+BASIC VIEWS
+- landing() - Landing page
+- trading_dashboard() - Main dashboard
+- hello_api() - Basic API connectivity test
+
+All endpoints include comprehensive error handling and fallback data
+for when external APIs are unavailable.
+"""
+
 from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -9,12 +37,17 @@ import requests
 from datetime import datetime, timedelta
 import random
 
+# ============================================================================
+# API CLIENT INITIALIZATION & FALLBACK DATA
+# ============================================================================
 # Initialize API clients only if keys are available
+# This ensures graceful degradation when APIs are not configured
 openai_client = openai.OpenAI(api_key=settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
 finnhub_client = finnhub.Client(api_key=settings.FINNHUB_API_KEY) if settings.FINNHUB_API_KEY else None
 newsapi = NewsApiClient(api_key=settings.NEWS_API_KEY) if settings.NEWS_API_KEY else None
 
 # Fallback data for when APIs are not available
+# Ensures application remains functional even without external API access
 FALLBACK_STOCKS = {
     'AAPL': {'name': 'Apple Inc.', 'price': 150.25, 'change': 2.15, 'changePercent': 1.45},
     'MSFT': {'name': 'Microsoft Corp.', 'price': 420.72, 'change': -0.50, 'changePercent': -0.12},
@@ -51,24 +84,49 @@ FALLBACK_NEWS = [
 ]
 
 
+# ============================================================================
+# SECTION 1: BASIC VIEWS & API CONNECTIVITY
+# ============================================================================
+# Core application views for user interface and basic API testing
+
 def landing(request):
-    """Landing page view"""
+    """
+    Landing page view - Feature: User Interface
+    Renders the main landing page with application introduction
+    """
     return render(request, "landing.html")
 
 
 def trading_dashboard(request):
-    """Trading dashboard view"""
+    """
+    Trading dashboard view - Feature: Main Application Interface
+    Renders the main trading dashboard with all features
+    """
     return render(request, "home.html")
 
 
 @api_view(["GET"])
 def hello_api(request):
+    """
+    Basic API connectivity test - Feature: API Health Check
+    Simple endpoint to verify API functionality
+    Returns: {"message": "Hello from Django + Basecoat + DRF!"}
+    """
     return Response({"message": "Hello from Django + Basecoat + DRF!"})
 
+
+# ============================================================================
+# SECTION 2: REAL-TIME STOCK DATA RETRIEVAL (FEATURE 1)
+# ============================================================================
+# Core stock data endpoints with comprehensive fallback systems
 
 @api_view(["GET"])
 def stock_summary(request):
     """
+    Advanced Stock Summary - Feature 1: Real-Time Stock Data + AI Analysis
+    Endpoint: /api/stock/?symbol=AAPL
+    Requires: Both Finnhub API key AND OpenAI API key
+    Returns: Stock data + AI-generated summary
     Example: /api/stock/?symbol=AAPL
     """
     symbol = request.GET.get("symbol", "AAPL").strip().upper()
@@ -111,7 +169,10 @@ def stock_summary(request):
 @api_view(["GET"])
 def get_stock_data(request):
     """
-    Get basic stock data for search functionality
+    Core Stock Data Retrieval - Feature 1: Real-Time Stock Data
+    Endpoint: /api/stock-data/?symbol=AAPL
+    Purpose: Get basic stock data for search functionality
+    Features: Real-time data, fallback system, input validation
     Example: /api/stock-data/?symbol=AAPL
     """
     symbol = request.GET.get("symbol", "").strip().upper()
@@ -224,10 +285,18 @@ def get_stock_data(request):
         return Response({"error": f"Failed to fetch data for {symbol}: {str(e)}"}, status=500)
 
 
+# ============================================================================
+# SECTION 3: MARKET MOVERS DASHBOARD (FEATURE 2)
+# ============================================================================
+# Market analysis endpoints for trending stocks
+
 @api_view(["GET"])
 def get_market_movers(request):
     """
-    Get top gainers and losers from the market
+    Market Movers Dashboard - Feature 2: Top Gainers & Losers
+    Endpoint: /api/market-movers/
+    Purpose: Get top gainers and losers from the market
+    Features: Real-time market data, sorted by percentage change
     Example: /api/market-movers/
     """
     # Check if API key is available, if not use fallback data
@@ -324,10 +393,18 @@ def get_market_movers(request):
         })
 
 
+# ============================================================================
+# SECTION 4: FINANCIAL NEWS FEED (FEATURE 3)
+# ============================================================================
+# News aggregation endpoints with symbol filtering
+
 @api_view(["GET"])
 def get_news(request):
     """
-    Get financial news from NewsAPI.org
+    Financial News Feed - Feature 3: Market News & Analysis
+    Endpoint: /api/news/?symbol=AAPL (optional)
+    Purpose: Get financial news from NewsAPI.org
+    Features: General news, symbol-specific filtering, time formatting
     Example: /api/news/?symbol=AAPL (optional)
     """
     symbol = request.GET.get("symbol", "").upper()
@@ -443,10 +520,18 @@ def get_news(request):
         })
 
 
+# ============================================================================
+# SECTION 5: AI-POWERED STOCK ANALYSIS (FEATURE 4)
+# ============================================================================
+# Advanced AI analysis endpoints with OpenAI integration
+
 @api_view(["GET"])
 def portfolai_analysis(request):
     """
-    Get AI-powered stock analysis using OpenAI
+    AI-Powered Stock Analysis - Feature 4: OpenAI Integration
+    Endpoint: /api/portfolai-analysis/?symbol=AAPL
+    Purpose: Get AI-powered stock analysis using OpenAI
+    Features: Web search integration, real-time data analysis, educational insights
     Example: /api/portfolai-analysis/?symbol=AAPL
     """
     symbol = request.GET.get("symbol", "").upper()
