@@ -440,6 +440,7 @@ class APITests(TestCase):
                 self.assertEqual(response.status_code, 500)
                 data = response.json()
                 self.assertIn('error', data)
+                self.assertEqual(data['error'], 'API keys not configured')
 
     def test_api_error_scenarios(self):
         """Test various API error scenarios"""
@@ -795,3 +796,75 @@ class APITests(TestCase):
                 data = response.json()
                 self.assertIn('analysis', data)
                 self.assertEqual(data['analysis'], 'Standard chat API analysis')
+
+    def test_get_stock_data_with_finnhub_client_none(self):
+        """Test stock data when finnhub_client is None"""
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.finnhub_client', None):
+                url = reverse('get_stock_data')
+                response = self.client.get(url, {'symbol': 'AAPL'})
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('symbol', data)
+                self.assertTrue(data.get('fallback', False))
+
+    def test_get_market_movers_with_finnhub_client_none(self):
+        """Test market movers when finnhub_client is None"""
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.finnhub_client', None):
+                url = reverse('get_market_movers')
+                response = self.client.get(url)
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('gainers', data)
+                self.assertTrue(data.get('fallback', False))
+
+    def test_get_news_with_newsapi_none(self):
+        """Test news when newsapi is None"""
+        with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
+            with patch('core.views.newsapi', None):
+                url = reverse('get_news')
+                response = self.client.get(url)
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('articles', data)
+                self.assertTrue(data.get('fallback', False))
+
+    def test_portfolai_analysis_with_openai_client_none(self):
+        """Test PortfolAI analysis when openai_client is None"""
+        with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
+            with patch('core.views.openai_client', None):
+                url = reverse('portfolai_analysis')
+                response = self.client.get(url, {'symbol': 'AAPL'})
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('symbol', data)
+                self.assertTrue(data.get('fallback', False))
+
+    def test_stock_summary_with_finnhub_client_none(self):
+        """Test stock summary when finnhub_client is None"""
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
+                with patch('core.views.finnhub_client', None):
+                    url = reverse('stock_summary')
+                    response = self.client.get(url, {'symbol': 'AAPL'})
+                    
+                    self.assertEqual(response.status_code, 500)
+                    data = response.json()
+                    self.assertIn('error', data)
+
+    def test_stock_summary_with_openai_client_none(self):
+        """Test stock summary when openai_client is None"""
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
+                with patch('core.views.openai_client', None):
+                    url = reverse('stock_summary')
+                    response = self.client.get(url, {'symbol': 'AAPL'})
+                    
+                    self.assertEqual(response.status_code, 500)
+                    data = response.json()
+                    self.assertIn('error', data)
