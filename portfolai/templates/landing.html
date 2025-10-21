@@ -29,8 +29,8 @@
     
     <!-- Header -->
     <header class="tw-max-w-lg:tw-px-4 tw-max-w-lg:tw-mr-auto tw-absolute tw-top-0 tw-z-20 tw-flex tw-h-[60px] tw-w-full tw-bg-opacity-0 tw-px-[5%] lg:tw-justify-around">
-        <a class="tw-h-[50px] tw-w-[50px] tw-p-[4px]" href="{% url 'landing' %}">
-            <img src="{% static 'landing/assets/logo.png' %}" alt="PortfolAI logo" class="tw-object tw-h-full tw-w-full" />
+        <a class="tw-h-[50px] tw-w-[50px] tw-p-[4px] tw-flex tw-items-center tw-justify-center" href="{% url 'landing' %}">
+            <span class="tw-text-2xl tw-font-bold tw-text-white">PortfolAI</span>
         </a>
         <div class="collapsible-header animated-collapse max-lg:tw-shadow-md" id="collapsed-header-items">
             <div class="tw-flex tw-h-full tw-w-max tw-gap-5 tw-text-base max-lg:tw-mt-[30px] max-lg:tw-flex-col max-lg:tw-place-items-end max-lg:tw-gap-5 lg:tw-mx-auto lg:tw-place-items-center">
@@ -638,12 +638,7 @@
             <div
                 class="tw-flex tw-h-full tw-w-[250px] tw-flex-col tw-place-items-center tw-gap-6 max-md:tw-w-full"
             >
-                <img
-                    src="{% static 'landing/assets/logo.png' %}"
-                    alt="PortfolAI logo"
-                    srcset=""
-                    class="tw-max-w-[120px]"
-                />
+                <span class="tw-text-4xl tw-font-bold tw-text-white">PortfolAI</span>
                 <div>
                     AI-Powered Stock Analysis
                     <br />
