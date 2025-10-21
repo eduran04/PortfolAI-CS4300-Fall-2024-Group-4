@@ -940,10 +940,10 @@ class APITests(TestCase):
                 url = reverse('get_stock_data')
                 response = self.client.get(url, {'symbol': 'INVALID'})
                 
-                # This should trigger the 500 error path in the exception handler
-                self.assertEqual(response.status_code, 200)  # Actually returns 200 with fallback
+                # This actually returns 500 when both quote and profile fail
+                self.assertEqual(response.status_code, 500)
                 data = response.json()
-                self.assertIn('symbol', data)
+                self.assertIn('error', data)
 
     def test_get_market_movers_with_invalid_quote_data(self):
         """Test market movers with invalid quote data"""
@@ -1014,3 +1014,39 @@ class APITests(TestCase):
                     self.assertEqual(response.status_code, 200)
                     data = response.json()
                     self.assertIn('symbol', data)
+
+    def test_get_stock_data_with_valid_quote_and_profile(self):
+        """Test stock data with valid quote and profile data"""
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.finnhub_client') as mock_finnhub:
+                mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.', 'country': 'US', 'industry': 'Technology'}
+                
+                url = reverse('get_stock_data')
+                response = self.client.get(url, {'symbol': 'AAPL'})
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('symbol', data)
+                self.assertIn('name', data)
+                self.assertIn('price', data)
+                self.assertEqual(data['symbol'], 'AAPL')
+                self.assertEqual(data['name'], 'Apple Inc.')
+
+    def test_get_market_movers_with_valid_data(self):
+        """Test market movers with valid data"""
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.finnhub_client') as mock_finnhub:
+                # Mock valid quote data
+                mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                mock_finnhub.company_profile2.return_value = {'name': 'Test Company'}
+                
+                url = reverse('get_market_movers')
+                response = self.client.get(url)
+                
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('gainers', data)
+                self.assertIn('losers', data)
+                self.assertIsInstance(data['gainers'], list)
+                self.assertIsInstance(data['losers'], list)
