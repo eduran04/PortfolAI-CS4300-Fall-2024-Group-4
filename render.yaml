@@ -22,3 +22,4 @@ services:
       name: sqlite-data
       mountPath: /opt/render/project/src/portfolai
       sizeGB: 1
+    staticPublishPath: ./staticfiles
