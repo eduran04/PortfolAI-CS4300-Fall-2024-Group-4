@@ -71,7 +71,50 @@ def stock_summary(request):
     """
     Example: /api/stock/?symbol=AAPL
     """
-    symbol = request.GET.get("symbol", "AAPL")
+    symbol = request.GET.get("symbol", "AAPL").strip().upper()
+    
+    # Handle empty or whitespace symbols
+    if not symbol:
+        symbol = "AAPL"
+
+    # Check if API keys are available
+    if not settings.FINNHUB_API_KEY or not finnhub_client or not settings.OPENAI_API_KEY or not openai_client:
+        # Return fallback data when APIs are not available
+        if symbol in FALLBACK_STOCKS:
+            stock_data = FALLBACK_STOCKS[symbol]
+            fallback_summary = f"""
+**PortfolAI Stock Summary for {symbol}**
+
+**Company:** {stock_data['name']}
+**Current Price:** ${stock_data['price']:.2f}
+**Change:** ${stock_data['change']:.2f} ({stock_data['changePercent']:.2f}%)
+
+**Summary:**
+This is a demo stock summary for educational purposes. The data shown is sample data for demonstration. For real-time analysis and AI-powered insights, please configure the required API keys.
+
+**Key Metrics:**
+- Price: ${stock_data['price']:.2f}
+- Change: {stock_data['changePercent']:.2f}%
+- Market Cap: Not available (demo data)
+
+*Note: This is fallback data for demonstration purposes. Configure API keys for real-time analysis.*
+            """
+            return Response({
+                "symbol": symbol,
+                "company": {"name": stock_data['name']},
+                "quote": {
+                    "c": stock_data['price'],
+                    "pc": stock_data['price'] - stock_data['change'],
+                    "o": stock_data['price'] - stock_data['change'],
+                    "h": stock_data['price'] + abs(stock_data['change']),
+                    "l": stock_data['price'] - abs(stock_data['change']),
+                    "v": 1000000
+                },
+                "ai_summary": fallback_summary,
+                "fallback": True
+            })
+        else:
+            return Response({"error": f"No data available for symbol {symbol} (API not configured)"}, status=404)
 
     try:
         # Fetch stock quote from Finnhub
@@ -80,7 +123,7 @@ def stock_summary(request):
 
         # Ask OpenAI to summarize
         summary_prompt = f"Summarize this stock data for {symbol}: {quote}"
-        response = openai.chat.completions.create(
+        response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a financial analyst."},
@@ -106,7 +149,7 @@ def get_stock_data(request):
     Get basic stock data for search functionality
     Example: /api/stock-data/?symbol=AAPL
     """
-    symbol = request.GET.get("symbol", "").upper()
+    symbol = request.GET.get("symbol", "").strip().upper()
     
     if not symbol:
         return Response({"error": "Symbol parameter is required"}, status=400)

@@ -559,6 +559,7 @@ class APITests(TestCase):
         """Test market movers API exception triggers fallback"""
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
+                # Mock the client to exist but throw exceptions
                 mock_finnhub.quote.side_effect = Exception("API Error")
                 
                 url = reverse('get_market_movers')
