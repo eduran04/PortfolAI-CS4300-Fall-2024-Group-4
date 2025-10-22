@@ -125,3 +125,21 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 └── render.yaml                             # Deployment configuration
 ```
 
+## AI Integration and Tools Used
+
+This project leverages AI tools in the following ways:
+
+### 1. Application-Level AI Features
+- **OpenAI API Integration**:  
+  Used within `/api/stock-summary/` and `/api/portfolai-analysis/` endpoints to generate AI-driven summaries and insights based on real-time stock data.  
+  - Fallback mock responses are used during offline testing or when API limits are reached.  
+  - AI summaries combine structured market data with sentiment and performance analysis.
+
+### 2. Development Assistance
+AI tools were responsibly used to improve productivity and creativity during development:
+- **ChatGPT (OpenAI GPT-5)** and **Claude Sonnet 4.5** were used to assist in:
+  - Writing and refining Django view logic and API exception handling.
+  - Drafting and verifying unit tests and mock data generation.
+  - Improving code readability and documentation.
+- **Cursor IDE (AI Pair Programming)** assisted in integrating the landing page and dashboard templates with Django.
+- All AI-generated or assisted code was **reviewed, debugged, and verified manually** by us [Group 4] before inclusion in the team repo.
