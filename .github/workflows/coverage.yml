@@ -29,6 +29,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        cd portfolai
         python -m pip install --upgrade pip
         pip install pytest pytest-cov pylint django djangorestframework pytest-django requests django-cors-headers pyzbar opencv-python numpy python-dotenv openai
         sudo apt-get update -y
@@ -39,21 +40,27 @@ jobs:
 
     - name: Run migrations
       run: |
-           python manage.py makemigrations
-           python manage.py migrate --noinput
+        cd portfolai
+        python manage.py makemigrations
+        python manage.py migrate --noinput
 
     - name: Collect static files
-      run: python manage.py collectstatic --noinput
+      run: |
+        cd portfolai
+        python manage.py collectstatic --noinput
 
     - name: Run linting with coverage
       run: |
-            python -m pylint core || true
+        cd portfolai
+        python -m pylint core || true
 
     - name: Run tests with coverage (Console (asked for in sprint requirements) and XML report)
-      run: pytest --cov=. --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80
+      run: |
+        cd portfolai
+        pytest --cov=. --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80
 
     - name: Post coverage comment using pytest-coverage-comment
       uses: MishaKav/pytest-coverage-comment@v1
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        pytest-xml-coverage-path: coverage.xml
+        pytest-xml-coverage-path: portfolai/coverage.xml

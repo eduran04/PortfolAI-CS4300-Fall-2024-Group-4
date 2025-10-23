@@ -91,6 +91,10 @@ coverage report --fail-under=80
 
 ```
 PortfolAI-CS4300-Fall-2024-Group-4/
+├── .github/                                # GitHub configuration
+│   └── workflows/                          # GitHub Actions workflows
+│       ├── ai-code-review.yml              # AI code review workflow
+│       └── ci.yml                          # Continuous integration workflow
 ├── portfolai/                              # Main Django project directory
 │   ├── core/                               # Django app for core functionality
 │   │   ├── __init__.py
@@ -99,29 +103,29 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │   │   ├── models.py                       # Database models
 │   │   ├── tests.py                        # Unit tests
 │   │   ├── views.py                        # View functions and API endpoints
-│   │   └── migrations/                     # Database migration files
-│   │       └── __init__.py
+│   │   ├── migrations/                     # Database migration files
+│   │   │   └── __init__.py
+│   │   ├── static/                         # Static files (CSS, JS, images)
+│   │   └── templates/                      # HTML templates
 │   ├── mysite/                             # Django project settings
 │   │   ├── __init__.py
 │   │   ├── asgi.py                         # ASGI configuration
 │   │   ├── settings.py                     # Django settings
 │   │   ├── urls.py                         # Main URL configuration
 │   │   └── wsgi.py                         # WSGI configuration
-│   ├── templates/                          # HTML templates
-│   │   ├── base.html                       # Base template
-│   │   ├── landing.html                    # Landing page template
-│   │   └── home.html                       # Dashboard template
-│   ├── static/                             # Static files
-│   │   ├── landing/                        # Landing page assets
-│   │   ├── script.js                       # Main JavaScript file
-│   │   └── style.css                       # Custom CSS styles
+│   ├── staticfiles/                        # Django static files collection
+│   ├── build.sh                            # Build script
 │   ├── manage.py                           # Django management script
 │   ├── db.sqlite3                          # SQLite database file
-│   └── requirements.txt                    # Python dependencies
-├── .gitignore                              # Root git ignore rules
+│   ├── pyproject.toml                      # Python project configuration
+│   ├── pytest.ini                         # Pytest configuration
+│   ├── requirements.txt                    # Python dependencies
+│   └── review.py                           # Code review script
+├── project_report.txt                      # Project report document
 ├── README.md                               # Project documentation
 ├── LICENSE                                 # Project license
 ├── Reflection1.txt                         # Team reflection document
+├── TESTING.md                              # Testing documentation
 └── render.yaml                             # Deployment configuration
 ```
 

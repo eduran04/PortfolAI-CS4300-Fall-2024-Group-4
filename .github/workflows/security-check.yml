@@ -29,9 +29,11 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd portfolai
           pip install -r requirements.txt
           pip install safety bandit
 
       - name: Run Bandit (Static Code Analysis)
         run: |
+          cd portfolai
           bandit -r core -s MEDIUM --exit-zero
