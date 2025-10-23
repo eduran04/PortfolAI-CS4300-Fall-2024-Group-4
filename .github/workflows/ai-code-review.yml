@@ -1,79 +1,39 @@
-name: AI Code Review
+name: Custom Code Review
+
+permissions:
+  contents: read
+  pull-requests: write
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, reopened, synchronize]
 
 jobs:
-  ai-review:
+  review:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       pull-requests: write
-    
+      issues: read
+      contents: read
+      actions: write
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Get changed files
-      id: changed-files
-      run: |
-        git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} > changed_files.txt
-        cat changed_files.txt
-    
-    - name: AI Code Review
-      uses: actions/github-script@v7
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const fs = require('fs');
-          const changedFiles = fs.readFileSync('changed_files.txt', 'utf8').split('\n').filter(f => f);
-          
-          let diffContent = '';
-          for (const file of changedFiles) {
-            if (file.endsWith('.py')) {
-              try {
-                const diff = await exec.getExecOutput('git', ['diff', '${{ github.event.pull_request.base.sha }}', '${{ github.sha }}', '--', file]);
-                diffContent += `\n\n### ${file}\n${diff.stdout}`;
-              } catch (error) {
-                console.log(`Could not get diff for ${file}`);
-              }
-            }
-          }
-          
-          if (!diffContent) {
-            console.log('No Python files changed');
-            return;
-          }
-          
-          // Call OpenAI API for code review
-          const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${{ secrets.OPENAI_API_KEY }}`
-            },
-            body: JSON.stringify({
-              model: 'gpt-4o-mini',
-              messages: [{
-                role: 'system',
-                content: 'You are a code reviewer. Review the following code changes and provide constructive feedback on code quality, potential bugs, security issues, and best practices. Focus on Django, Python, and web development best practices.'
-              }, {
-                role: 'user',
-                content: `Please review these code changes for a Django stock analysis application:\n${diffContent.substring(0, 8000)}`
-              }],
-              max_tokens: 1000
-            })
-          });
-          
-          const data = await response.json();
-          const review = data.choices[0].message.content;
-          
-          // Post review as comment
-          await github.rest.issues.createComment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: context.issue.number,
-            body: `## 🤖 AI Code Review\n\n${review}\n\n---\n*Powered by OpenAI GPT-4o-mini*`
-          });
+      - name: Checkout the code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install openai PyGithub
+
+      - name: Run Custom Code Review
+        run: |
+          python review.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_PR_ID: ${{ github.event.pull_request.number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
