@@ -11,7 +11,7 @@ FEATURE 1: REAL-TIME STOCK DATA RETRIEVAL
 FEATURE 2: MARKET MOVERS DASHBOARD  
 - get_market_movers() - /api/market-movers/ - Top gainers/losers
 
-FEATURE 3: FINANCIAL NEWS FEED
+FEATURE 3: REAL TIME FINANCIAL NEWS FEED
 - get_news() - /api/news/ - Financial news with symbol filtering
 
 FEATURE 4: REAL TIME AI-POWERED STOCK ANALYSIS 
