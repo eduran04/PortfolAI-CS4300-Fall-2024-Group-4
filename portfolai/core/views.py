@@ -14,7 +14,7 @@ FEATURE 2: MARKET MOVERS DASHBOARD
 FEATURE 3: FINANCIAL NEWS FEED
 - get_news() - /api/news/ - Financial news with symbol filtering
 
-FEATURE 4: AI-POWERED STOCK ANALYSIS
+FEATURE 4: REAL TIME AI-POWERED STOCK ANALYSIS 
 - portfolai_analysis() - /api/portfolai-analysis/ - OpenAI-powered analysis
 
 BASIC VIEWS
