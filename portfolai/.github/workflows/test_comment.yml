@@ -1,0 +1,37 @@
+name: Post Django Test Results to Pull Request
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  post-test-results:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: read
+      contents: read
+      actions: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest django djangorestframework pytest-django requests PyGithub
+
+    - name: Post test results to pull request
+      run: |
+        python test_results.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_PR_ID: ${{ github.event.pull_request.number }}
+        GITHUB_REPOSITORY: ${{ github.repository }}

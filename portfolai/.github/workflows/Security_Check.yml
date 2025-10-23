@@ -1,0 +1,36 @@
+name: Python Security Checks
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10.12'
+
+      - name: Set up cache for pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install safety bandit
+
+      - name: Run Bandit (Static Code Analysis)
+        run: |
+          bandit -r core -s MEDIUM --exit-zero
