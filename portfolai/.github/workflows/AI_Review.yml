@@ -29,6 +29,11 @@ jobs:
         run: |
           pip install openai PyGithub
 
+      - name: Run migrations and collect static files
+        run: |
+          python manage.py migrate --noinput
+          python manage.py collectstatic --noinput
+
       - name: Run Custom Code Review
         run: |
           python review.py

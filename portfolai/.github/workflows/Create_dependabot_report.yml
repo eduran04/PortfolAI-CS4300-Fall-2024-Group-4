@@ -3,6 +3,7 @@ name: Print Dependabot Report
 on:
   pull_request:
       branches:
+          - main
           - develop
     
 jobs:

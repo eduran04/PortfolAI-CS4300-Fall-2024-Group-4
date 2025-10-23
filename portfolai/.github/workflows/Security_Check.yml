@@ -3,6 +3,7 @@ name: Python Security Checks
 on:
   push:
     branches:
+      - main
       - develop
 
 jobs:

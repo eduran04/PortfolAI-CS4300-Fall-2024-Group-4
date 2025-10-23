@@ -3,6 +3,7 @@ name: Run Django Tests with Coverage
 on:
   pull_request:
     branches:
+      - main
       - develop
 
 jobs:
@@ -40,6 +41,9 @@ jobs:
       run: |
            python manage.py makemigrations
            python manage.py migrate --noinput
+
+    - name: Collect static files
+      run: python manage.py collectstatic --noinput
 
     - name: Run linting with coverage
       run: |
