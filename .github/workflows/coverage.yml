@@ -25,15 +25,19 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.12.3'
 
-    - name: Install dependencies
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y libzbar-dev
+
+    - name: Install Python dependencies
       run: |
         cd portfolai
         python -m pip install --upgrade pip
-        pip install pytest pytest-cov pylint django djangorestframework pytest-django requests django-cors-headers pyzbar opencv-python numpy python-dotenv openai
-        sudo apt-get update -y
-        sudo apt-get install -y libzbar-dev
+        pip install -r requirements.txt
+        pip install PyGithub
 
     - name: Set DJANGO_SETTINGS_MODULE environment variable
       run: echo "DJANGO_SETTINGS_MODULE=mysite.settings" >> $GITHUB_ENV
