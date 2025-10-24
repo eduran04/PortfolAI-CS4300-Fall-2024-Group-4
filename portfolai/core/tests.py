@@ -485,7 +485,7 @@ class APITests(TestCase):
     def test_get_news_with_api_error(self):
         """Test news with API error handling"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 mock_newsapi.get_top_headlines.side_effect = Exception("API Error")
                 
                 url = reverse('get_news')
@@ -564,7 +564,7 @@ class APITests(TestCase):
         """Test various API error scenarios"""
         # Test news with None response
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 mock_newsapi.get_top_headlines.return_value = None
                 
                 url = reverse('get_news')
@@ -577,7 +577,7 @@ class APITests(TestCase):
 
         # Test news with invalid response structure
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 mock_newsapi.get_top_headlines.return_value = {'invalid': 'data'}
                 
                 url = reverse('get_news')
@@ -696,7 +696,7 @@ class APITests(TestCase):
     def test_get_news_articles_processing(self):
         """Test news articles processing and filtering"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 mock_articles = {
                     'articles': [
                         {'title': 'Valid Article', 'url': 'http://example.com', 'publishedAt': '2024-01-01T10:00:00Z', 'source': {'name': 'Test Source'}, 'description': 'Test description'},
@@ -719,7 +719,7 @@ class APITests(TestCase):
     def test_get_news_time_formatting(self):
         """Test news time formatting logic"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 mock_articles = {
                     'articles': [
                         {'title': 'Test Article', 'url': 'http://example.com', 'publishedAt': '2024-01-01T10:00:00Z', 'source': {'name': 'Test Source'}, 'description': 'Test description'}
@@ -739,7 +739,7 @@ class APITests(TestCase):
     def test_get_news_invalid_time_format(self):
         """Test news with invalid time format"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 mock_articles = {
                     'articles': [
                         {'title': 'Test Article', 'url': 'http://example.com', 'publishedAt': 'invalid-time', 'source': {'name': 'Test Source'}, 'description': 'Test description'}
@@ -759,7 +759,7 @@ class APITests(TestCase):
     def test_get_news_no_articles_fallback(self):
         """Test news when no valid articles found"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 mock_articles = {
                     'articles': [
                         {'title': '', 'url': 'http://example.com'},  # Invalid article
@@ -1018,7 +1018,7 @@ class APITests(TestCase):
     def test_get_news_with_headlines_exception(self):
         """Test news when headlines fetch throws exception"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 mock_newsapi.get_top_headlines.side_effect = Exception("Headlines fetch error")
                 
                 url = reverse('get_news')
@@ -1091,7 +1091,7 @@ class APITests(TestCase):
     def test_get_news_with_invalid_article_data(self):
         """Test news with invalid article data"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 # Mock articles with missing required fields
                 mock_articles = {
                     'articles': [
@@ -1182,7 +1182,7 @@ class APITests(TestCase):
     def test_get_news_with_symbol_specific_news(self):
         """Test news with symbol-specific news using get_everything"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 # Mock successful get_everything call
                 mock_articles = {
                     'articles': [
@@ -1202,7 +1202,7 @@ class APITests(TestCase):
     def test_get_news_with_symbol_news_fallback(self):
         """Test news with symbol when get_everything fails, falls back to headlines"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi') as mock_newsapi:
+            with patch('core.views.newsapi') as mock_newsapi:
                 # Mock get_everything to fail, headlines to succeed
                 mock_newsapi.get_everything.side_effect = Exception("Everything API failed")
                 mock_newsapi.get_top_headlines.return_value = {
