@@ -80,16 +80,16 @@ body {
   
   /* Analysis Modal Styling */
   .prose {
-    color: #374151;
+    color: #1f2937;
     line-height: 1.7;
   }
   
   .dark .prose {
-    color: #d1d5db;
+    color: #f9fafb;
   }
   
   .prose h3 {
-    color: #374151;
+    color: #111827;
     font-weight: 700;
     margin-top: 1.5rem;
     margin-bottom: 0.75rem;
@@ -98,12 +98,12 @@ body {
   }
   
   .dark .prose h3 {
-    color: #d1d5db;
+    color: #ffffff;
     border-bottom-color: #60a5fa;
   }
   
   .prose h4 {
-    color: #374151;
+    color: #111827;
     font-weight: 600;
     margin-top: 1.25rem;
     margin-bottom: 0.75rem;
@@ -112,27 +112,27 @@ body {
   }
   
   .dark .prose h4 {
-    color: #d1d5db;
+    color: #ffffff;
     border-left-color: #60a5fa;
   }
   
   .prose strong {
-    color: #374151;
+    color: #111827;
     font-weight: 700;
   }
   
   .dark .prose strong {
-    color: #d1d5db;
+    color: #ffffff;
   }
   
   .prose em {
-    color: #374151;
+    color: #111827;
     font-style: italic;
     font-weight: 500;
   }
   
   .dark .prose em {
-    color: #d1d5db;
+    color: #ffffff;
   }
   
   .prose ul {
@@ -147,21 +147,21 @@ body {
   .prose li {
     margin: 0.5rem 0;
     line-height: 1.6;
-    color: #374151;
+    color: #111827;
   }
   
   .dark .prose li {
-    color: #d1d5db;
+    color: #f9fafb;
   }
   
   .prose p {
     margin-bottom: 1.25rem;
     line-height: 1.7;
-    color: #374151;
+    color: #111827;
   }
   
   .dark .prose p {
-    color: #d1d5db;
+    color: #f9fafb;
   }
   
   /* Modal animations - consolidated above */
