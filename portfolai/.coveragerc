@@ -1,0 +1,23 @@
+[run]
+omit = 
+    */core/services.py
+    */migrations/*
+    */venv/*
+    */env/*
+    */tests.py
+    */test_*.py
+    */__pycache__/*
+    */node_modules/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
