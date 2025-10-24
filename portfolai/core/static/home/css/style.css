@@ -52,9 +52,14 @@ body {
   }
   .modal {
     display: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
   }
   .modal.active {
     display: flex;
+    opacity: 1;
+    visibility: visible;
   }
   
   .tv-lightweight-charts-tooltip {
@@ -159,17 +164,7 @@ body {
     color: #d1d5db;
   }
   
-  /* Modal animations */
-  .modal {
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-  }
-  
-  .modal.active {
-    opacity: 1;
-    visibility: visible;
-  }
+  /* Modal animations - consolidated above */
   
   /* Analysis modal specific styles */
   #analysisModal .bg-white {
