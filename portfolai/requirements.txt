@@ -10,7 +10,7 @@ finnhub-python==2.4.20
 newsapi-python==0.2.7
 
 # Environment management (for API keys)
-python-dotenv==1.0.1
+python-dotenv==1.1.1
 
 # CORS (if your frontend and backend communicate separately)
 django-cors-headers==4.4.0
