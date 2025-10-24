@@ -794,7 +794,7 @@ class APITests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
                 mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
-                with patch('core.services.newsapi') as mock_newsapi:
+                with patch('core.views.newsapi') as mock_newsapi:
                     mock_newsapi.get_everything.side_effect = Exception("News error")
                     
                     url = reverse('portfolai_analysis')
@@ -942,7 +942,7 @@ class APITests(TestCase):
     def test_get_news_with_newsapi_none(self):
         """Test news when newsapi is None"""
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
-            with patch('core.services.newsapi', None):
+            with patch('core.views.newsapi', None):
                 url = reverse('get_news')
                 response = self.client.get(url)
                 
@@ -1115,7 +1115,7 @@ class APITests(TestCase):
         """Test PortfolAI analysis when news fetch throws exception"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
-                with patch('core.services.newsapi') as mock_newsapi:
+                with patch('core.views.newsapi') as mock_newsapi:
                     mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0}
                     mock_finnhub.company_profile2.return_value = {'name': 'Test Company'}
                     mock_newsapi.get_everything.side_effect = Exception("News error")
