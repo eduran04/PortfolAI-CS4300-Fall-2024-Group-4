@@ -149,6 +149,13 @@ function showAnalysisModal(symbol, analysis, isFallback) {
         closeAnalysisModal();
       }
     });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && analysisModal.classList.contains('active')) {
+        closeAnalysisModal();
+      }
+    });
   }
   
   // Update content
