@@ -6,11 +6,9 @@
 // Watchlist state
 let watchlist = JSON.parse(localStorage.getItem('stockWatchlist')) || [];
 
-// DOM references
+// DOM references (these are already declared in stock.js, reuse them)
 const watchlistItemsDiv = document.getElementById('watchlist-items');
 const emptyWatchlistMessage = document.getElementById('empty-watchlist-message');
-const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
-const searchInput = document.getElementById('stock-search');
 
 /**
  * Load watchlist from localStorage
@@ -52,6 +50,7 @@ function toggleWatchlist(symbol) {
   saveWatchlist();
   renderWatchlist();
 
+  const searchInput = document.getElementById('stock-search');
   const currentSearchSymbol = searchInput.value.toUpperCase().trim();
   if (currentSearchSymbol === symbol) {
     updateWatchlistButton(symbol);
@@ -63,6 +62,7 @@ function toggleWatchlist(symbol) {
  * @param {string} symbol - Stock symbol to update button for
  */
 function updateWatchlistButton(symbol) {
+  const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
   const isInWatchlist = isStockInWatchlist(symbol);
   
   addToWatchlistBtn.textContent = isInWatchlist
@@ -151,7 +151,7 @@ async function renderWatchlist() {
       : 'bg-gray-50 dark:bg-gray-700';
 
     return `
-    <tr class="${rowClass} border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer" onclick="searchInput.value='${item.symbol}'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
+    <tr class="${rowClass} border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer" onclick="document.getElementById('stock-search').value='${item.symbol}'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
         <td class="px-6 py-4">
             <div class="font-medium text-gray-900 dark:text-white">${item.symbol}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400">${stockData.name}</div>
@@ -180,6 +180,8 @@ async function renderWatchlist() {
  * Initialize watchlist functionality
  */
 function initializeWatchlist() {
+  const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
+  const searchInput = document.getElementById('stock-search');
   addToWatchlistBtn.addEventListener('click', () => {
     const symbol = searchInput.value.toUpperCase().trim();
     toggleWatchlist(symbol);

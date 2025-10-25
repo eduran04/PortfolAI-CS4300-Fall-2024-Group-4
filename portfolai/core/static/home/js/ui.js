@@ -15,8 +15,6 @@ const tickerMove = document.querySelector('.ticker-move');
 const topGainersList = document.getElementById('top-gainers-list');
 const topLosersList = document.getElementById('top-losers-list');
 const newsFeedDiv = document.getElementById('news-feed');
-const searchInput = document.getElementById('stock-search');
-const searchButton = document.getElementById('search-button');
 
 // Ticker data storage
 let tickerData = [];
@@ -54,6 +52,7 @@ function toggleTheme() {
   
   // Update chart if it exists
   if (typeof chartInstance !== 'undefined' && chartInstance) {
+    const searchInput = document.getElementById('stock-search');
     const symbol = searchInput.value.toUpperCase() || 'AAPL';
     renderChart(generateStockData(100), currentTheme, symbol);
   }
@@ -123,7 +122,7 @@ async function populateMarketMovers() {
       ? gainers
           .map(
             (stock) => `
-                  <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="searchInput.value='${
+                  <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
                     stock.symbol
                   }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
                   <div>
@@ -152,7 +151,7 @@ async function populateMarketMovers() {
       ? losers
           .map(
             (stock) => `
-            <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="searchInput.value='${
+            <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
               stock.symbol
             }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
                 <div>
@@ -188,6 +187,7 @@ async function populateMarketMovers() {
  * @param {string} symbol - Optional stock symbol to filter news
  */
 async function populateNewsFeed(symbol = null) {
+  const searchInput = document.getElementById('stock-search');
   const currentSymbol = symbol || searchInput.value.toUpperCase().trim();
   
   try {
@@ -279,6 +279,8 @@ function initializeUI() {
   setInterval(populateMarketMovers, 15000); // Update market movers every 15 seconds
   
   // Set up news feed updates on search
+  const searchButton = document.getElementById('search-button');
+  const searchInput = document.getElementById('stock-search');
   searchButton.addEventListener('click', () => populateNewsFeed());
   searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
