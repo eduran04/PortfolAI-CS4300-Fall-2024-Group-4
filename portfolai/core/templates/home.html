@@ -131,9 +131,29 @@
 
         <section id="watchlist" class="mb-8">
              <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-300">
-                <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">My Watchlist</h2>
-                <div id="watchlist-items" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <p id="empty-watchlist-message" class="text-gray-500 dark:text-gray-400 col-span-full">Your watchlist is empty. Search for a stock and add it!</p>
+                <div class="mb-4">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-200">My Watchlist</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Symbol</th>
+                                <th scope="col" class="px-6 py-3">Price</th>
+                                <th scope="col" class="px-6 py-3">Change</th>
+                                <th scope="col" class="px-6 py-3">% Change</th>
+                                <th scope="col" class="px-6 py-3">Open</th>
+                                <th scope="col" class="px-6 py-3">High</th>
+                                <th scope="col" class="px-6 py-3">Low</th>
+                                <th scope="col" class="px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlist-items">
+                            <tr id="empty-watchlist-message" class="bg-white dark:bg-gray-800">
+                                <td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Your watchlist is empty. Search for a stock and add it!</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </section>
@@ -239,6 +259,17 @@
             <p class="mt-4 text-center text-xs text-gray-500 dark:text-gray-400">Note: This is a UI demonstration. Alerts are not functional.</p>
         </div>
     </div>
-    <script src="{% static 'home/js/script.js' %}"></script>
+    <!-- Core utilities and API -->
+    <script src="{% static 'home/js/utils.js' %}"></script>
+    <script src="{% static 'home/js/api.js' %}"></script>
+    
+    <!-- Feature modules -->
+    <script src="{% static 'home/js/modals.js' %}"></script>
+    <script src="{% static 'home/js/stock.js' %}"></script>
+    <script src="{% static 'home/js/watchlist.js' %}"></script>
+    <script src="{% static 'home/js/ui.js' %}"></script>
+    
+    <!-- Application initialization -->
+    <script src="{% static 'home/js/main.js' %}"></script>
 </body>
 </html>
