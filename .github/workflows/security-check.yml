@@ -1,7 +1,7 @@
 name: Python Security Checks
 
 on:
-  push:
+  pull_request:
     branches:
       - main
       - develop
