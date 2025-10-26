@@ -24,14 +24,15 @@ jobs:
         pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Run migrations
-      run: |
-        cd portfolai
-        python manage.py migrate
-      env:
-        DJANGO_SETTINGS_MODULE: mysite.settings
-        SECRET_KEY: test-secret-key-for-ci
-        DEBUG: True
+      - name: Run migrations
+        run: |
+          cd portfolai
+          python manage.py migrate
+        env:
+          DJANGO_SETTINGS_MODULE: mysite.settings
+          SECRET_KEY: test-secret-key-for-ci
+          DEBUG: True
+          ALLOWED_HOSTS: localhost,127.0.0.1,test
     
     - name: Collect static files
       run: |
@@ -41,6 +42,7 @@ jobs:
         DJANGO_SETTINGS_MODULE: mysite.settings
         SECRET_KEY: test-secret-key-for-ci
         DEBUG: True
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
     
     - name: Run tests with coverage
       run: |
@@ -50,6 +52,7 @@ jobs:
         DJANGO_SETTINGS_MODULE: mysite.settings
         SECRET_KEY: test-secret-key-for-ci
         DEBUG: True
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
     
     - name: Check coverage threshold
       run: |
@@ -59,3 +62,4 @@ jobs:
         DJANGO_SETTINGS_MODULE: mysite.settings
         SECRET_KEY: test-secret-key-for-ci
         DEBUG: True
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
