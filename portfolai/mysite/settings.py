@@ -30,9 +30,9 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SECRET_KEY = 'django-insecure-z4ih%dt*unw7*5(t*hv7(uur(cx1utk@*#yj2rk(m1hn(i@_-g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
+DEBUG = False
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = ['portfolai.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
