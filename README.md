@@ -36,15 +36,15 @@ pip install -r requirements.txt
 Copy the environment template and configure your API keys:
 
 ```
-cp portfolai/env.example portfolai/.env
+touch .env # portfolai/.env
 ```
 
 Edit the `.env` file with your actual API keys:
 
 ```
-# Django Configuration (Configured on Render Dashboard)
+# Django Configuration
 SECRET_KEY=django-secret-key
-DEBUG=True
+DEBUG=True # True in your environment / False in production
 ALLOWED_HOSTS=localhost,127.0.0.1,our-domain-name.onrender.com
 
 # API Keys
