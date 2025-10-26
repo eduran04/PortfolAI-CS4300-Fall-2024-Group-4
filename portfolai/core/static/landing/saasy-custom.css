@@ -19,8 +19,6 @@ html {
 }
 
 header{
-    /* background-color: #fff;
-    color: #000; */
     color: #b1b1b1;
 }
 
@@ -52,7 +50,6 @@ header > .collapsible-header{
 
 .header-links:hover {
     color: #ffffff;
-    /* background-color: var(--header-link-hover); */
 }
 
 .primary-text-color{
@@ -67,9 +64,8 @@ header > .collapsible-header{
 }
 
 .hero-section{
-    /* background-image: url("../assets/images/background/dots.svg"); */
-    background-position: center; /* Center the image */
-    background-repeat: no-repeat; /* Do not repeat the image */
+    background-position: center;
+    background-repeat: no-repeat;
     background-size: cover;
 }
 
@@ -81,7 +77,6 @@ header > .collapsible-header{
 }
 
 #dashboard {
-    /* transform-origin: bottom center; */
     transform: perspective(1200px) translateX(0px) translateY(12px) scale(0.8)
         rotate(0deg) rotateX(70deg);
     transition: transform 0.5;
@@ -90,12 +85,10 @@ header > .collapsible-header{
 .border-gradient{
     background: rgb(219,215,213);
     background: linear-gradient(180deg, rgba(219,215,213,1) 35%, rgba(214,211,233,0) 71%);
-    /* background-image: linear-gradient(90deg, #7e22ce91 8%, #625aafae 31%, #7badbbbc 76%, #54d2d0ca 89%); */
     padding: 2px;
     border-radius: 10px;
 }
 .border-gradient>div{
-    /* background-color: var(--bg-color); */
     background-color: var(--bg-color);
     border-radius: inherit;
 }
@@ -132,10 +125,8 @@ header > .collapsible-header{
     padding: 10px;
     background-color: transparent;
     border-radius: 5px;
-    /* outline: none; */
     min-width: 100px;
     border: 1px solid #818080;
-    /* transition: border 0.3s; */
 }
 
 .input:active, .input:focus, .input:focus-within{
@@ -205,7 +196,7 @@ header > .collapsible-header{
 
 .faq-accordion .active,
 .faq-accordion:hover {
-    /* background-color: #2e2c2c; */
+    /* Hover effect handled by JavaScript */
 }
 
 @media not all and (min-width: 1024px) {
@@ -233,4 +224,20 @@ header > .collapsible-header{
         color: rgb(255, 255, 255);
     }
     
+}
+
+/* Simple fixed header styling */
+header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 50 !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+/* Ensure body has proper spacing for fixed header */
+body {
+    padding-top: 60px !important;
 }

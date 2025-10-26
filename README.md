@@ -33,14 +33,21 @@ pip install -r requirements.txt
 
 4. Configure Environment Variables
 
-Create a .env file in the project root:
+Copy the environment template and configure your API keys:
 
 ```
-touch .env
+touch .env # portfolai/.env
 ```
 
-Add Key to .env file:
+Edit the `.env` file with your actual API keys:
+
 ```
+# Django Configuration
+SECRET_KEY=django-secret-key
+DEBUG=True # True in your environment / False in production
+ALLOWED_HOSTS=localhost,127.0.0.1,our-domain-name.onrender.com
+
+# API Keys
 FINNHUB_API_KEY=your_finnhub_api_key_here
 OPENAI_API_KEY=your_openai_api_key_here
 NEWS_API_KEY=your_news_api_key_here
