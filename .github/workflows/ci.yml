@@ -1,0 +1,65 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12.3'
+    
+    - name: Install dependencies
+      run: |
+        cd portfolai
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run migrations
+      run: |
+        cd portfolai
+        python manage.py migrate
+      env:
+        DJANGO_SETTINGS_MODULE: mysite.settings
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: True
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
+    
+    - name: Collect static files
+      run: |
+        cd portfolai
+        python manage.py collectstatic --noinput
+      env:
+        DJANGO_SETTINGS_MODULE: mysite.settings
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: True
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
+    
+    - name: Run tests with coverage
+      run: |
+        cd portfolai
+        pytest -v --cov=core --cov-report=term-missing
+      env:
+        DJANGO_SETTINGS_MODULE: mysite.settings
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: True
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
+    
+    - name: Check coverage threshold
+      run: |
+        cd portfolai
+        coverage report --fail-under=80
+      env:
+        DJANGO_SETTINGS_MODULE: mysite.settings
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: True
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
