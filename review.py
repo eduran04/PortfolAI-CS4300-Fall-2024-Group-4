@@ -7,8 +7,6 @@ from openai import OpenAI, OpenAIError
 
 # Configuration
 MAX_FILES = 30
-SKIP_EXTENSIONS = {'.lock', '.min.js', '.svg', '.png', '.jpg'}
-SKIP_FILES = {'package-lock.json', 'yarn.lock', 'poetry.lock'}
 
 SYSTEM_PROMPT = """Please review the following code and provide comprehensive feedback. 
 Consider the following aspects:
@@ -47,15 +45,6 @@ Prioritize suggestions that address security vulnerabilities, performance issues
 
 **Scoring:**
 At the end of your review, provide an overall code quality score out of 10, considering all the aspects mentioned above."""
-
-
-def should_review_file(filename: str) -> bool:
-    """Check if file should be reviewed."""
-    if any(filename.endswith(ext) for ext in SKIP_EXTENSIONS):
-        return False
-    if any(skip in filename for skip in SKIP_FILES):
-        return False
-    return True
 
 
 def initialize() -> tuple[OpenAI, Github, str, str]:
@@ -113,10 +102,6 @@ def fetch_files_from_pr(pr: PullRequest) -> str:
         # Collect file changes
         diff_parts = []
         for file in files:
-            # Skip files that shouldn't be reviewed
-            if not should_review_file(file.filename):
-                continue
-            
             # Only include files with actual changes (patch can be None)
             if file.patch:
                 diff_parts.append(f"File: {file.filename}\nChanges:\n{file.patch}\n")
