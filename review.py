@@ -1,14 +1,9 @@
 """AI-powered code review automation for GitHub pull requests."""
 
-import logging
 import os
 from github import Github, GithubException
 from github.PullRequest import PullRequest
 from openai import OpenAI, OpenAIError
-
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 # Configuration
 MAX_FILES = 30
@@ -85,11 +80,9 @@ def initialize() -> tuple[OpenAI, Github, str, str]:
         client = OpenAI(api_key=openai_key)
         g = Github(github_token)
         
-        logger.info(f"Initialized for {repo_name} PR #{pr_id}")
         return client, g, repo_name, pr_id
         
     except Exception as e:
-        logger.error(f"Initialization failed: {e}")
         raise
 
 
@@ -98,7 +91,6 @@ def get_pull_request(g: Github, repo_name: str, pr_id: str) -> PullRequest:
     try:
         repo = g.get_repo(repo_name)
         pr = repo.get_pull(int(pr_id))
-        logger.info(f"Fetched PR #{pr_id}")
         return pr
     except ValueError:
         raise ValueError(f"Invalid PR ID: {pr_id}")
@@ -138,7 +130,6 @@ def fetch_files_from_pr(pr: PullRequest) -> str:
         if len(diff) > 400000:
             raise ValueError("Changes too large. Split into smaller PRs.")
         
-        logger.info(f"Collected {len(diff_parts)} files for review")
         return diff
         
     except GithubException as e:
@@ -151,8 +142,6 @@ def request_code_review(diff: str, client: OpenAI) -> str:
         raise ValueError("Cannot review empty diff")
     
     try:
-        logger.info("Requesting code review")
-        
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
@@ -169,10 +158,6 @@ def request_code_review(diff: str, client: OpenAI) -> str:
         if not review or len(review) < 50:
             raise ValueError("Received insufficient review")
         
-        # Log usage
-        usage = response.usage
-        logger.info(f"Used {usage.total_tokens} tokens")
-        
         return review
         
     except OpenAIError as e:
@@ -184,7 +169,6 @@ def post_review(pr: PullRequest, review: str) -> None:
     try:
         comment = f"## Automated Code Review\n\n{review}"
         pr.create_issue_comment(comment)
-        logger.info("Posted review")
     except GithubException as e:
         raise ValueError(f"Failed to post review: {e}")
 
@@ -198,8 +182,8 @@ def post_error(pr: PullRequest, error: str) -> None:
             f"Check workflow logs for details."
         )
         pr.create_issue_comment(message)
-    except Exception as e:
-        logger.error(f"Could not post error: {e}")
+    except Exception:
+        pass
 
 
 def main() -> None:
@@ -207,8 +191,6 @@ def main() -> None:
     pr = None
     
     try:
-        logger.info("Starting code review")
-        
         # Initialize
         client, g, repo_name, pr_id = initialize()
         
@@ -224,17 +206,14 @@ def main() -> None:
         # Post review
         post_review(pr, review)
         
-        logger.info("Review completed successfully")
         print("Code review posted successfully")
         
     except ValueError as e:
-        logger.error(f"Error: {e}")
         if pr:
             post_error(pr, str(e))
         print(f"Error: {e}")
         exit(1)
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
         if pr:
             post_error(pr, "Unexpected error occurred")
         print(f"Error: {e}")
