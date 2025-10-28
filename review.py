@@ -7,7 +7,6 @@ from openai import OpenAI, OpenAIError
 
 # Configuration
 MAX_FILES = 30
-
 SYSTEM_PROMPT = """Please review the following code and provide comprehensive feedback. 
 Consider the following aspects:
 
@@ -48,7 +47,7 @@ At the end of your review, provide an overall code quality score out of 10, cons
 
 
 def initialize() -> tuple[OpenAI, Github, str, str]:
-    """Initialize OpenAI and GitHub clients."""
+    """Initialize OpenAI and GitHub clients and return them with repository info."""
     try:
         openai_key = os.getenv('OPENAI_API_KEY')
         if not openai_key:
@@ -76,7 +75,7 @@ def initialize() -> tuple[OpenAI, Github, str, str]:
 
 
 def get_pull_request(g: Github, repo_name: str, pr_id: str) -> PullRequest:
-    """Fetch pull request from GitHub."""
+    """Fetch pull request from GitHub repository."""
     try:
         repo = g.get_repo(repo_name)
         pr = repo.get_pull(int(pr_id))
@@ -88,7 +87,7 @@ def get_pull_request(g: Github, repo_name: str, pr_id: str) -> PullRequest:
 
 
 def fetch_files_from_pr(pr: PullRequest) -> str:
-    """Fetch and format file changes from PR."""
+    """Fetch and format file changes from pull request."""
     try:
         files = pr.get_files()
         total_files = files.totalCount
@@ -122,7 +121,7 @@ def fetch_files_from_pr(pr: PullRequest) -> str:
 
 
 def request_code_review(diff: str, client: OpenAI) -> str:
-    """Get code review from OpenAI."""
+    """Get code review from OpenAI for the provided diff."""
     if not diff.strip():
         raise ValueError("Cannot review empty diff")
     
@@ -150,7 +149,7 @@ def request_code_review(diff: str, client: OpenAI) -> str:
 
 
 def post_review(pr: PullRequest, review: str) -> None:
-    """Post review to PR."""
+    """Post review comment to pull request."""
     try:
         comment = f"## Automated Code Review\n\n{review}"
         pr.create_issue_comment(comment)
@@ -159,7 +158,7 @@ def post_review(pr: PullRequest, review: str) -> None:
 
 
 def post_error(pr: PullRequest, error: str) -> None:
-    """Post error message to PR."""
+    """Post error message to pull request."""
     try:
         message = (
             f"## Automated Code Review Failed\n\n"
@@ -172,7 +171,7 @@ def post_error(pr: PullRequest, error: str) -> None:
 
 
 def main() -> None:
-    """Run the code review process."""
+    """Run the complete code review process."""
     pr = None
     
     try:
