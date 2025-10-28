@@ -77,7 +77,10 @@ def request_code_review(diff, client):
                     - Code example if applicable
 
                     Focus on actionable feedback that will help improve code quality, maintainability, and adherence to industry standards.
-                    Prioritize suggestions that address security vulnerabilities, performance issues, or maintainability concerns."""
+                    Prioritize suggestions that address security vulnerabilities, performance issues, or maintainability concerns.
+
+                    **Scoring:**
+                    At the end of your review, provide an overall code quality score out of 10, considering all the aspects mentioned above."""
                 },
                 {"role": "user", "content": f"Here's the code to review:\n\n{diff}"}
             ],
