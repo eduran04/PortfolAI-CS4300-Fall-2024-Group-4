@@ -1,25 +1,27 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>{% block title %}MySite{% endblock %}</title>
-
-    <!-- ✅ Basecoat CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.2/dist/basecoat.cdn.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/basecoat-css@0.3.2/dist/js/all.min.js" defer></script>
-  </head>
-  <body class="min-h-svh bg-background text-foreground">
-    <header class="p-4 border-b">
-      <div class="container mx-auto flex items-center gap-4">
-        <a href="/" class="text-xl font-semibold">MySite</a>
-        <nav class="ml-auto flex gap-3">
-          <a href="/" class="btn btn-ghost">Home</a>
-        </nav>
-      </div>
-    </header>
-
-    <main class="container mx-auto p-6">
-      {% block content %}{% endblock %}
-    </main>
-  </body>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PortfolAI - AI-Powered Stock Portfolio{% endblock %}</title>
+    
+    <!-- Base Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Base Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Additional head content block for page-specific stylesheets and scripts -->
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300{% endblock %}">
+    
+    <!-- Main content block -->
+    {% block content %}{% endblock %}
+    
+    <!-- Additional scripts block for page-specific JavaScript -->
+    {% block extra_scripts %}{% endblock %}
+    
+</body>
 </html>
