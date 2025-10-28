@@ -1,129 +1,208 @@
+"""AI-powered code review automation for GitHub pull requests."""
+
 import os
-from github import Github
-from openai import OpenAI
+from github import Github, GithubException
+from github.PullRequest import PullRequest
+from openai import OpenAI, OpenAIError
 
-def initialize():
+# Configuration
+MAX_FILES = 30
+SYSTEM_PROMPT = """Please review the following code and provide comprehensive feedback. 
+Consider the following aspects:
+
+**General Code Quality:**
+- Code quality and adherence to best practices
+- Potential bugs or edge cases
+- Performance optimizations
+- Readability and maintainability
+
+**Security Considerations:**
+Pay special attention to security vulnerabilities including:
+- Input validation and sanitization
+- Authentication and authorization mechanisms
+- SQL injection prevention (proper ORM usage)
+- XSS and CSRF protection (Django-specific)
+- Sensitive data handling and exposure
+- Dependency vulnerabilities
+
+**Django/Python/JavaScript Specific Considerations:**
+- Django framework best practices (proper use of ORM, views patterns, built-in features)
+- Python standards compliance (PEP 8, type hints, docstrings)
+- JavaScript best practices and modern patterns
+- Error handling and input validation
+- Code organization and separation of concerns
+
+**Review Structure:**
+For each suggestion, please provide:
+- Specific issue identified with line references when applicable
+- Recommended improvement with clear explanation
+- Code example showing before/after implementation
+- Security implications if applicable
+
+Focus on actionable feedback that will help improve code quality, maintainability, and adherence to industry standards.
+Prioritize suggestions that address security vulnerabilities, performance issues, or maintainability concerns.
+
+**Scoring:**
+At the end of your review, provide an overall code quality score out of 10, considering all the aspects mentioned above."""
+
+
+def initialize() -> tuple[OpenAI, Github, str, str]:
+    """Initialize OpenAI and GitHub clients and return them with repository info."""
     try:
-        # Initialize OpenAI client
-        client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
-
-        # Get GitHub token and repository info from environment variables
+        openai_key = os.getenv('OPENAI_API_KEY')
+        if not openai_key:
+            raise ValueError("OPENAI_API_KEY is not set")
+        
         github_token = os.getenv('GITHUB_TOKEN')
         if not github_token:
             raise ValueError("GITHUB_TOKEN is not set")
-
+        
         repo_name = os.getenv('GITHUB_REPOSITORY')
         if not repo_name:
             raise ValueError("GITHUB_REPOSITORY is not set")
-
+        
         pr_id = os.getenv('GITHUB_PR_ID')
         if not pr_id:
             raise ValueError("GITHUB_PR_ID is not set")
-
-        # Initialize Github instance
+        
+        client = OpenAI(api_key=openai_key)
         g = Github(github_token)
-
+        
         return client, g, repo_name, pr_id
+        
     except Exception as e:
-        raise ValueError(f"Failed to initialize: {e}")
+        raise
 
-def get_repo_and_pull_request(g, repo_name, pr_id):
+
+def get_pull_request(g: Github, repo_name: str, pr_id: str) -> PullRequest:
+    """Fetch pull request from GitHub repository."""
     try:
         repo = g.get_repo(repo_name)
         pr = repo.get_pull(int(pr_id))
-        return repo, pr
-    except Exception as e:
-        raise ValueError(f"Failed to fetch repo or pull request: {e}")
+        return pr
+    except ValueError:
+        raise ValueError(f"Invalid PR ID: {pr_id}")
+    except GithubException as e:
+        raise ValueError(f"Failed to fetch PR: {e}")
 
-def fetch_files_from_pr(pr):
+
+def fetch_files_from_pr(pr: PullRequest) -> str:
+    """Fetch and format file changes from pull request."""
     try:
         files = pr.get_files()
-        diff = ""
+        total_files = files.totalCount
+        
+        # Validate file count
+        if total_files == 0:
+            raise ValueError("PR has no file changes")
+        if total_files > MAX_FILES:
+            raise ValueError(f"PR has {total_files} files (max {MAX_FILES}). Split into smaller PRs.")
+        
+        # Collect file changes
+        diff_parts = []
         for file in files:
-            diff += f"File: {file.filename}\nChanges:\n{file.patch}\n\n"
+            # Only include files with actual changes (patch can be None)
+            if file.patch:
+                diff_parts.append(f"File: {file.filename}\nChanges:\n{file.patch}\n")
+        
+        if not diff_parts:
+            raise ValueError("No reviewable files found")
+        
+        diff = "\n".join(diff_parts)
+        
+        # Simple size check (approximate 400k chars ~= 100k tokens)
+        if len(diff) > 400000:
+            raise ValueError("Changes too large. Split into smaller PRs.")
+        
         return diff
-    except Exception as e:
-        raise ValueError(f"Failed to fetch files from PR: {e}")
+        
+    except GithubException as e:
+        raise ValueError(f"Failed to fetch files: {e}")
 
-def request_code_review(diff, client):
+
+def request_code_review(diff: str, client: OpenAI) -> str:
+    """Get code review from OpenAI for the provided diff."""
+    if not diff.strip():
+        raise ValueError("Cannot review empty diff")
+    
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {
-                    "role": "system", 
-                    "content": """Yo! Let's make review.py actually readable because we're gonna have to present this code and I don't want the professor roasting us 💀
-
-                    We're learning Django/Python/JS and want to write code that doesn't look like we threw it together at 3am in the library (even if we did). Let's refactor this to follow actual software standards so we can flex our skills and maybe put this on our portfolio without cringing.
-
-                    **Django Stuff - Let's Not Reinvent The Wheel:**
-                    - Use Django's built-in features fr fr (forms, validators, all that)
-                    - Fat Models, Thin Views - basically put the logic where it belongs
-                    - Use the ORM properly so we're not just raw-dogging SQL queries
-                    - Class-based views or function-based views - whichever makes more sense (no cap, sometimes simple is better)
-
-                    **Make The Code Make Sense:**
-                    - Add comments that actually help - not "this is a variable" type beat
-                    - Name things properly so we remember what they do next week
-                    - Break up functions that are doing way too much
-                    - Type hints would be cool so VSCode stops yelling at us
-                    - Follow PEP 8 because the linter won't stop complaining otherwise
-
-                    **Error Handling - Because Stuff Breaks:**
-                    - Add try/except blocks so the whole app doesn't crash when something goes wrong
-                    - Print/log actual helpful error messages
-                    - Validate user input (never trust users bestie)
-                    - Handle edge cases we didn't think about at first
-
-                    **Organization - Clean Room Energy:**
-                    - Separate different concerns - don't mix everything together like a messy closet
-                    - Extract magic numbers into constants with actual names
-                    - Remove commented-out code and random print statements we left for debugging
-                    - Organize imports at the top like we're supposed to
-                    - Add docstrings so we remember what functions do when we review for finals
-                    
-                    **The College Student Special:**
-                    - Make it easy to understand for when we're explaining it in our presentation
-                    - Structure it so adding new features later won't be a nightmare
-                    - Comment the tricky parts so we can explain our thought process
-                    - Make sure it's something we'd be proud to show in a portfolio or interview
-                    
-                    Show me the refactored code with comments on what you changed and why. Don't go crazy with over-engineering - 
-                    we want good code, not a 10-page class diagram. Keep it real but make it professional. Let's goooo"""
-                },
+                {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": f"Here's the code to review:\n\n{diff}"}
             ],
-            max_completion_tokens=2048
+            max_completion_tokens=2048,
+            timeout=60.0
         )
-        return response.choices[0].message.content
+        
+        review = response.choices[0].message.content
+        
+        # Validate response
+        if not review or len(review) < 50:
+            raise ValueError("Received insufficient review")
+        
+        return review
+        
+    except OpenAIError as e:
+        raise ValueError(f"OpenAI error: {e}")
 
-    except Exception as e:
-        raise ValueError(f"Failed to get code review from OpenAI: {e}")
 
-
-def post_review_comments(pr, review_comments):
+def post_review(pr: PullRequest, review: str) -> None:
+    """Post review comment to pull request."""
     try:
-        pr.create_issue_comment(review_comments)
-    except Exception as e:
-        raise ValueError(f"Failed to post review comments: {e}")
+        comment = f"## Automated Code Review\n\n{review}"
+        pr.create_issue_comment(comment)
+    except GithubException as e:
+        raise ValueError(f"Failed to post review: {e}")
 
-def main():
+
+def post_error(pr: PullRequest, error: str) -> None:
+    """Post error message to pull request."""
     try:
+        message = (
+            f"## Automated Code Review Failed\n\n"
+            f"**Error:** {error}\n\n"
+            f"Check workflow logs for details."
+        )
+        pr.create_issue_comment(message)
+    except Exception:
+        pass
 
+
+def main() -> None:
+    """Run the complete code review process."""
+    pr = None
+    
+    try:
+        # Initialize
         client, g, repo_name, pr_id = initialize()
-
-        repo, pr = get_repo_and_pull_request(g, repo_name, pr_id)
-
+        
+        # Get PR
+        pr = get_pull_request(g, repo_name, pr_id)
+        
+        # Get changes
         diff = fetch_files_from_pr(pr)
-
-        review_comments = request_code_review(diff, client)
-
-        post_review_comments(pr, review_comments)
-
-        print("Code review posted successfully.")
-
-    except Exception as e:
+        
+        # Get review
+        review = request_code_review(diff, client)
+        
+        # Post review
+        post_review(pr, review)
+        
+        print("Code review posted successfully")
+        
+    except ValueError as e:
+        if pr:
+            post_error(pr, str(e))
         print(f"Error: {e}")
+        exit(1)
+    except Exception as e:
+        if pr:
+            post_error(pr, "Unexpected error occurred")
+        print(f"Error: {e}")
+        exit(1)
+
 
 if __name__ == "__main__":
     main()
