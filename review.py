@@ -60,7 +60,15 @@ def request_code_review(diff, client):
                     - Potential bugs or edge cases
                     - Performance optimizations
                     - Readability and maintainability
-                    - Security concerns
+
+                    **Security Considerations:**
+                    Pay special attention to security vulnerabilities including:
+                    - Input validation and sanitization
+                    - Authentication and authorization mechanisms
+                    - SQL injection prevention (proper ORM usage)
+                    - XSS and CSRF protection (Django-specific)
+                    - Sensitive data handling and exposure
+                    - Dependency vulnerabilities
 
                     **Django/Python/JavaScript Specific Considerations:**
                     - Django framework best practices (proper use of ORM, views patterns, built-in features)
@@ -71,10 +79,10 @@ def request_code_review(diff, client):
 
                     **Review Structure:**
                     For each suggestion, please provide:
-                    - Specific issue identified
-                    - Recommended improvement
-                    - Clear explanation of why the change improves the code
-                    - Code example if applicable
+                    - Specific issue identified with line references when applicable
+                    - Recommended improvement with clear explanation
+                    - Code example showing before/after implementation
+                    - Security implications if applicable
 
                     Focus on actionable feedback that will help improve code quality, maintainability, and adherence to industry standards.
                     Prioritize suggestions that address security vulnerabilities, performance issues, or maintainability concerns.
