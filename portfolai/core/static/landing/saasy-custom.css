@@ -22,6 +22,11 @@ header{
     color: #b1b1b1;
 }
 
+.header-logo {
+    color: #ffffff !important;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.3) !important;
+}
+
 
 header > .collapsible-header{
     display: flex;
