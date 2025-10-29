@@ -23,52 +23,22 @@
     <link rel="stylesheet" href="{% static 'landing/tailwind-build.css' %}">
     <link rel="stylesheet" href="{% static 'landing/saasy-custom.css' %}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
-    
-    <!-- Fallback styles for Render deployment -->
-    <style>
-        .carousel-container {
-            overflow: hidden;
-            width: 100%;
-        }
-        .carousel {
-            display: flex;
-            animation: scroll 20s linear infinite;
-        }
-        @keyframes scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        .carousel-img {
-            flex-shrink: 0;
-            margin-right: 1rem;
-        }
-        .reveal-up {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        .gradient-text {
-            background: linear-gradient(45deg, #7e22ce, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-    </style>
 </head>
 <body class="tw-flex tw-min-h-[100vh] tw-flex-col tw-bg-black tw-text-white tw-pt-[60px]">
     
     <!-- Header -->
     <header class="tw-fixed tw-top-0 tw-left-0 tw-right-0 tw-z-50 tw-flex tw-h-[60px] tw-w-full tw-bg-black/80 tw-backdrop-blur-sm tw-px-[5%] lg:tw-justify-around">
-        <a class="tw-h-[50px] tw-w-[50px] tw-p-[4px] tw-flex tw-items-center tw-justify-center" href="{% url 'landing' %}">
-            <span class="tw-text-2xl tw-font-bold tw-text-white" style="color: #ffffff !important; text-shadow: 0 0 2px rgba(255, 255, 255, 0.3) !important;">PortfolAI</span>
+        <a class="tw-h-[50px] tw-w-auto tw-p-[4px] tw-flex tw-items-center tw-justify-center" href="{% url 'landing' %}">
+            <span class="tw-text-2xl tw-font-bold header-logo">PortfolAI</span>
         </a>
         <div class="collapsible-header animated-collapse max-lg:tw-shadow-md" id="collapsed-header-items">
             <div class="tw-flex tw-h-full tw-w-max tw-gap-5 tw-text-base max-lg:tw-mt-[30px] max-lg:tw-flex-col max-lg:tw-place-items-end max-lg:tw-gap-5 lg:tw-mx-auto lg:tw-place-items-center">
-                <a class="header-links" href="#key-benefits"> Key Benefits </a>
-                <a class="header-links" href="#features"> Features </a>
-                <a class="header-links" href="#solutions"> Solutions </a>
-                <a class="header-links" href="#news"> News </a>
+                <a class="header-links" href="#key-benefits">Key Benefits</a>
+                <a class="header-links" href="#features">Features</a>
+                <a class="header-links" href="#solutions">Solutions</a>
+                <a class="header-links" href="#news">News</a>
             </div>
-                <div class="tw-mx-4 tw-flex tw-place-items-center tw-gap-[20px] tw-text-base max-md:tw-w-full max-md:tw-flex-col max-md:tw-place-content-center">
+            <div class="tw-mx-4 tw-flex tw-place-items-center tw-gap-[20px] tw-text-base max-md:tw-w-full max-md:tw-flex-col max-md:tw-place-content-center">
                 <a href="{% url 'dashboard' %}" aria-label="signup" class="tw-rounded-full tw-bg-white tw-px-3 tw-py-2 tw-text-black tw-transition-transform tw-duration-[0.3s] hover:tw-translate-x-2">
                     <span>Get started</span>
                     <i class="bi bi-arrow-right"></i>
@@ -216,9 +186,9 @@
                             </h3>
                             <div class="tw-text-gray-300">
                                 Get intelligent insights and recommendations powered by advanced machine learning algorithms.
-                                        </div>
-                                        </div>
-                                    </div>
+                            </div>
+                        </div>
+                    </div>
                     <div
                         class="reveal-up tw-flex tw-h-[400px] tw-w-[450px] tw-flex-col tw-gap-3 tw-text-center max-md:tw-w-[320px]"
                     >
@@ -231,8 +201,8 @@
                                 <i
                                     class="bi bi-layout-sidebar-inset tw-text-7xl tw-text-gray-200 max-md:tw-text-5xl"
                                 ></i>
-                                        </div>
-                                    </div>
+                            </div>
+                        </div>
                         <div class="tw-flex tw-flex-col tw-gap-4 tw-p-2">
                             <h3
                                 class="tw-mt-8 tw-text-2xl tw-font-normal max-md:tw-text-xl"
@@ -241,9 +211,9 @@
                             </h3>
                             <div class="tw-text-gray-300">
                                 Analyze without the risk. No trading, no financial exposure, just pure analysis and learning.
-                                        </div>
-                                        </div>
-                                    </div>
+                            </div>
+                        </div>
+                    </div>
                     <div
                         class="reveal-up tw-flex tw-h-[400px] tw-w-[450px] tw-flex-col tw-gap-3 tw-text-center max-md:tw-w-[320px]"
                     >
@@ -256,8 +226,8 @@
                                 <i
                                     class="bi bi-lightning-charge-fill tw-text-7xl tw-text-gray-200 max-md:tw-text-5xl"
                                 ></i>
-                                        </div>
-                                    </div>
+                            </div>
+                        </div>
                         <div class="tw-flex tw-flex-col tw-gap-4 tw-p-2">
                             <h3
                                 class="tw-mt-8 tw-text-2xl tw-font-normal max-md:tw-text-xl"
@@ -270,8 +240,8 @@
                         </div>
                     </div>
                 </div>
-        </div>
-    </section>
+            </div>
+        </section>
 
         <section
             id="features"
@@ -564,6 +534,7 @@
                     </div>
                     <div class="content">
                         Absolutely Not! PortfolAI is not meant for gambling and is only meant to learn about market analysis without financial risk.
+                    </div>
                 </div>
             </div>
         </div>
@@ -673,7 +644,7 @@
             <div
                 class="tw-flex tw-h-full tw-w-[250px] tw-flex-col tw-place-items-center tw-gap-6 max-md:tw-w-full"
             >
-                <span class="tw-text-4xl tw-font-bold tw-text-white">PortfolAI</span>
+                <span class="tw-text-4xl tw-font-bold footer-text">PortfolAI</span>
                 <div>
                     AI-Powered Stock Analysis
                     <br />
@@ -682,7 +653,7 @@
                     Learn & Analyze
                 </div>
                 <div class="tw-mt-4 tw-flex tw-flex-col tw-items-center tw-gap-3">
-                    <div class="tw-text-lg tw-font-semibold tw-text-white">Follow our progress</div>
+                    <div class="tw-text-lg tw-font-semibold footer-text">Follow our progress</div>
                     <a
                         href="https://github.com/eduran04/PortfolAI-CS4300-Fall-2024-Group-4?tab=readme-ov-file"
                         aria-label="GitHub"
