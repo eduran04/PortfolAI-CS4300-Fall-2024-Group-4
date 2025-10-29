@@ -8,11 +8,18 @@
 
 :root {
     --bg-color: #000;
+    --bg-secondary: #080808;
+    --text-white: #ffffff;
+    --text-gray-light: #b1b1b1;
+    --text-gray-medium: #c7c6c6;
+    --text-gray-dark: #e4e4e4;
     --btn-color: #fdfdfd;
     --btn-bg: #7e22ce;
     --primary-text-color: #7e22ce;
     --header-link-hover: #7e22ce;
     --input-hover-bd-color: #7e22ce;
+    --border-color: #818080;
+    --border-outline: #1F2123;
 }
 
 /* ==========================================================================
@@ -40,13 +47,13 @@ header {
     left: 0;
     right: 0;
     z-index: 50;
-    color: #b1b1b1;
+    color: var(--text-gray-light);
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(8px);
 }
 
 .header-logo {
-    color: #ffffff;
+    color: var(--text-white);
     text-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
@@ -74,7 +81,7 @@ header > .collapsible-header {
 }
 
 .header-links:hover {
-    color: #ffffff;
+    color: var(--text-white);
 }
 
 /* ==========================================================================
@@ -83,13 +90,6 @@ header > .collapsible-header {
 
 .primary-text-color {
     color: var(--primary-text-color);
-}
-
-.gradient-text {
-    background: linear-gradient(90deg, rgba(215, 215, 215, 1) 18%, rgba(136, 136, 136, 1) 71%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .opacity-0 {
@@ -159,7 +159,7 @@ header > .collapsible-header {
 .input {
     padding: 10px;
     min-width: 100px;
-    border: 1px solid #818080;
+    border: 1px solid var(--border-color);
     border-radius: 5px;
     background-color: transparent;
 }
@@ -216,12 +216,16 @@ header > .collapsible-header {
    ========================================================================== */
 
 .footer-link {
-    color: #c7c6c6;
+    color: var(--text-gray-medium);
     transition: color 0.3s;
 }
 
 .footer-link:hover {
-    color: #fff;
+    color: var(--text-white);
+}
+
+.footer-text {
+    color: var(--text-white);
 }
 
 /* ==========================================================================
@@ -244,7 +248,7 @@ header > .collapsible-header {
     padding: 0 18px;
     max-height: 0;
     overflow: hidden;
-    color: #e4e4e4;
+    color: var(--text-gray-dark);
     background-color: transparent;
     text-align: justify;
     transition: max-height 0.4s, padding 0.4s;
@@ -282,6 +286,6 @@ header > .collapsible-header {
     }
 
     .header-links {
-        color: rgb(255, 255, 255);
+        color: var(--text-white);
     }
 }
