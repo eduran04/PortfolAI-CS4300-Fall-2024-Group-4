@@ -4,7 +4,6 @@
 {% block title %}PortfolAI - AI-Powered Stock Portfolio{% endblock %}
 
 {% block extra_head %}
-    <script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
     <link rel="stylesheet" href="{% static 'home/css/style.css' %}">
 {% endblock %}
 
@@ -60,7 +59,7 @@
         </div>
     </nav>
 
-    <main class="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white dark:bg-gray-900 min-h-screen">
         <section class="mb-8">
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-300">
                 <div class="mb-6">
@@ -78,9 +77,11 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Stock Chart Section - Left 2/3 of grid -->
                     <div class="lg:col-span-2">
                         <h2 class="text-xl font-semibold mb-3 text-gray-800 dark:text-gray-200">Stock Chart</h2>
-                        <div id="chart-container" class="w-full h-96 bg-gray-50 dark:bg-gray-700 rounded-md shadow p-1 relative">
+                        <!-- Chart Container: 450px height with 16px padding to accommodate TradingView widget and copyright -->
+                        <div id="chart-container" class="w-full h-[450px] bg-gray-50 dark:bg-gray-700 rounded-md shadow p-4 relative overflow-hidden">
                            <div id="chart-loader" class="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 z-10">
                                 <svg class="animate-spin h-10 w-10 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -88,6 +89,7 @@
                                   </svg>
                                   <span class="ml-3 text-gray-700 dark:text-gray-300">Loading chart data...</span>
                            </div>
+                           <div id="tradingview-widget-container" class="tradingview-widget-container"></div>
                         </div>
                     </div>
 

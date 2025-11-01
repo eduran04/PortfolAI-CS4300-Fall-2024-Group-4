@@ -71,6 +71,79 @@ body {
   visibility: visible;
 }
 
+/* TradingView Widget Container */
+.tradingview-widget-container {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  position: relative;
+  overflow: hidden !important; /* Prevent overflow - force it */
+  box-sizing: border-box;
+}
+
+.tradingview-widget-container__widget {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important; /* Ensure widget respects container bounds */
+  box-sizing: border-box;
+}
+
+/* Target TradingView iframe directly if it creates one */
+.tradingview-widget-container iframe,
+.tradingview-widget-container__widget iframe {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border: none !important;
+}
+
+/* TradingView Copyright Styling - Clean and Subtle */
+.tradingview-widget-copyright {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.5);
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.tradingview-widget-copyright a {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.tradingview-widget-copyright a:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.tradingview-widget-copyright .blue-text {
+  color: rgba(126, 34, 206, 0.8); /* Purple accent matching theme */
+}
+
+.tradingview-widget-copyright .trademark {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 9px;
+}
+
+/* Dark mode adjustments */
+.dark .tradingview-widget-copyright {
+  color: rgba(219, 219, 219, 0.5);
+}
+
+.dark .tradingview-widget-copyright a {
+  color: rgba(219, 219, 219, 0.6);
+}
+
+.dark .tradingview-widget-copyright a:hover {
+  color: rgba(219, 219, 219, 0.8);
+}
+
 /* Chart tooltip styling */
 .tv-lightweight-charts-tooltip {
   background-color: rgba(255, 255, 255, 0.9) !important;

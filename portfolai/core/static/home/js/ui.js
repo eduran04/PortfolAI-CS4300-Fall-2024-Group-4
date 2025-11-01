@@ -50,12 +50,8 @@ function toggleTheme() {
     : 'light';
   localStorage.setItem('color-theme', currentTheme);
   
-  // Update chart if it exists
-  if (typeof chartInstance !== 'undefined' && chartInstance) {
-    const searchInput = document.getElementById('stock-search');
-    const symbol = searchInput.value.toUpperCase() || 'AAPL';
-    renderChart(generateStockData(100), currentTheme, symbol);
-  }
+  // Dispatch custom event for components that need to react to theme changes
+  window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: currentTheme } }));
 }
 
 /**
@@ -121,7 +117,7 @@ async function populateMarketMovers() {
     topGainersList.innerHTML = gainers.length
       ? gainers
           .map(
-            (stock) => `
+                    (stock) => `
                   <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
                     stock.symbol
                   }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
