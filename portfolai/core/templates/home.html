@@ -28,7 +28,10 @@
                         <a href="#watchlist" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Watchlist</a>
                         {% if user.is_authenticated %}
                             <span class="text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md text-sm font-medium">Welcome, {{ user.username }}</span>
-                            <a href="{% url 'logout' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Logout</a>
+                            <form method="POST" action="{% url 'logout' %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Logout</button>
+                            </form>
                         {% else %}
                             <a href="{% url 'login' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Login</a>
                         {% endif %}
@@ -61,7 +64,10 @@
                 <a href="#watchlist" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Watchlist</a>
                 {% if user.is_authenticated %}
                     <span class="text-gray-700 dark:text-gray-300 block px-3 py-2 rounded-md text-base font-medium">Welcome, {{ user.username }}</span>
-                    <a href="{% url 'logout' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Logout</a>
+                    <form method="POST" action="{% url 'logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Logout</button>
+                    </form>
                 {% else %}
                     <a href="{% url 'login' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Login</a>
                 {% endif %}
