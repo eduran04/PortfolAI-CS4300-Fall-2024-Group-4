@@ -22,6 +22,9 @@ const TRADINGVIEW_WIDGET_URL = 'https://s3.tradingview.com/external-embedding/em
 /** @type {number} Delay in milliseconds before hiding the chart loader */
 const CHART_LOADER_DELAY = 500;
 
+/** @type {number} Maximum timeout in milliseconds to ensure loader is hidden even if widget fails */
+const CHART_LOADER_MAX_TIMEOUT = 10000; // 10 seconds
+
 /** @type {string[]} List of common NYSE-listed stock symbols */
 const NYSE_SYMBOLS = [
   'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS',           // Financials
@@ -123,7 +126,11 @@ async function performSearch() {
     searchErrorDiv.classList.remove('hidden');
     searchErrorDiv.textContent = `Error: ${error.message}`;
     
-    // Reset UI on error
+    // Reset UI on error - ensure loader is hidden
+    const chartLoader = document.getElementById('chart-loader');
+    if (chartLoader) {
+      chartLoader.classList.add('hidden');
+    }
     clearTradingViewWidget();
     addToWatchlistBtn.disabled = true;
     portfolaiAnalysisBtn.disabled = true;
@@ -353,6 +360,7 @@ function createWidgetStructure(container, symbol, exchange, config) {
  * 
  * Attempts to hide the loading spinner after the widget has initialized.
  * Uses a timeout to allow TradingView script to load and render.
+ * Includes a maximum timeout fallback to ensure loader is hidden even if widget fails.
  * 
  * @param {HTMLElement|null} chartLoader - Chart loader element
  */
@@ -361,13 +369,27 @@ function hideChartLoader(chartLoader) {
     return;
   }
   
-  setTimeout(() => {
+  // Primary timeout - hide after widget should have loaded
+  const primaryTimeout = setTimeout(() => {
     try {
       chartLoader.classList.add('hidden');
     } catch (error) {
       console.warn('Error hiding chart loader:', error);
     }
   }, CHART_LOADER_DELAY);
+  
+  // Fallback timeout - ensure loader is hidden even if widget fails completely
+  const fallbackTimeout = setTimeout(() => {
+    try {
+      chartLoader.classList.add('hidden');
+      console.warn('Chart loader hidden by fallback timeout - widget may have failed to load');
+    } catch (error) {
+      console.warn('Error hiding chart loader in fallback:', error);
+    }
+  }, CHART_LOADER_MAX_TIMEOUT);
+  
+  // Store timeouts so they can be cleared if needed
+  chartLoader._loaderTimeouts = { primary: primaryTimeout, fallback: fallbackTimeout };
 }
 
 /**

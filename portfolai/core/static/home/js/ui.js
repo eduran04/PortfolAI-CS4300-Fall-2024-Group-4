@@ -73,6 +73,11 @@ function initializeMobileMenu() {
  * Populate the scrolling ticker with market data
  */
 async function populateTicker() {
+  if (!tickerMove) {
+    console.warn('Ticker element not found');
+    return;
+  }
+  
   try {
     const data = await fetchMarketMovers();
 
@@ -101,7 +106,9 @@ async function populateTicker() {
 
   } catch (error) {
     console.error('Error fetching ticker data:', error);
-    tickerMove.innerHTML = '<div class="ticker-item text-gray-400">Loading market data...</div>';
+    if (tickerMove) {
+      tickerMove.innerHTML = '<div class="ticker-item text-gray-400">Unable to load market data</div>';
+    }
   }
 }
 
@@ -109,72 +116,85 @@ async function populateTicker() {
  * Populate market movers (gainers and losers) lists
  */
 async function populateMarketMovers() {
+  if (!topGainersList || !topLosersList) {
+    console.warn('Market movers elements not found');
+    return;
+  }
+  
   try {
     const data = await fetchMarketMovers();
     const { gainers, losers } = data;
 
     // Display gainers
-    topGainersList.innerHTML = gainers.length
-      ? gainers
-          .map(
-                    (stock) => `
-                  <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
-                    stock.symbol
-                  }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
-                  <div>
-                  <span class="font-semibold text-gray-800 dark:text-gray-200">${
-                            stock.symbol
-                          }</span>
-                          <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
-                            0,
-                            20
-                          )}${stock.name.length > 20 ? '...' : ''}</span>
-                          </div>
-                          <div class="text-right">
-                          <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
-                            2
-                          )}</span>
-                          <span class="block text-sm text-green-500 dark:text-green-400">+${stock.changePercent.toFixed(2)}%</span>
-                          </div>
-                  </li>
-              `
-          )
-          .join('')
-      : '<li class="text-sm text-gray-500 dark:text-gray-400">No significant gainers today.</li>';
+    if (topGainersList) {
+      topGainersList.innerHTML = gainers && gainers.length
+        ? gainers
+            .map(
+                      (stock) => `
+                    <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
+                      stock.symbol
+                    }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
+                    <div>
+                    <span class="font-semibold text-gray-800 dark:text-gray-200">${
+                              stock.symbol
+                            }</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
+                              0,
+                              20
+                            )}${stock.name.length > 20 ? '...' : ''}</span>
+                            </div>
+                            <div class="text-right">
+                            <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
+                              2
+                            )}</span>
+                            <span class="block text-sm text-green-500 dark:text-green-400">+${stock.changePercent.toFixed(2)}%</span>
+                            </div>
+                    </li>
+                `
+            )
+            .join('')
+        : '<li class="text-sm text-gray-500 dark:text-gray-400">No significant gainers today.</li>';
+    }
 
     // Display losers
-    topLosersList.innerHTML = losers.length
-      ? losers
-          .map(
-            (stock) => `
-            <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
-              stock.symbol
-            }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
-                <div>
-                    <span class="font-semibold text-gray-800 dark:text-gray-200">${
-                      stock.symbol
-                    }</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
-                            0,
-                            20
-                          )}${stock.name.length > 20 ? '...' : ''}</span>
-                          </div>
-                          <div class="text-right">
-                              <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
-                                2
-                              )}</span>
-                              <span class="block text-sm text-red-500 dark:text-red-400">${stock.changePercent.toFixed(2)}%</span>
-                          </div>
-                      </li>
-              `
-          )
-          .join('')
-      : '<li class="text-sm text-gray-500 dark:text-gray-400">No significant losers today.</li>';
+    if (topLosersList) {
+      topLosersList.innerHTML = losers && losers.length
+        ? losers
+            .map(
+              (stock) => `
+              <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
+                stock.symbol
+              }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
+                  <div>
+                      <span class="font-semibold text-gray-800 dark:text-gray-200">${
+                        stock.symbol
+                      }</span>
+                      <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
+                              0,
+                              20
+                            )}${stock.name.length > 20 ? '...' : ''}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
+                                  2
+                                )}</span>
+                                <span class="block text-sm text-red-500 dark:text-red-400">${stock.changePercent.toFixed(2)}%</span>
+                            </div>
+                        </li>
+                `
+            )
+            .join('')
+        : '<li class="text-sm text-gray-500 dark:text-gray-400">No significant losers today.</li>';
+    }
 
   } catch (error) {
     console.error('Error fetching market movers:', error);
-    topGainersList.innerHTML = '<li class="text-sm text-red-500 dark:text-red-400">Error loading market data</li>';
-    topLosersList.innerHTML = '<li class="text-sm text-red-500 dark:text-red-400">Error loading market data</li>';
+    if (topGainersList) {
+      topGainersList.innerHTML = '<li class="text-sm text-red-500 dark:text-red-400">Error loading market data. Please refresh the page.</li>';
+    }
+    if (topLosersList) {
+      topLosersList.innerHTML = '<li class="text-sm text-red-500 dark:text-red-400">Error loading market data. Please refresh the page.</li>';
+    }
   }
 }
 
@@ -183,8 +203,13 @@ async function populateMarketMovers() {
  * @param {string} symbol - Optional stock symbol to filter news
  */
 async function populateNewsFeed(symbol = null) {
+  if (!newsFeedDiv) {
+    console.warn('News feed element not found');
+    return;
+  }
+  
   const searchInput = document.getElementById('stock-search');
-  const currentSymbol = symbol || searchInput.value.toUpperCase().trim();
+  const currentSymbol = symbol || (searchInput ? searchInput.value.toUpperCase().trim() : '');
   
   try {
     const data = await fetchNews(currentSymbol);
@@ -196,28 +221,32 @@ async function populateNewsFeed(symbol = null) {
       fallbackNotice = '<div class="bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded mb-4">⚠️ Using demo news - API not configured or unavailable</div>';
     }
 
-    newsFeedDiv.innerHTML = fallbackNotice + (articles.length
-      ? articles
-          .map(
-            (news) => `
-            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
-            <a href="${news.url}" target="_blank" rel="noopener noreferrer" class="block hover:text-indigo-600 dark:hover:text-indigo-400">
-                <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">${news.title}</h4>
-                ${news.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${news.description.substring(0, 100)}${news.description.length > 100 ? '...' : ''}</p>` : ''}
-            </a>
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <span>${news.source}</span>
-                <span>${news.time}</span>
-            </div>
-        </div>
-              `
-          )
-          .join('')
-      : '<p class="text-sm text-gray-500 dark:text-gray-400">No news available at the moment.</p>');
+    if (newsFeedDiv) {
+      newsFeedDiv.innerHTML = fallbackNotice + (articles.length
+        ? articles
+            .map(
+              (news) => `
+              <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+              <a href="${news.url}" target="_blank" rel="noopener noreferrer" class="block hover:text-indigo-600 dark:hover:text-indigo-400">
+                  <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">${news.title}</h4>
+                  ${news.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${news.description.substring(0, 100)}${news.description.length > 100 ? '...' : ''}</p>` : ''}
+              </a>
+              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  <span>${news.source}</span>
+                  <span>${news.time}</span>
+              </div>
+          </div>
+                `
+            )
+            .join('')
+        : '<p class="text-sm text-gray-500 dark:text-gray-400">No news available at the moment.</p>');
+    }
 
   } catch (error) {
     console.error('Error fetching news:', error);
-    newsFeedDiv.innerHTML = '<p class="text-sm text-red-500 dark:text-red-400">Error loading news. Please try again later.</p>';
+    if (newsFeedDiv) {
+      newsFeedDiv.innerHTML = '<p class="text-sm text-red-500 dark:text-red-400">Error loading news. Please try again later.</p>';
+    }
   }
 }
 
