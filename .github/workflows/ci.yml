@@ -42,4 +42,4 @@ jobs:
     - name: Run tests with coverage
       run: |
         cd portfolai
-        pytest -v --cov=core.views --cov-report=term-missing --cov-fail-under=80 --timeout=30 --timeout-method=thread
+        pytest -v --cov=core.views --cov=core.forms --cov-report=term-missing --cov-fail-under=80 --timeout=30 --timeout-method=thread
