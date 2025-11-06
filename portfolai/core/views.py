@@ -729,17 +729,8 @@ def portfolai_analysis(request):
         # Enhanced prompt with real-time data
         enhanced_prompt = prompt + additional_context
         
-        # Try using the Responses API with web search capabilities first
+        # Use standard chat completions API (responses.create() doesn't exist in OpenAI SDK)
         try:
-            response = openai_client.responses.create(
-                model="gpt-4o",
-                tools=[{"type": "web_search_preview"}],
-                input=enhanced_prompt
-            )
-            analysis = response.output_text
-        except Exception as e:
-            print(f"Web search API failed, falling back to standard chat API: {e}")
-            # Fallback to standard chat completions API
             response = openai_client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
@@ -751,17 +742,35 @@ def portfolai_analysis(request):
             )
             analysis = response.choices[0].message.content
         
-        return Response({
-            "symbol": symbol,
-            "analysis": analysis,
-            "timestamp": datetime.now().isoformat(),
-            "data_used": stock_data is not None
-        })
+            return Response({
+                "symbol": symbol,
+                "analysis": analysis,
+                "timestamp": datetime.now().isoformat(),
+                "data_used": stock_data is not None
+            })
+        except Exception as api_error:
+            # Log detailed error information for debugging
+            error_type = type(api_error).__name__
+            error_message = str(api_error)
+            logger.error(
+                f"OpenAI API error generating analysis for {symbol}: "
+                f"Type={error_type}, Message={error_message}, "
+                f"User={request.user.username if request.user.is_authenticated else 'anonymous'}"
+            )
+            # Re-raise to be caught by outer exception handler
+            raise
         
     except Exception as e:
-        print(f"Error generating AI analysis for {symbol}: {str(e)}")
+        # Log detailed error information for debugging
+        error_type = type(e).__name__
+        error_message = str(e)
+        logger.error(
+            f"Error generating AI analysis for {symbol}: "
+            f"Type={error_type}, Message={error_message}, "
+            f"User={request.user.username if request.user.is_authenticated else 'anonymous'}"
+        )
         return Response({
-            "error": f"Failed to generate analysis for {symbol}: {str(e)}",
+            "error": f"Failed to generate analysis for {symbol}: {error_message}",
             "fallback": True
         }, status=500)
 
@@ -828,8 +837,16 @@ def add_to_watchlist(request):
         }, status=201)
         
     except Exception as e:
-        logger.error(f"Error adding {request.data.get('symbol')} to watchlist for user {request.user.username}: {str(e)}")
-        return Response({"error": f"Failed to add to watchlist: {str(e)}"}, status=500)
+        # Log detailed error information for debugging
+        error_type = type(e).__name__
+        error_message = str(e)
+        symbol_attempted = request.data.get('symbol', 'unknown')
+        logger.error(
+            f"Error adding {symbol_attempted} to watchlist for user {request.user.username}: "
+            f"Type={error_type}, Message={error_message}, "
+            f"UserID={request.user.id if request.user.is_authenticated else 'N/A'}"
+        )
+        return Response({"error": f"Failed to add to watchlist: {error_message}"}, status=500)
 
 
 @api_view(["DELETE"])
