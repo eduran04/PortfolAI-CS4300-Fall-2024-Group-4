@@ -260,10 +260,14 @@ async function populateNewsFeed(symbol = null) {
   const searchInput = document.getElementById('stock-search');
   const currentSymbol = symbol || (searchInput ? searchInput.value.toUpperCase().trim() : '');
   
+  // If symbol is explicitly provided, always force refresh
+  // If symbol is null/empty, use cache (for general news on page load)
+  const shouldForceRefresh = symbol !== null && symbol !== undefined && symbol !== '';
+  
   try {
-    console.log('Fetching news for symbol:', currentSymbol);
-    // Force refresh when a symbol is provided to get latest stock-specific news
-    const data = await fetchNews(currentSymbol, currentSymbol ? true : false);
+    console.log('Fetching news for symbol:', currentSymbol, 'forceRefresh:', shouldForceRefresh);
+    // Force refresh when a symbol is explicitly provided to get latest stock-specific news
+    const data = await fetchNews(currentSymbol || null, shouldForceRefresh);
     console.log('News data received:', data);
     const articles = data.articles || [];
     

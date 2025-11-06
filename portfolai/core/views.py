@@ -421,11 +421,14 @@ def get_news(request):
             # Get company-specific news using everything endpoint
             # Limit to 3 articles for stock-specific news
             try:
-                # Use today's date for better results
-                from_date = datetime.now().strftime('%Y-%m-%d')
+                # Free plan has 24-hour delay, so search from yesterday back to a month ago
+                # Use date range to get recent articles (yesterday to 30 days ago)
+                to_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')  # Yesterday (24h delay)
+                from_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')  # 30 days ago
                 articles = newsapi.get_everything(
                     q=f"{symbol} stock",
                     from_param=from_date,
+                    to=to_date,
                     language='en',
                     sort_by='popularity',  # Use popularity as recommended in docs
                     page_size=3  # Limit to 3 articles for stock-specific news
@@ -433,7 +436,11 @@ def get_news(request):
                 # Check if API returned an error response
                 if articles and articles.get('status') == 'error':
                     error_msg = articles.get('message', 'Unknown error')
-                    logger.warning(f"News API error for {symbol}: {error_msg}")
+                    error_code = articles.get('code', 'unknown')
+                    logger.warning(f"News API error for {symbol}: {error_code} - {error_msg}")
+                    # Check for rate limit errors
+                    if 'rate' in error_msg.lower() or 'limit' in error_msg.lower() or error_code == 'rateLimited':
+                        logger.error(f"News API rate limit reached for {symbol}. Consider upgrading plan or reducing requests.")
                     raise Exception(f"News API error: {error_msg}")
             except Exception as e:
                 logger.warning(f"News API failed for {symbol}: {e}")
@@ -467,8 +474,13 @@ def get_news(request):
                 logger.warning(f"News API top headlines failed: {e}")
                 # Fallback to everything endpoint
                 try:
+                    # Free plan has 24-hour delay, so search from yesterday back to a month ago
+                    to_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')  # Yesterday (24h delay)
+                    from_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')  # 30 days ago
                     articles = newsapi.get_everything(
                         q='stock market OR finance OR economy',
+                        from_param=from_date,
+                        to=to_date,
                         language='en',
                         sort_by='popularity',
                         page_size=10
@@ -534,8 +546,9 @@ def get_news(request):
             "totalResults": articles.get('totalResults', 0)
         }
         
-        # Cache the response for 5 minutes
-        cache.set(cache_key, response_data, 300)
+        # Cache the response for 10 minutes to reduce API calls (free plan: 100 requests/day)
+        # Longer cache helps stay within rate limits
+        cache.set(cache_key, response_data, 600)
         
         return Response(response_data)
         

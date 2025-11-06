@@ -13,6 +13,18 @@ const CACHE_DURATIONS = {
 };
 
 /**
+ * Clear cached data from localStorage
+ * @param {string} key - Cache key to clear
+ */
+function clearCachedData(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.warn('Failed to clear cache:', error);
+  }
+}
+
+/**
  * Get cached data from localStorage
  * @param {string} key - Cache key
  * @param {number} duration - Cache duration in milliseconds (optional, uses default if not provided)
@@ -245,9 +257,20 @@ async function fetchNews(symbol = null, forceRefresh = false) {
   if (!forceRefresh) {
     const cached = getCachedData(cacheKey);
     if (cached) {
-      console.log(`Using cached news data for ${symbol || 'general'}`);
-      return cached;
+      // Don't use cached fallback data - we want to retry the API
+      if (!cached.fallback) {
+        console.log(`Using cached news data for ${symbol || 'general'}`);
+        return cached;
+      } else {
+        console.log(`Cached data is fallback, fetching fresh data for ${symbol || 'general'}`);
+        // Clear the fallback cache so we can retry
+        clearCachedData(cacheKey);
+      }
     }
+  } else {
+    // Force refresh - clear any existing cache
+    clearCachedData(cacheKey);
+    console.log(`Force refresh requested, clearing cache for ${symbol || 'general'}`);
   }
   
   try {
@@ -273,15 +296,23 @@ async function fetchNews(symbol = null, forceRefresh = false) {
       throw new Error(data.error);
     }
 
-    // Cache the response
-    setCachedData(cacheKey, data);
+    // Don't cache fallback data - we want to retry the API on next request
+    if (!data.fallback) {
+      // Only cache successful API responses
+      setCachedData(cacheKey, data);
+      console.log(`Cached news data for ${symbol || 'general'}`);
+    } else {
+      // Clear any existing cache for this key if we got fallback data
+      clearCachedData(cacheKey);
+      console.warn(`Received fallback news data for ${symbol || 'general'} - not caching`);
+    }
     
     return data;
   } catch (error) {
     console.error('Error fetching news:', error);
-    // Try to return cached data even if expired as fallback
+    // Try to return cached data even if expired as fallback, but only if it's not fallback data
     const cached = getCachedData(cacheKey);
-    if (cached) {
+    if (cached && !cached.fallback) {
       console.log(`Using expired cache as fallback for news ${symbol || 'general'}`);
       return cached;
     }
