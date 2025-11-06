@@ -39,10 +39,17 @@
                 <a class="header-links" href="#news">News</a>
             </div>
             <div class="tw-mx-4 tw-flex tw-place-items-center tw-gap-[20px] tw-text-base max-md:tw-w-full max-md:tw-flex-col max-md:tw-place-content-center">
-                <a href="{% url 'dashboard' %}" aria-label="signup" class="tw-rounded-full tw-bg-white tw-px-3 tw-py-2 tw-text-black tw-transition-transform tw-duration-[0.3s] hover:tw-translate-x-2">
-                    <span>Get started</span>
-                    <i class="bi bi-arrow-right"></i>
-                </a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" aria-label="dashboard" class="tw-rounded-full tw-bg-white tw-px-3 tw-py-2 tw-text-black tw-transition-transform tw-duration-[0.3s] hover:tw-translate-x-2">
+                        <span>Dashboard</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </a>
+                {% else %}
+                    <button id="getStartedBtn" aria-label="login" class="tw-rounded-full tw-bg-white tw-px-3 tw-py-2 tw-text-black tw-transition-transform tw-duration-[0.3s] hover:tw-translate-x-2">
+                        <span>Get started</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                {% endif %}
             </div>
         </div>
         <button class="bi bi-list tw-absolute tw-right-3 tw-top-3 tw-z-50 tw-text-3xl tw-text-white lg:tw-hidden" onclick="toggleHeader()" aria-label="menu" id="collapse-btn"></button>
@@ -76,12 +83,21 @@
                     <div
                         class="reveal-up tw-mt-10 tw-flex tw-place-items-center tw-gap-4"
                     >
-                <a
-                    class="btn tw-bg-[#7e22ce85] tw-shadow-lg tw-shadow-primary tw-transition-transform tw-duration-[0.3s] hover:tw-scale-x-[1.03]"
-                    href="{% url 'dashboard' %}"
-                >
-                    Dashboard
-                </a>
+                {% if user.is_authenticated %}
+                    <a
+                        class="btn tw-bg-[#7e22ce85] tw-shadow-lg tw-shadow-primary tw-transition-transform tw-duration-[0.3s] hover:tw-scale-x-[1.03]"
+                        href="{% url 'dashboard' %}"
+                    >
+                        Dashboard
+                    </a>
+                {% else %}
+                    <button
+                        id="getStartedBtnHero"
+                        class="btn tw-bg-[#7e22ce85] tw-shadow-lg tw-shadow-primary tw-transition-transform tw-duration-[0.3s] hover:tw-scale-x-[1.03]"
+                    >
+                        Get started
+                    </button>
+                {% endif %}
                         <a
                             class="btn tw-flex tw-gap-2 !tw-bg-black !tw-text-white tw-transition-colors tw-duration-[0.3s] hover:!tw-bg-white hover:!tw-text-black"
                             href="https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4"
@@ -684,9 +700,76 @@
     </footer>
     </main>
 
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-opacity-70 overflow-y-auto h-full w-full items-center justify-center px-4 z-50 transition-opacity duration-300 ease-in-out hidden">
+        <div class="relative bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md transform transition-all duration-300 ease-in-out scale-95 opacity-0 mx-auto mt-20">
+            <button id="closeLoginModal" class="absolute top-3 right-3 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors" aria-label="Close login modal">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">Login</h2>
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="login-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                    <input type="text" name="username" id="login-username" autocomplete="username" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                </div>
+                <div class="mb-6">
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                    <input type="password" name="password" id="login-password" autocomplete="current-password" required class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                </div>
+                <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-colors">Sign in</button>
+            </form>
+            <p class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                Not a member? <a href="{% url 'signup' %}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">Register here</a>
+            </p>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/ScrollTrigger.min.js"></script>
     <script src="{% static 'landing/saasy.js' %}"></script>
+    <script>
+        // Login modal functionality
+        const loginModal = document.getElementById('loginModal');
+        const getStartedBtn = document.getElementById('getStartedBtn');
+        const getStartedBtnHero = document.getElementById('getStartedBtnHero');
+        const closeLoginModal = document.getElementById('closeLoginModal');
+
+        function openLoginModal() {
+            loginModal.classList.remove('hidden');
+            setTimeout(() => {
+                loginModal.querySelector('.relative').classList.remove('scale-95', 'opacity-0');
+                loginModal.querySelector('.relative').classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            loginModal.querySelector('.relative').classList.remove('scale-100', 'opacity-100');
+            loginModal.querySelector('.relative').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                loginModal.classList.add('hidden');
+            }, 300);
+        }
+
+        if (getStartedBtn) {
+            getStartedBtn.addEventListener('click', openLoginModal);
+        }
+        if (getStartedBtnHero) {
+            getStartedBtnHero.addEventListener('click', openLoginModal);
+        }
+        if (closeLoginModal) {
+            closeLoginModal.addEventListener('click', closeModal);
+        }
+
+        // Close modal when clicking outside
+        loginModal.addEventListener('click', function(e) {
+            if (e.target === loginModal) {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html>

@@ -26,7 +26,10 @@ All endpoints include comprehensive error handling and fallback data
 for when external APIs are unavailable.
 """
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
+from django.views.generic import CreateView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 import openai
@@ -37,6 +40,7 @@ import requests
 from datetime import datetime, timedelta
 import random
 import logging
+from .forms import UserRegistrationForm
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +70,37 @@ def landing(request):
     return render(request, "landing.html")
 
 
+@login_required
 def trading_dashboard(request):
     """
     Trading dashboard view - Feature: Main Application Interface
     Renders the main trading dashboard with all features
+    Requires user authentication.
     """
     return render(request, "home.html")
+
+
+# ============================================================================
+# SECTION: AUTHENTICATION VIEWS
+# ============================================================================
+
+class SignUpView(CreateView):
+    """
+    User registration view.
+    Creates a new user account with email (required and unique).
+    """
+    form_class = UserRegistrationForm
+    template_name = 'registration/signup.html'
+    success_url = '/'
+
+    def form_valid(self, form):
+        """
+        Save the user and log them in after successful registration.
+        """
+        response = super().form_valid(form)
+        user = form.save()
+        login(self.request, user)
+        return response
 
 
 @api_view(["GET"])
