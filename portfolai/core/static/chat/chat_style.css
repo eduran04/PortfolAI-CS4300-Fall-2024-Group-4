@@ -17,10 +17,11 @@
 }
 
 /* --- Visibility --- */
-.hidden {
+/* Scoped to chat widget only to avoid conflicts with Tailwind's responsive classes */
+#chat-widget .hidden {
   display: none !important;
 }
-.show {
+#chat-widget .show {
   display: flex !important;
 }
 

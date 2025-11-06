@@ -93,6 +93,13 @@ nav form button {
   visibility: visible;
 }
 
+/* Chart container - ensure it doesn't interfere with navbar */
+#chart-container {
+  position: relative;
+  z-index: 1 !important; /* Lower than navbar (z-index: 10000) */
+  isolation: isolate; /* Create new stacking context */
+}
+
 /* TradingView Widget Container */
 .tradingview-widget-container {
   width: 100%;
@@ -102,6 +109,8 @@ nav form button {
   position: relative;
   overflow: hidden !important; /* Prevent overflow - force it */
   box-sizing: border-box;
+  z-index: 1 !important; /* Lower than navbar (z-index: 10000) to prevent covering navbar */
+  isolation: isolate; /* Create new stacking context */
 }
 
 .tradingview-widget-container__widget {
@@ -111,6 +120,8 @@ nav form button {
   max-height: 100% !important;
   overflow: hidden !important; /* Ensure widget respects container bounds */
   box-sizing: border-box;
+  position: relative;
+  z-index: 1 !important; /* Lower than navbar */
 }
 
 /* Target TradingView iframe directly if it creates one */
@@ -121,6 +132,9 @@ nav form button {
   max-width: 100% !important;
   max-height: 100% !important;
   border: none !important;
+  position: relative;
+  z-index: 1 !important; /* Lower than navbar - prevent iframe from covering navbar */
+  pointer-events: auto; /* Allow iframe interactions within its container */
 }
 
 /* TradingView Copyright Styling - Clean and Subtle */
