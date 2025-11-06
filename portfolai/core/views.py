@@ -183,9 +183,11 @@ def get_stock_data(request):
     if not symbol:
         symbol = "AAPL"
     
+    # Define cache_key early so it's available throughout the function
+    cache_key = f'stock_data_{symbol}'
+    
     # Check cache first (1 minute cache) - skip if force_refresh is True
     if not force_refresh:
-        cache_key = f'stock_data_{symbol}'
         cached_data = cache.get(cache_key)
         if cached_data:
             logger.info(f'Returning cached stock data for {symbol}')
