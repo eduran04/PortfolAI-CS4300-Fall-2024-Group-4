@@ -30,8 +30,11 @@ const NYSE_SYMBOLS = [
   'NKE', 'SBUX', 'MCD', 'DIS',                    // Retail/Food
   'V', 'MA', 'AXP', 'BRK.B',                      // Payments/Finance
   'GE', 'BA', 'CAT', 'DE',                        // Industrials
-  'OKLO',                                          // Energy/Utilities
-  // Popular ETFs
+  'OKLO'                                           // Energy/Utilities
+];
+
+/** @type {string[]} List of NYSE Arca (AMEX) listed ETFs */
+const NYSE_ARCA_ETFS = [
   'VOO', 'SPY', 'QQQ', 'VTI', 'IVV', 'IWM',      // Broad market ETFs
   'VEA', 'VWO', 'EFA', 'EEM',                     // International ETFs
   'BND', 'TLT', 'AGG',                            // Bond ETFs
@@ -252,13 +255,15 @@ function displayStockDetails(stock, symbol = 'N/A') {
 /**
  * Detect the stock exchange for a given symbol
  * 
- * Determines the most likely exchange (NASDAQ or NYSE) based on known symbols.
+ * Determines the most likely exchange (NASDAQ, NYSE, or AMEX/NYSE Arca) based on known symbols.
  * Supports both stocks and ETFs. TradingView supports auto-detection if the 
  * exchange is incorrect, but specifying the correct exchange improves widget 
  * initialization speed.
  * 
+ * Note: NYSE Arca (where many ETFs like VOO trade) is represented as "AMEX" in TradingView.
+ * 
  * @param {string} symbol - Stock or ETF symbol to detect exchange for
- * @returns {string} Exchange identifier ('NYSE' or 'NASDAQ')
+ * @returns {string} Exchange identifier ('NYSE', 'AMEX', or 'NASDAQ')
  */
 function detectExchange(symbol) {
   if (!symbol || symbol.length === 0) {
@@ -266,7 +271,19 @@ function detectExchange(symbol) {
   }
   
   const upperSymbol = symbol.toUpperCase();
-  return NYSE_SYMBOLS.includes(upperSymbol) ? 'NYSE' : 'NASDAQ';
+  
+  // Check NYSE Arca ETFs first (many ETFs trade on NYSE Arca, represented as AMEX in TradingView)
+  if (NYSE_ARCA_ETFS.includes(upperSymbol)) {
+    return 'AMEX';
+  }
+  
+  // Check NYSE stocks
+  if (NYSE_SYMBOLS.includes(upperSymbol)) {
+    return 'NYSE';
+  }
+  
+  // Default to NASDAQ
+  return 'NASDAQ';
 }
 
 /**
@@ -290,8 +307,8 @@ function getCurrentTheme() {
  * Generates the configuration JSON for the TradingView Symbol Overview widget
  * with theme-appropriate colors and settings.
  * 
- * @param {string} symbol - Stock symbol to display
- * @param {string} exchange - Exchange identifier (e.g., 'NASDAQ', 'NYSE')
+ * @param {string} symbol - Stock or ETF symbol to display
+ * @param {string} exchange - Exchange identifier (e.g., 'NASDAQ', 'NYSE', 'AMEX')
  * @param {string} theme - Theme identifier ('light' or 'dark')
  * @returns {Object} TradingView widget configuration object
  */
@@ -477,9 +494,10 @@ function clearTradingViewWidget() {
  * - Proper exchange detection (NASDAQ/NYSE)
  * 
  * TradingView Widget Support:
- * - US Exchanges: NASDAQ, NYSE, AMEX
+ * - US Exchanges: NASDAQ, NYSE, AMEX (NYSE Arca/American)
  * - International: LSE (London), TSE (Tokyo), SSE (Shanghai), ASX, TSX, etc.
  * - Auto-detection: TradingView can find symbols across exchanges if specified incorrectly
+ * - Note: NYSE Arca ETFs (like VOO, SPY) use "AMEX" as the exchange identifier
  * 
  * @param {string} symbol - Stock symbol to display (e.g., 'AAPL', 'MSFT', 'NFLX')
  * @throws {Error} If widget container element is not found in DOM
