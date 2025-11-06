@@ -53,12 +53,14 @@ nav form button {
   overflow: hidden;
   white-space: nowrap;
   box-sizing: border-box;
+  pointer-events: none; /* Allow clicks to pass through to navbar below */
 }
 .ticker-move {
   display: inline-block;
   white-space: nowrap;
   box-sizing: border-box;
   animation: ticker 30s linear infinite;
+  pointer-events: auto; /* Make ticker content itself interactive */
 }
 .ticker-move:hover {
   animation-play-state: paused;
