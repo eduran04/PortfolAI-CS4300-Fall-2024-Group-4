@@ -20,8 +20,12 @@ function onHeaderClickOutside(e) {
 
 function toggleHeader() {
     if (isHeaderCollapsed) {
-        // collapseHeaderItems.classList.remove("max-md:tw-opacity-0")
-        collapseHeaderItems.classList.add("opacity-100",)
+        // Remove opacity-0 class if it exists
+        collapseHeaderItems.classList.remove("opacity-0")
+        // Add opacity-100 class
+        collapseHeaderItems.classList.add("opacity-100")
+        // Set inline opacity style as fallback for better control
+        collapseHeaderItems.style.opacity = "1"
         collapseHeaderItems.style.width = "60vw"
         collapseBtn.classList.remove("bi-list")
         collapseBtn.classList.add("bi-x", "max-lg:tw-fixed")
@@ -31,6 +35,9 @@ function toggleHeader() {
 
     } else {
         collapseHeaderItems.classList.remove("opacity-100")
+        collapseHeaderItems.classList.add("opacity-0")
+        // Set inline opacity style
+        collapseHeaderItems.style.opacity = "0"
         collapseHeaderItems.style.width = "0vw"
         collapseBtn.classList.remove("bi-x", "max-lg:tw-fixed")
         collapseBtn.classList.add("bi-list")
