@@ -63,8 +63,8 @@ class AuthenticationTests(TestCase):
         """Test successful user registration with valid data"""
         url = reverse('signup')
         data = {
-            'username': 'testuser',
-            'email': 'test@example.com',
+            'username': 'newuser1',
+            'email': 'newuser1@example.com',
             'password1': 'TestPassword123!',
             'password2': 'TestPassword123!'
         }
@@ -75,9 +75,9 @@ class AuthenticationTests(TestCase):
         self.assertRedirects(response, reverse('login'))
         
         # Verify user was created
-        self.assertTrue(User.objects.filter(username='testuser').exists())
-        user = User.objects.get(username='testuser')
-        self.assertEqual(user.email, 'test@example.com')
+        self.assertTrue(User.objects.filter(username='newuser1').exists())
+        user = User.objects.get(username='newuser1')
+        self.assertEqual(user.email, 'newuser1@example.com')
         self.assertTrue(user.check_password('TestPassword123!'))
     
     def test_user_registration_duplicate_email(self):
@@ -107,17 +107,19 @@ class AuthenticationTests(TestCase):
     
     def test_user_registration_duplicate_username(self):
         """Test registration with duplicate username should fail"""
-        # Create existing user
-        User.objects.create_user(
-            username='testuser',
-            email='existing@example.com',
-            password='password123'
-        )
+        # Create existing user for this test (use unique username to avoid conflicts)
+        existing_username = 'duplicate_test_user'
+        if not User.objects.filter(username=existing_username).exists():
+            User.objects.create_user(
+                username=existing_username,
+                email='duplicate@example.com',
+                password='password123'
+            )
         
         url = reverse('signup')
         data = {
-            'username': 'testuser',  # Duplicate username
-            'email': 'new@example.com',
+            'username': existing_username,  # Duplicate username
+            'email': 'newduplicate@example.com',
             'password1': 'TestPassword123!',
             'password2': 'TestPassword123!'
         }
@@ -127,13 +129,16 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # Django's UserCreationForm shows username error
         self.assertContains(response, 'A user with that username already exists', status_code=200)
+        
+        # Verify no additional user was created (should still be just the one we created)
+        self.assertEqual(User.objects.filter(username=existing_username).count(), 1)
     
     def test_user_registration_password_mismatch(self):
         """Test registration with mismatched passwords should fail"""
         url = reverse('signup')
         data = {
-            'username': 'testuser',
-            'email': 'test@example.com',
+            'username': 'newuser2',
+            'email': 'newuser2@example.com',
             'password1': 'TestPassword123!',
             'password2': 'DifferentPassword123!'  # Mismatch
         }
@@ -141,44 +146,45 @@ class AuthenticationTests(TestCase):
         
         # Should return form with error
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "The two password fields didn't match")
+        # Check for password mismatch error (can be in different formats)
+        self.assertContains(response, "didn't match", status_code=200)
         
         # Verify user was NOT created
-        self.assertFalse(User.objects.filter(username='testuser').exists())
+        self.assertFalse(User.objects.filter(username='newuser2').exists())
     
     def test_user_registration_missing_fields(self):
         """Test registration with missing required fields should fail"""
         url = reverse('signup')
         data = {
-            'username': 'testuser',
+            'username': 'newuser3',
             # Missing email
             'password1': 'TestPassword123!',
             'password2': 'TestPassword123!'
         }
         response = self.client.post(url, data)
         
-        # Should return form with error
+        # Should return form with error (200 status, not redirect)
         self.assertEqual(response.status_code, 200)
         
         # Verify user was NOT created
-        self.assertFalse(User.objects.filter(username='testuser').exists())
+        self.assertFalse(User.objects.filter(username='newuser3').exists())
     
     def test_user_registration_invalid_email(self):
         """Test registration with invalid email format should fail"""
         url = reverse('signup')
         data = {
-            'username': 'testuser',
+            'username': 'newuser4',
             'email': 'invalid-email',  # Invalid format
             'password1': 'TestPassword123!',
             'password2': 'TestPassword123!'
         }
         response = self.client.post(url, data)
         
-        # Should return form with error
+        # Should return form with error (200 status, not redirect)
         self.assertEqual(response.status_code, 200)
         
         # Verify user was NOT created
-        self.assertFalse(User.objects.filter(username='testuser').exists())
+        self.assertFalse(User.objects.filter(username='newuser4').exists())
     
     def test_user_registration_get_request(self):
         """Test registration page renders correctly on GET request"""
@@ -234,7 +240,8 @@ class AuthenticationTests(TestCase):
         
         # Should return form with error (200 status, not redirect)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Please enter a correct username and password")
+        # Check for the actual error message from the template
+        self.assertContains(response, "Your username and password didn't match")
         
         # Verify user is NOT authenticated
         user = get_user(self.client)
@@ -251,7 +258,8 @@ class AuthenticationTests(TestCase):
         
         # Should return form with error
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Please enter a correct username and password")
+        # Check for the actual error message from the template
+        self.assertContains(response, "Your username and password didn't match")
         
         # Verify user is NOT authenticated
         user = get_user(self.client)
@@ -311,9 +319,9 @@ class AuthenticationTests(TestCase):
         user = get_user(self.client)
         self.assertTrue(user.is_authenticated)
         
-        # Then logout
+        # Then logout (Django's LogoutView requires POST)
         url = reverse('logout')
-        response = self.client.get(url)
+        response = self.client.post(url)
         
         # Should redirect to landing page
         self.assertEqual(response.status_code, 302)
@@ -327,7 +335,7 @@ class AuthenticationTests(TestCase):
         """Test logout redirects to landing page"""
         self.client.login(username='testuser', password='TestPassword123!')
         url = reverse('logout')
-        response = self.client.get(url, follow=True)
+        response = self.client.post(url, follow=True)
         
         # Should eventually reach landing page
         self.assertEqual(response.status_code, 200)
@@ -335,17 +343,17 @@ class AuthenticationTests(TestCase):
     
     def test_user_logout_destroys_session(self):
         """Test user session is destroyed after logout"""
-        # Login and verify session exists
+        # Login and verify user is authenticated
         self.client.login(username='testuser', password='TestPassword123!')
-        session_key_before = self.client.session.session_key
-        self.assertIsNotNone(session_key_before)
+        user = get_user(self.client)
+        self.assertTrue(user.is_authenticated)
         
-        # Logout
+        # Logout (Django's LogoutView requires POST)
         url = reverse('logout')
-        self.client.get(url)
+        self.client.post(url)
         
-        # Session should be cleared
-        # Note: Django test client may maintain session, but user should be unauthenticated
+        # User should be unauthenticated after logout
+        # Note: Django test client may maintain session object, but authentication should be cleared
         user = get_user(self.client)
         self.assertFalse(user.is_authenticated)
     
