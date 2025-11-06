@@ -23,7 +23,10 @@
     <!-- Additional scripts block for page-specific JavaScript -->
     {% block extra_scripts %}{% endblock %}
 
-    {% include 'chat_widget.html' %}
+    <!-- Chat widget only visible for authenticated users on dashboard -->
+    {% if user.is_authenticated and request.resolver_match.url_name == 'dashboard' %}
+        {% include 'chat_widget.html' %}
+    {% endif %}
 
 </body>
 </html>
