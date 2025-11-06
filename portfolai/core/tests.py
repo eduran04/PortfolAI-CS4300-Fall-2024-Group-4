@@ -389,10 +389,12 @@ class APITests(TestCase):
 
     def test_get_stock_data_fallback_data(self):
         """Test stock data with fallback data when API key is not available"""
+        from django.core.cache import cache
+        cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'FINNHUB_API_KEY', None):
             with patch('core.views.finnhub_client', None):
                 url = reverse('get_stock_data')
-                response = self.client.get(url, {'symbol': 'AAPL'})
+                response = self.client.get(url, {'symbol': 'AAPL', 'force_refresh': 'true'})
                 
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
@@ -425,10 +427,12 @@ class APITests(TestCase):
 
     def test_get_news_fallback(self):
         """Test news with fallback data when API key is not available"""
+        from django.core.cache import cache
+        cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', None):
             with patch('core.views.newsapi', None):
                 url = reverse('get_news')
-                response = self.client.get(url)
+                response = self.client.get(url, {'force_refresh': 'true'})
                 
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
@@ -967,10 +971,12 @@ class APITests(TestCase):
 
     def test_get_news_with_newsapi_none(self):
         """Test news when newsapi is None"""
+        from django.core.cache import cache
+        cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.newsapi', None):
                 url = reverse('get_news')
-                response = self.client.get(url)
+                response = self.client.get(url, {'force_refresh': 'true'})
                 
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
