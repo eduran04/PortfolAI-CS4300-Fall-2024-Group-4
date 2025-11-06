@@ -13,9 +13,9 @@ async function fetchStockData(symbol) {
     const response = await fetch(`/api/stock-data/?symbol=${symbol}`, {
       method: 'GET',
       headers: {
-        'X-CSRFToken': csrftoken,
         'Content-Type': 'application/json',
       },
+      credentials: 'same-origin',
     });
 
     if (!response.ok) {
@@ -44,9 +44,9 @@ async function fetchMarketMovers() {
     const response = await fetch('/api/market-movers/', {
       method: 'GET',
       headers: {
-        'X-CSRFToken': csrftoken,
         'Content-Type': 'application/json',
       },
+      credentials: 'same-origin',
     });
 
     if (!response.ok) {
@@ -76,9 +76,9 @@ async function fetchPortfolAIAnalysis(symbol) {
     const response = await fetch(`/api/portfolai-analysis/?symbol=${symbol}`, {
       method: 'GET',
       headers: {
-        'X-CSRFToken': csrftoken,
         'Content-Type': 'application/json',
       },
+      credentials: 'same-origin',
     });
     
     if (!response.ok) {
@@ -109,9 +109,9 @@ async function fetchNews(symbol = null) {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'X-CSRFToken': csrftoken,
         'Content-Type': 'application/json',
       },
+      credentials: 'same-origin',
     });
 
     if (!response.ok) {

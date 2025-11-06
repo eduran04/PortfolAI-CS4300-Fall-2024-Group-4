@@ -100,8 +100,8 @@ class SignUpView(CreateView):
         """
         Save the user and redirect to login page.
         """
-        user = form.save()
-        messages.success(self.request, f'Account created successfully! Please log in with your username: {user.username}')
+        form.save()
+        messages.success(self.request, 'Account created successfully! Please log in to continue.')
         return super().form_valid(form)
 
 
