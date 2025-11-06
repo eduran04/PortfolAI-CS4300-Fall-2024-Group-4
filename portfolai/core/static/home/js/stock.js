@@ -150,6 +150,11 @@ async function performSearch() {
     // Render TradingView widget with the searched stock
     renderTradingViewWidget(searchTerm);
     
+    // Update news feed with stock-specific news (limit to 3 articles)
+    if (typeof populateNewsFeed === 'function') {
+      populateNewsFeed(searchTerm);
+    }
+    
     // Safety timeout to ensure loader is hidden even if widget fails
     setTimeout(() => {
       const chartLoader = document.getElementById('chart-loader');

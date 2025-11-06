@@ -415,6 +415,7 @@ def get_news(request):
     try:
         if symbol:
             # Get company-specific news using everything endpoint
+            # Limit to 3 articles for stock-specific news
             try:
                 # Use today's date for better results
                 from_date = datetime.now().strftime('%Y-%m-%d')
@@ -423,7 +424,7 @@ def get_news(request):
                     from_param=from_date,
                     language='en',
                     sort_by='popularity',  # Use popularity as recommended in docs
-                    page_size=10
+                    page_size=3  # Limit to 3 articles for stock-specific news
                 )
             except Exception as e:
                 print(f"Warning: News API failed for {symbol}: {e}")

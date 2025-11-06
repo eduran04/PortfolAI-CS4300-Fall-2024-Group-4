@@ -266,14 +266,33 @@ async function populateNewsFeed(symbol = null) {
     console.log('News data received:', data);
     const articles = data.articles || [];
     
+    // Limit to 3 articles when a symbol is provided
+    const displayArticles = currentSymbol ? articles.slice(0, 3) : articles;
+    
     // Show fallback notice if using fallback data
     let fallbackNotice = '';
     if (data.fallback) {
       fallbackNotice = '<div class="bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded mb-4">⚠️ Using demo news - API not configured or unavailable</div>';
     }
+    
+    // Update section title based on whether we're showing stock-specific news
+    const newsFeed = getNewsFeedDiv();
+    if (newsFeed) {
+      const newsSection = newsFeed.closest('section');
+      if (newsSection) {
+        const titleElement = newsSection.querySelector('h2');
+        if (titleElement) {
+          if (currentSymbol) {
+            titleElement.textContent = `Latest News for ${currentSymbol}`;
+          } else {
+            titleElement.textContent = 'Latest News';
+          }
+        }
+      }
+    }
 
-    newsFeedDiv.innerHTML = fallbackNotice + (articles.length
-      ? articles
+    newsFeedDiv.innerHTML = fallbackNotice + (displayArticles.length
+      ? displayArticles
           .map(
             (news) => `
             <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
