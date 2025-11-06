@@ -3,6 +3,8 @@ name: CI Pipeline
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   test:
@@ -45,7 +47,7 @@ jobs:
     - name: Run tests with coverage
       run: |
         cd portfolai
-        pytest -v --cov=core --cov-report=term-missing
+        pytest -v core/tests.py core/auth_test.py --cov=core.views --cov-report=term-missing
       env:
         DJANGO_SETTINGS_MODULE: mysite.settings
         SECRET_KEY: test-secret-key-for-ci
