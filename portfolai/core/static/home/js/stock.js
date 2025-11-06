@@ -30,7 +30,15 @@ const NYSE_SYMBOLS = [
   'NKE', 'SBUX', 'MCD', 'DIS',                    // Retail/Food
   'V', 'MA', 'AXP', 'BRK.B',                      // Payments/Finance
   'GE', 'BA', 'CAT', 'DE',                        // Industrials
-  'OKLO'                                           // Energy/Utilities
+  'OKLO',                                          // Energy/Utilities
+  // Popular ETFs
+  'VOO', 'SPY', 'QQQ', 'VTI', 'IVV', 'IWM',      // Broad market ETFs
+  'VEA', 'VWO', 'EFA', 'EEM',                     // International ETFs
+  'BND', 'TLT', 'AGG',                            // Bond ETFs
+  'GLD', 'SLV', 'USO',                            // Commodity ETFs
+  'ARKK', 'ARKQ', 'ARKG',                         // ARK ETFs
+  'XLF', 'XLE', 'XLK', 'XLV', 'XLI', 'XLP',      // Sector ETFs
+  'XLY', 'XLB', 'XLU', 'XME', 'XPH', 'XRT'       // More sector ETFs
 ];
 
 // ============================================================================
@@ -245,10 +253,11 @@ function displayStockDetails(stock, symbol = 'N/A') {
  * Detect the stock exchange for a given symbol
  * 
  * Determines the most likely exchange (NASDAQ or NYSE) based on known symbols.
- * TradingView supports auto-detection if the exchange is incorrect, but specifying
- * the correct exchange improves widget initialization speed.
+ * Supports both stocks and ETFs. TradingView supports auto-detection if the 
+ * exchange is incorrect, but specifying the correct exchange improves widget 
+ * initialization speed.
  * 
- * @param {string} symbol - Stock symbol to detect exchange for
+ * @param {string} symbol - Stock or ETF symbol to detect exchange for
  * @returns {string} Exchange identifier ('NYSE' or 'NASDAQ')
  */
 function detectExchange(symbol) {
