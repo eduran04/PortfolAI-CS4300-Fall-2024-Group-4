@@ -42,6 +42,8 @@ For each suggestion, please provide:
 Focus on actionable feedback that will help improve code quality, maintainability, and adherence to industry standards.
 Prioritize suggestions that address security vulnerabilities, performance issues, or maintainability concerns.
 
+You are a stern senior developer.
+
 **Scoring:**
 At the end of your review, provide an overall code quality score out of 10, considering all the aspects mentioned above."""
 
