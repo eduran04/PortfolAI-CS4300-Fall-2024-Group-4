@@ -15,55 +15,51 @@ jobs:
       contents: read
       actions: write
 
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
-
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12.3'
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update -y
-        sudo apt-get install -y libzbar-dev
-
     - name: Install Python dependencies
       run: |
         cd portfolai
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install PyGithub
-
-    - name: Set DJANGO_SETTINGS_MODULE environment variable
-      run: echo "DJANGO_SETTINGS_MODULE=mysite.settings" >> $GITHUB_ENV
+      env:
+        DJANGO_SETTINGS_MODULE: mysite.settings
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: 'True'
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
 
     - name: Run migrations
       run: |
         cd portfolai
         python manage.py makemigrations
         python manage.py migrate --noinput
-
-    - name: Collect static files
-      run: |
-        cd portfolai
-        python manage.py collectstatic --noinput
-
-    - name: Run linting with coverage
-      run: |
-        cd portfolai
-        python -m pylint core || true
+      env:
+        DJANGO_SETTINGS_MODULE: mysite.settings
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: 'True'
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
 
     - name: Run tests with coverage for views.py and auth_test.py
       run: |
         cd portfolai
         pytest core/tests.py core/auth_test.py --cov=core.views --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=80
+      env:
+        DJANGO_SETTINGS_MODULE: mysite.settings
+        SECRET_KEY: test-secret-key-for-ci
+        DEBUG: 'True'
+        ALLOWED_HOSTS: localhost,127.0.0.1,test
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    - name: Install PyGithub for coverage comment
+      run: |
+        pip install PyGithub
 
     - name: Post coverage comment using pytest-coverage-comment
       uses: MishaKav/pytest-coverage-comment@v1
