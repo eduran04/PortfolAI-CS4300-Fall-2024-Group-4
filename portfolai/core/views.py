@@ -396,13 +396,17 @@ def get_news(request):
     Example: /api/news/?symbol=AAPL (optional)
     """
     symbol = request.GET.get("symbol", "").upper()
+    force_refresh = request.GET.get("force_refresh", "false").lower() == "true"
     
-    # Check cache first (5 minute cache)
+    # Check cache first (5 minute cache) - skip if force_refresh is True
     cache_key = f'news_{symbol or "general"}'
-    cached_data = cache.get(cache_key)
-    if cached_data:
-        logger.info(f'Returning cached news data for {symbol or "general"}')
-        return Response(cached_data)
+    if not force_refresh:
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            logger.info(f'Returning cached news data for {symbol or "general"}')
+            return Response(cached_data)
+    else:
+        logger.info(f'Force refresh requested for news {symbol or "general"}, bypassing cache')
     
     # Check if API key is available, if not use fallback data
     if not settings.NEWS_API_KEY or not newsapi:
@@ -426,14 +430,26 @@ def get_news(request):
                     sort_by='popularity',  # Use popularity as recommended in docs
                     page_size=3  # Limit to 3 articles for stock-specific news
                 )
+                # Check if API returned an error response
+                if articles and articles.get('status') == 'error':
+                    error_msg = articles.get('message', 'Unknown error')
+                    logger.warning(f"News API error for {symbol}: {error_msg}")
+                    raise Exception(f"News API error: {error_msg}")
             except Exception as e:
-                print(f"Warning: News API failed for {symbol}: {e}")
-                # Fallback to top headlines for business category
-                articles = newsapi.get_top_headlines(
-                    category='business',
-                    language='en',
-                    page_size=10
-                )
+                logger.warning(f"News API failed for {symbol}: {e}")
+                # Try fallback to top headlines for business category
+                try:
+                    articles = newsapi.get_top_headlines(
+                        category='business',
+                        language='en',
+                        page_size=3
+                    )
+                    # Check if fallback also returned an error
+                    if articles and articles.get('status') == 'error':
+                        raise Exception(f"News API fallback also failed: {articles.get('message', 'Unknown error')}")
+                except Exception as fallback_error:
+                    logger.error(f"News API fallback also failed for {symbol}: {fallback_error}")
+                    raise fallback_error
         else:
             # Get general financial market news using top headlines
             try:
@@ -442,15 +458,27 @@ def get_news(request):
                     language='en',
                     page_size=10
                 )
+                # Check if API returned an error response
+                if articles and articles.get('status') == 'error':
+                    error_msg = articles.get('message', 'Unknown error')
+                    logger.warning(f"News API error for general news: {error_msg}")
+                    raise Exception(f"News API error: {error_msg}")
             except Exception as e:
-                print(f"Warning: News API top headlines failed: {e}")
+                logger.warning(f"News API top headlines failed: {e}")
                 # Fallback to everything endpoint
-                articles = newsapi.get_everything(
-                    q='stock market OR finance OR economy',
-                    language='en',
-                    sort_by='popularity',
-                    page_size=10
-                )
+                try:
+                    articles = newsapi.get_everything(
+                        q='stock market OR finance OR economy',
+                        language='en',
+                        sort_by='popularity',
+                        page_size=10
+                    )
+                    # Check if fallback also returned an error
+                    if articles and articles.get('status') == 'error':
+                        raise Exception(f"News API fallback also failed: {articles.get('message', 'Unknown error')}")
+                except Exception as fallback_error:
+                    logger.error(f"News API fallback also failed: {fallback_error}")
+                    raise fallback_error
         
         # Check if we got valid articles
         if not articles or 'articles' not in articles:

@@ -151,8 +151,12 @@ async function performSearch() {
     renderTradingViewWidget(searchTerm);
     
     // Update news feed with stock-specific news (limit to 3 articles)
+    // Force refresh to get latest news for the searched stock
     if (typeof populateNewsFeed === 'function') {
+      console.log('Updating news feed for symbol:', searchTerm);
       populateNewsFeed(searchTerm);
+    } else {
+      console.warn('populateNewsFeed function not available');
     }
     
     // Safety timeout to ensure loader is hidden even if widget fails

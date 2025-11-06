@@ -262,7 +262,8 @@ async function populateNewsFeed(symbol = null) {
   
   try {
     console.log('Fetching news for symbol:', currentSymbol);
-    const data = await fetchNews(currentSymbol);
+    // Force refresh when a symbol is provided to get latest stock-specific news
+    const data = await fetchNews(currentSymbol, currentSymbol ? true : false);
     console.log('News data received:', data);
     const articles = data.articles || [];
     

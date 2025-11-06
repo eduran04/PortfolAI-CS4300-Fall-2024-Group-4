@@ -251,7 +251,10 @@ async function fetchNews(symbol = null, forceRefresh = false) {
   }
   
   try {
-    const url = symbol ? `/api/news/?symbol=${symbol}` : '/api/news/';
+    // Add force_refresh parameter when forcing refresh
+    const url = symbol 
+      ? `/api/news/?symbol=${symbol}${forceRefresh ? '&force_refresh=true' : ''}` 
+      : `/api/news/${forceRefresh ? '?force_refresh=true' : ''}`;
     const response = await fetch(url, {
       method: 'GET',
       headers: {
