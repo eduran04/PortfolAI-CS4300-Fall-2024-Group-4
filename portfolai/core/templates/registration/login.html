@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - PortfolAI{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Login</h2>
+            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-4 p-3 {% if message.tags == 'success' %}bg-green-100 dark:bg-green-900 border border-green-400 text-green-700 dark:text-green-300{% else %}bg-blue-100 dark:bg-blue-900 border border-blue-400 text-blue-700 dark:text-blue-300{% endif %} rounded">
+                        <p class="text-sm">{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% if form.errors %}
+            <div class="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-300 rounded">
+                <p class="text-sm">Your username and password didn't match. Please try again.</p>
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="id_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        id="id_username" 
+                        autocomplete="username" 
+                        required 
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="Enter your username"
+                    >
+                </div>
+                <div class="mb-6">
+                    <label for="id_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="id_password" 
+                        autocomplete="current-password" 
+                        required 
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        placeholder="Enter your password"
+                    >
+                </div>
+                <button 
+                    type="submit" 
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-colors"
+                >
+                    Sign in
+                </button>
+            </form>
+            
+            <p class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                Not a member? <a href="{% url 'signup' %}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">Register here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
