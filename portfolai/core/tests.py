@@ -252,14 +252,16 @@ class APITests(TestCase):
 
     def test_get_stock_data_empty_symbol(self):
         """Test stock data with empty symbol"""
-        # When empty symbol, defaults to AAPL - may or may not have fallback depending on API
-        url = reverse('get_stock_data')
-        response = self.client.get(url, {'symbol': ''})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('symbol', data)
-        # Don't check for fallback as it depends on API availability
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.finnhub_client', None):
+            # When empty symbol, defaults to AAPL - may or may not have fallback depending on API
+            url = reverse('get_stock_data')
+            response = self.client.get(url, {'symbol': ''})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
+            # Don't check for fallback as it depends on API availability
 
     def test_portfolai_analysis_empty_symbol(self):
         """Test PortfolAI analysis with empty symbol"""
@@ -293,13 +295,15 @@ class APITests(TestCase):
 
     def test_portfolai_analysis_whitespace_symbol(self):
         """Test PortfolAI analysis with whitespace symbol - actually works with fallback"""
-        url = reverse('portfolai_analysis')
-        response = self.client.get(url, {'symbol': '   '})
-        
-        # Whitespace actually works and returns 200 with fallback data
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('symbol', data)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch.object(settings, 'OPENAI_API_KEY', None):
+            url = reverse('portfolai_analysis')
+            response = self.client.get(url, {'symbol': '   '})
+            
+            # Whitespace actually works and returns 200 with fallback data
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
 
     def test_stock_summary_whitespace_symbol(self):
         """Test stock summary with whitespace symbol - requires API keys"""
@@ -313,21 +317,25 @@ class APITests(TestCase):
 
     def test_get_stock_data_lowercase_symbol(self):
         """Test stock data with lowercase symbol (should be converted to uppercase)"""
-        url = reverse('get_stock_data')
-        response = self.client.get(url, {'symbol': 'aapl'})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data['symbol'], 'AAPL')
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.finnhub_client', None):
+            url = reverse('get_stock_data')
+            response = self.client.get(url, {'symbol': 'aapl'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(data['symbol'], 'AAPL')
 
     def test_portfolai_analysis_lowercase_symbol(self):
         """Test PortfolAI analysis with lowercase symbol"""
-        url = reverse('portfolai_analysis')
-        response = self.client.get(url, {'symbol': 'aapl'})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data['symbol'], 'AAPL')
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch.object(settings, 'OPENAI_API_KEY', None):
+            url = reverse('portfolai_analysis')
+            response = self.client.get(url, {'symbol': 'aapl'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(data['symbol'], 'AAPL')
 
     def test_stock_summary_lowercase_symbol(self):
         """Test stock summary with lowercase symbol - requires API keys"""
@@ -341,49 +349,57 @@ class APITests(TestCase):
 
     def test_get_news_response_structure(self):
         """Test news response has correct structure"""
-        url = reverse('get_news')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('articles', data)
-        self.assertIn('totalResults', data)
-        self.assertIsInstance(data['articles'], list)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.newsapi', None):
+            url = reverse('get_news')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('articles', data)
+            self.assertIn('totalResults', data)
+            self.assertIsInstance(data['articles'], list)
 
     def test_get_market_movers_response_structure(self):
         """Test market movers response has correct structure"""
-        url = reverse('get_market_movers')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('gainers', data)
-        self.assertIn('losers', data)
-        self.assertIsInstance(data['gainers'], list)
-        self.assertIsInstance(data['losers'], list)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.finnhub_client', None):
+            url = reverse('get_market_movers')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('gainers', data)
+            self.assertIn('losers', data)
+            self.assertIsInstance(data['gainers'], list)
+            self.assertIsInstance(data['losers'], list)
 
     def test_get_stock_data_response_structure(self):
         """Test stock data response has correct structure"""
-        url = reverse('get_stock_data')
-        response = self.client.get(url, {'symbol': 'AAPL'})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('symbol', data)
-        self.assertIn('name', data)
-        self.assertIn('price', data)
-        self.assertIn('change', data)
-        self.assertIn('changePercent', data)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.finnhub_client', None):
+            url = reverse('get_stock_data')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
+            self.assertIn('name', data)
+            self.assertIn('price', data)
+            self.assertIn('change', data)
+            self.assertIn('changePercent', data)
 
     def test_portfolai_analysis_response_structure(self):
         """Test PortfolAI analysis response has correct structure"""
-        url = reverse('portfolai_analysis')
-        response = self.client.get(url, {'symbol': 'AAPL'})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('symbol', data)
-        self.assertIn('analysis', data)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch.object(settings, 'OPENAI_API_KEY', None):
+            url = reverse('portfolai_analysis')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
+            self.assertIn('analysis', data)
 
     def test_stock_summary_response_structure(self):
         """Test stock summary response structure - requires API keys"""
@@ -818,22 +834,18 @@ class APITests(TestCase):
         """Test PortfolAI analysis when stock data fetch fails"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.side_effect = Exception("Stock data error")
-                
-                url = reverse('portfolai_analysis')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-
-    def test_portfolai_analysis_news_fetch_exception(self):
-        """Test PortfolAI analysis when news fetch fails"""
-        with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
-                with patch('core.views.newsapi') as mock_newsapi:
-                    mock_newsapi.get_everything.side_effect = Exception("News error")
+                with patch('core.views.openai_client') as mock_openai:
+                    mock_finnhub.quote.side_effect = Exception("Stock data error")
+                    
+                    # Mock OpenAI response
+                    mock_response = type('obj', (object,), {
+                        'choices': [type('obj', (object,), {
+                            'message': type('obj', (object,), {
+                                'content': 'Test AI analysis'
+                            })
+                        })]
+                    })
+                    mock_openai.chat.completions.create.return_value = mock_response
                     
                     url = reverse('portfolai_analysis')
                     response = self.client.get(url, {'symbol': 'AAPL'})
@@ -842,19 +854,56 @@ class APITests(TestCase):
                     data = response.json()
                     self.assertIn('symbol', data)
 
+    def test_portfolai_analysis_news_fetch_exception(self):
+        """Test PortfolAI analysis when news fetch fails"""
+        with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
+            with patch('core.views.finnhub_client') as mock_finnhub:
+                mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                with patch('core.views.newsapi') as mock_newsapi:
+                    with patch('core.views.openai_client') as mock_openai:
+                        mock_newsapi.get_everything.side_effect = Exception("News error")
+                        
+                        # Mock OpenAI response
+                        mock_response = type('obj', (object,), {
+                            'choices': [type('obj', (object,), {
+                                'message': type('obj', (object,), {
+                                    'content': 'Test AI analysis'
+                                })
+                            })]
+                        })
+                        mock_openai.chat.completions.create.return_value = mock_response
+                        
+                        url = reverse('portfolai_analysis')
+                        response = self.client.get(url, {'symbol': 'AAPL'})
+                        
+                        self.assertEqual(response.status_code, 200)
+                        data = response.json()
+                        self.assertIn('symbol', data)
+
     def test_portfolai_analysis_company_profile_exception(self):
         """Test PortfolAI analysis when company profile fetch fails"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
-                mock_finnhub.company_profile2.side_effect = Exception("Company profile error")
-                
-                url = reverse('portfolai_analysis')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
+                with patch('core.views.openai_client') as mock_openai:
+                    mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                    mock_finnhub.company_profile2.side_effect = Exception("Company profile error")
+                    
+                    # Mock OpenAI response
+                    mock_response = type('obj', (object,), {
+                        'choices': [type('obj', (object,), {
+                            'message': type('obj', (object,), {
+                                'content': 'Test AI analysis'
+                            })
+                        })]
+                    })
+                    mock_openai.chat.completions.create.return_value = mock_response
+                    
+                    url = reverse('portfolai_analysis')
+                    response = self.client.get(url, {'symbol': 'AAPL'})
+                    
+                    self.assertEqual(response.status_code, 200)
+                    data = response.json()
+                    self.assertIn('symbol', data)
 
     def test_portfolai_analysis_web_search_api_fallback(self):
         """Test PortfolAI analysis web search API fallback"""
@@ -1186,16 +1235,27 @@ class APITests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
                 with patch('core.views.newsapi') as mock_newsapi:
-                    mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0}
-                    mock_finnhub.company_profile2.return_value = {'name': 'Test Company'}
-                    mock_newsapi.get_everything.side_effect = Exception("News error")
-                    
-                    url = reverse('portfolai_analysis')
-                    response = self.client.get(url, {'symbol': 'AAPL'})
-                    
-                    self.assertEqual(response.status_code, 200)
-                    data = response.json()
-                    self.assertIn('symbol', data)
+                    with patch('core.views.openai_client') as mock_openai:
+                        mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0}
+                        mock_finnhub.company_profile2.return_value = {'name': 'Test Company'}
+                        mock_newsapi.get_everything.side_effect = Exception("News error")
+                        
+                        # Mock OpenAI response
+                        mock_response = type('obj', (object,), {
+                            'choices': [type('obj', (object,), {
+                                'message': type('obj', (object,), {
+                                    'content': 'Test AI analysis'
+                                })
+                            })]
+                        })
+                        mock_openai.chat.completions.create.return_value = mock_response
+                        
+                        url = reverse('portfolai_analysis')
+                        response = self.client.get(url, {'symbol': 'AAPL'})
+                        
+                        self.assertEqual(response.status_code, 200)
+                        data = response.json()
+                        self.assertIn('symbol', data)
 
     def test_get_stock_data_with_valid_quote_and_profile(self):
         """Test stock data with valid quote and profile data"""
