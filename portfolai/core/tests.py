@@ -96,14 +96,14 @@ class APITests(TestCase):
 
     def test_get_stock_data_no_symbol(self):
         """Test stock data endpoint without symbol parameter"""
-        # When no symbol, defaults to AAPL - may or may not have fallback depending on API
-        url = reverse('get_stock_data')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('symbol', data)
-        # Don't check for fallback as it depends on API availability
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.finnhub_client', None):
+            url = reverse('get_stock_data')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
 
     def test_portfolai_analysis_no_symbol(self):
         """Test PortfolAI analysis without symbol"""
@@ -127,12 +127,14 @@ class APITests(TestCase):
 
     def test_get_news_endpoint(self):
         """Test news endpoint returns response"""
-        url = reverse('get_news')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('articles', data)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.newsapi', None):
+            url = reverse('get_news')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('articles', data)
 
     # ============================================================================
     # SECTION 4: MARKET MOVERS DASHBOARD TESTS
@@ -147,33 +149,39 @@ class APITests(TestCase):
 
     def test_get_market_movers_endpoint(self):
         """Test market movers endpoint returns response"""
-        url = reverse('get_market_movers')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('gainers', data)
-        self.assertIn('losers', data)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.finnhub_client', None):
+            url = reverse('get_market_movers')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('gainers', data)
+            self.assertIn('losers', data)
 
     def test_get_stock_data_with_symbol_fallback(self):
         """Test stock data with symbol using fallback data"""
-        url = reverse('get_stock_data')
-        response = self.client.get(url, {'symbol': 'AAPL'})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('symbol', data)
-        self.assertIn('name', data)
-        self.assertIn('price', data)
+        # Mock API client to ensure fallback is used and prevent real API calls
+        with patch('core.views.finnhub_client', None):
+            url = reverse('get_stock_data')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
+            self.assertIn('name', data)
+            self.assertIn('price', data)
 
     def test_get_news_with_symbol(self):
         """Test news endpoint with symbol parameter"""
-        url = reverse('get_news')
-        response = self.client.get(url, {'symbol': 'AAPL'})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('articles', data)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.newsapi', None):
+            url = reverse('get_news')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('articles', data)
 
     def test_portfolai_analysis_with_symbol_fallback(self):
         """Test PortfolAI analysis with symbol using fallback"""
