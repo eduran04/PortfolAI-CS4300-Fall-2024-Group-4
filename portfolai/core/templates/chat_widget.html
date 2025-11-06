@@ -1,0 +1,29 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'chat/chat_style.css' %}">
+
+<div id="chat-widget" class="chat-widget">
+  <!-- Collapsible Header -->
+  <div id="chat-header" class="hidden">
+    <span class="chat-title">PortfolAI Assistant</span>
+    <button id="chat-close" aria-label="Close chat">✕</button>
+  </div>
+
+  <!-- Chat History -->
+  <div id="chat-history" class="hidden"></div>
+
+  <!-- Always-visible Chat Bar -->
+  <div id="chat-bar">
+    <img 
+      id="chat-icon"
+      src="{% static 'chat/chatbot_idle.png' %}"
+      alt="Chat icon"
+      class="chat-icon"
+      data-idle="{% static 'chat/chatbot_idle.png' %}"
+      data-active="{% static 'chat/chatbot_active.png' %}"
+    />
+    <input type="text" id="chat-input" placeholder="Ask me about PortfolAI data..." />
+    <button id="chat-send">↑</button>
+  </div>
+</div>
+
+<script src="{% static 'chat/chat.js' %}"></script>
