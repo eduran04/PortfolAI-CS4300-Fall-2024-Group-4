@@ -34,6 +34,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.core.cache import cache
 import openai
 import finnhub
 from newsapi import NewsApiClient
@@ -172,7 +173,7 @@ def get_stock_data(request):
     Core Stock Data Retrieval - Feature 1: Real-Time Stock Data
     Endpoint: /api/stock-data/?symbol=AAPL
     Purpose: Get basic stock data for search functionality
-    Features: Real-time data, fallback system, input validation
+    Features: Real-time data, fallback system, input validation, caching
     Example: /api/stock-data/?symbol=AAPL
     """
     symbol = request.GET.get("symbol", "").strip().upper()
@@ -180,6 +181,13 @@ def get_stock_data(request):
     # Handle whitespace-only symbols by using default AAPL
     if not symbol:
         symbol = "AAPL"
+    
+    # Check cache first (1 minute cache)
+    cache_key = f'stock_data_{symbol}'
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        logger.info(f'Returning cached stock data for {symbol}')
+        return Response(cached_data)
     
     # Check if API key is available, if not use fallback data
     if not settings.FINNHUB_API_KEY or not finnhub_client:
@@ -207,7 +215,39 @@ def get_stock_data(request):
     
     try:
         # Fetch stock quote from Finnhub
-        quote = finnhub_client.quote(symbol)
+        try:
+            quote = finnhub_client.quote(symbol)
+        except Exception as api_error:
+            error_str = str(api_error).lower()
+            # Check for rate limit errors
+            if 'rate limit' in error_str or '429' in error_str or 'too many requests' in error_str:
+                logger.warning(f'Rate limit hit for {symbol}, using cached or fallback data')
+                # Try to return cached data even if expired
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    return Response(cached_data)
+                # Use fallback
+                from .services import FALLBACK_STOCKS
+                if symbol in FALLBACK_STOCKS:
+                    stock_data = FALLBACK_STOCKS[symbol]
+                    return Response({
+                        "symbol": symbol,
+                        "name": stock_data['name'],
+                        "price": stock_data['price'],
+                        "change": stock_data['change'],
+                        "changePercent": stock_data['changePercent'],
+                        "open": stock_data['price'] - stock_data['change'],
+                        "high": stock_data['price'] + abs(stock_data['change']),
+                        "low": stock_data['price'] - abs(stock_data['change']),
+                        "volume": 1000000,
+                        "marketCap": 0,
+                        "peRatio": 0,
+                        "yearHigh": stock_data['price'] + abs(stock_data['change']),
+                        "yearLow": stock_data['price'] - abs(stock_data['change']),
+                        "fallback": True,
+                        "rateLimited": True
+                    })
+            raise api_error
         
         # Check if quote data is valid
         if not quote or quote.get('c') is None:
@@ -234,11 +274,16 @@ def get_stock_data(request):
             return Response({"error": f"No data found for symbol {symbol}"}, status=404)
         
         # Try to get company profile, but don't fail if it's not available
+        # Only fetch if we don't have name from quote (reduces API calls)
         company = {}
+        company_name = symbol  # Default to symbol
         try:
+            # Only fetch company profile if we really need it (reduces API calls)
+            # For basic display, we can use symbol as name
             company = finnhub_client.company_profile2(symbol=symbol)
+            company_name = company.get('name', symbol)
         except Exception as e:
-            print(f"Warning: Could not fetch company profile for {symbol}: {e}")
+            logger.warning(f"Could not fetch company profile for {symbol}: {e}")
             company = {}
         
         # Calculate price change and percentage
@@ -247,9 +292,9 @@ def get_stock_data(request):
         change = current_price - previous_close
         change_percent = (change / previous_close * 100) if previous_close != 0 else 0
         
-        return Response({
+        response_data = {
             "symbol": symbol,
-            "name": company.get('name', symbol),
+            "name": company_name,
             "price": round(current_price, 2),
             "change": round(change, 2),
             "changePercent": round(change_percent, 2),
@@ -257,11 +302,16 @@ def get_stock_data(request):
             "high": quote.get('h', 0),
             "low": quote.get('l', 0),
             "volume": quote.get('v', 0),
-            "marketCap": company.get('marketCapitalization', 0),
-            "peRatio": company.get('pe', 0),
+            "marketCap": company.get('marketCapitalization', 0) if company else 0,
+            "peRatio": company.get('pe', 0) if company else 0,
             "yearHigh": quote.get('h', 0),  # Using current high as year high for now
             "yearLow": quote.get('l', 0),   # Using current low as year low for now
-        })
+        }
+        
+        # Cache the response for 1 minute
+        cache.set(cache_key, response_data, 60)
+        
+        return Response(response_data)
         
     except Exception as e:
         print(f"Error fetching data for {symbol}: {str(e)}")
@@ -299,13 +349,23 @@ def get_market_movers(request):
     Market Movers Dashboard - Feature 2: Top Gainers & Losers
     Endpoint: /api/market-movers/
     Purpose: Get top gainers and losers from the market
-    Features: Real-time market data, sorted by percentage change
+    Features: Real-time market data, sorted by percentage change, caching
     Example: /api/market-movers/
     """
+    # Check cache first (2 minute cache)
+    cache_key = 'market_movers'
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        logger.info('Returning cached market movers data')
+        return Response(cached_data)
+    
     try:
         # Use service layer to handle business logic
         market_data_service = MarketDataService()
         market_movers_data = market_data_service.get_market_movers()
+        
+        # Cache the response for 2 minutes
+        cache.set(cache_key, market_movers_data, 120)
         
         return Response(market_movers_data)
         
@@ -325,10 +385,17 @@ def get_news(request):
     Financial News Feed - Feature 3: Market News & Analysis
     Endpoint: /api/news/?symbol=AAPL (optional)
     Purpose: Get financial news from NewsAPI.org
-    Features: General news, symbol-specific filtering, time formatting
+    Features: General news, symbol-specific filtering, time formatting, caching
     Example: /api/news/?symbol=AAPL (optional)
     """
     symbol = request.GET.get("symbol", "").upper()
+    
+    # Check cache first (5 minute cache)
+    cache_key = f'news_{symbol or "general"}'
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        logger.info(f'Returning cached news data for {symbol or "general"}')
+        return Response(cached_data)
     
     # Check if API key is available, if not use fallback data
     if not settings.NEWS_API_KEY or not newsapi:
@@ -426,19 +493,27 @@ def get_news(request):
                 "fallback": True
             })
         
-        return Response({
+        response_data = {
             "articles": news_items,
             "totalResults": articles.get('totalResults', 0)
-        })
+        }
+        
+        # Cache the response for 5 minutes
+        cache.set(cache_key, response_data, 300)
+        
+        return Response(response_data)
         
     except Exception as e:
-        print(f"Error fetching news: {str(e)}")
+        logger.error(f"Error fetching news: {str(e)}")
         # Return fallback news on error
-        return Response({
+        fallback_data = {
             "articles": FALLBACK_NEWS,
             "totalResults": len(FALLBACK_NEWS),
             "fallback": True
-        })
+        }
+        # Cache fallback data too (shorter duration)
+        cache.set(cache_key, fallback_data, 60)
+        return Response(fallback_data)
 
 
 # ============================================================================

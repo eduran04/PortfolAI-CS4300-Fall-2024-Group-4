@@ -348,9 +348,9 @@ function initializeUI() {
   populateMarketMovers();
   populateNewsFeed();
   
-  // Set up periodic updates
-  setInterval(populateTicker, 30000); // Update ticker every 30 seconds
-  setInterval(populateMarketMovers, 15000); // Update market movers every 15 seconds
+  // Set up periodic updates - increased intervals to reduce API calls
+  setInterval(populateTicker, 120000); // Update ticker every 2 minutes (was 30 seconds)
+  setInterval(populateMarketMovers, 120000); // Update market movers every 2 minutes (was 15 seconds)
   
   // Set up news feed updates on search
   const searchButton = document.getElementById('search-button');
