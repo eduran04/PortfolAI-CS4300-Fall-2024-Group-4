@@ -112,9 +112,9 @@ async function performSearch() {
     if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
     if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
 
-    // Fetch stock data from API
-    console.log('Fetching stock data for:', searchTerm);
-    const stockData = await fetchStockData(searchTerm);
+    // Fetch stock data from API - always force refresh for search to ensure accurate data
+    console.log('Fetching stock data for:', searchTerm, '(force refresh)');
+    const stockData = await fetchStockData(searchTerm, true); // Force refresh for search
     console.log('Stock data received:', stockData);
 
     // Display stock details in the sidebar

@@ -117,9 +117,10 @@ function initializeMobileMenu() {
 
 /**
  * Populate the scrolling ticker with market data
+ * @param {boolean} forceRefresh - Force refresh, bypass cache
  */
-async function populateTicker() {
-  console.log('populateTicker called');
+async function populateTicker(forceRefresh = false) {
+  console.log('populateTicker called', forceRefresh ? '(force refresh)' : '(using cache if available)');
   const tickerMove = getTickerMove();
   if (!tickerMove) {
     console.warn('Ticker element not found');
@@ -128,7 +129,7 @@ async function populateTicker() {
   
   try {
     console.log('Fetching market movers for ticker...');
-    const data = await fetchMarketMovers();
+    const data = await fetchMarketMovers(forceRefresh);
     console.log('Market movers data received:', data);
 
     // Combine gainers and losers for ticker
@@ -344,12 +345,15 @@ function initializeUI() {
   document.getElementById('currentYear').textContent = new Date().getFullYear();
   
   // Initialize data loading
-  populateTicker();
+  // Force refresh on initial load to ensure fresh data
+  populateTicker(true); // Force refresh on initial load
   populateMarketMovers();
   populateNewsFeed();
   
-  // Set up periodic updates - increased intervals to reduce API calls
-  setInterval(populateTicker, 120000); // Update ticker every 2 minutes (was 30 seconds)
+  // Set up periodic updates
+  // Ticker: Refresh every 1 minute, will use cache if available but can make API calls
+  setInterval(() => populateTicker(false), 60000); // Update ticker every 1 minute, using cache if available
+  // Market movers: Refresh every 2 minutes to reduce API calls
   setInterval(populateMarketMovers, 120000); // Update market movers every 2 minutes (was 15 seconds)
   
   // Set up news feed updates on search

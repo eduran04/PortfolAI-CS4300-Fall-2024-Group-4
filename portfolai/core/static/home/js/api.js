@@ -102,7 +102,12 @@ async function fetchStockData(symbol, forceRefresh = false) {
   }
   
   try {
-    const response = await fetch(`/api/stock-data/?symbol=${symbol}`, {
+    // Add force_refresh parameter to bypass server-side cache when forceRefresh is true
+    const url = forceRefresh 
+      ? `/api/stock-data/?symbol=${symbol}&force_refresh=true`
+      : `/api/stock-data/?symbol=${symbol}`;
+    
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

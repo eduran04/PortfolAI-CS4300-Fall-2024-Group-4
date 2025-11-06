@@ -177,17 +177,21 @@ def get_stock_data(request):
     Example: /api/stock-data/?symbol=AAPL
     """
     symbol = request.GET.get("symbol", "").strip().upper()
+    force_refresh = request.GET.get("force_refresh", "false").lower() == "true"
     
     # Handle whitespace-only symbols by using default AAPL
     if not symbol:
         symbol = "AAPL"
     
-    # Check cache first (1 minute cache)
-    cache_key = f'stock_data_{symbol}'
-    cached_data = cache.get(cache_key)
-    if cached_data:
-        logger.info(f'Returning cached stock data for {symbol}')
-        return Response(cached_data)
+    # Check cache first (1 minute cache) - skip if force_refresh is True
+    if not force_refresh:
+        cache_key = f'stock_data_{symbol}'
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            logger.info(f'Returning cached stock data for {symbol}')
+            return Response(cached_data)
+    else:
+        logger.info(f'Force refresh requested for {symbol}, bypassing cache')
     
     # Check if API key is available, if not use fallback data
     if not settings.FINNHUB_API_KEY or not finnhub_client:
