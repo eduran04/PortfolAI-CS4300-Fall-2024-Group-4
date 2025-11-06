@@ -26,17 +26,31 @@ All endpoints include comprehensive error handling and fallback data
 for when external APIs are unavailable.
 """
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
+from django.contrib import messages
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.core.cache import cache
 import openai
 import finnhub
 from newsapi import NewsApiClient
 from django.conf import settings
-import requests
+import requests, json, os, openai, re
 from datetime import datetime, timedelta
 import random
 import logging
+from .forms import UserRegistrationForm
+from .models import Watchlist
+
+#added by me
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from openai import OpenAI
+#added by me
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +80,37 @@ def landing(request):
     return render(request, "landing.html")
 
 
+@login_required
 def trading_dashboard(request):
     """
     Trading dashboard view - Feature: Main Application Interface
     Renders the main trading dashboard with all features
+    Requires user authentication.
     """
     return render(request, "home.html")
+
+
+# ============================================================================
+# SECTION: AUTHENTICATION VIEWS
+# ============================================================================
+
+class SignUpView(CreateView):
+    """
+    User registration view.
+    Creates a new user account with email (required and unique).
+    Redirects to login page after successful registration.
+    """
+    form_class = UserRegistrationForm
+    template_name = 'registration/signup.html'
+    success_url = reverse_lazy('login')
+
+    def form_valid(self, form):
+        """
+        Save the user and redirect to login page.
+        """
+        form.save()
+        messages.success(self.request, 'Account created successfully! Please log in to continue.')
+        return super().form_valid(form)
 
 
 @api_view(["GET"])
@@ -141,14 +180,27 @@ def get_stock_data(request):
     Core Stock Data Retrieval - Feature 1: Real-Time Stock Data
     Endpoint: /api/stock-data/?symbol=AAPL
     Purpose: Get basic stock data for search functionality
-    Features: Real-time data, fallback system, input validation
+    Features: Real-time data, fallback system, input validation, caching
     Example: /api/stock-data/?symbol=AAPL
     """
     symbol = request.GET.get("symbol", "").strip().upper()
+    force_refresh = request.GET.get("force_refresh", "false").lower() == "true"
     
     # Handle whitespace-only symbols by using default AAPL
     if not symbol:
         symbol = "AAPL"
+    
+    # Define cache_key early so it's available throughout the function
+    cache_key = f'stock_data_{symbol}'
+    
+    # Check cache first (1 minute cache) - skip if force_refresh is True
+    if not force_refresh:
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            logger.info(f'Returning cached stock data for {symbol}')
+            return Response(cached_data)
+    else:
+        logger.info(f'Force refresh requested for {symbol}, bypassing cache')
     
     # Check if API key is available, if not use fallback data
     if not settings.FINNHUB_API_KEY or not finnhub_client:
@@ -176,7 +228,39 @@ def get_stock_data(request):
     
     try:
         # Fetch stock quote from Finnhub
-        quote = finnhub_client.quote(symbol)
+        try:
+            quote = finnhub_client.quote(symbol)
+        except Exception as api_error:
+            error_str = str(api_error).lower()
+            # Check for rate limit errors
+            if 'rate limit' in error_str or '429' in error_str or 'too many requests' in error_str:
+                logger.warning(f'Rate limit hit for {symbol}, using cached or fallback data')
+                # Try to return cached data even if expired
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    return Response(cached_data)
+                # Use fallback
+                from .services import FALLBACK_STOCKS
+                if symbol in FALLBACK_STOCKS:
+                    stock_data = FALLBACK_STOCKS[symbol]
+                    return Response({
+                        "symbol": symbol,
+                        "name": stock_data['name'],
+                        "price": stock_data['price'],
+                        "change": stock_data['change'],
+                        "changePercent": stock_data['changePercent'],
+                        "open": stock_data['price'] - stock_data['change'],
+                        "high": stock_data['price'] + abs(stock_data['change']),
+                        "low": stock_data['price'] - abs(stock_data['change']),
+                        "volume": 1000000,
+                        "marketCap": 0,
+                        "peRatio": 0,
+                        "yearHigh": stock_data['price'] + abs(stock_data['change']),
+                        "yearLow": stock_data['price'] - abs(stock_data['change']),
+                        "fallback": True,
+                        "rateLimited": True
+                    })
+            raise api_error
         
         # Check if quote data is valid
         if not quote or quote.get('c') is None:
@@ -203,11 +287,16 @@ def get_stock_data(request):
             return Response({"error": f"No data found for symbol {symbol}"}, status=404)
         
         # Try to get company profile, but don't fail if it's not available
+        # Only fetch if we don't have name from quote (reduces API calls)
         company = {}
+        company_name = symbol  # Default to symbol
         try:
+            # Only fetch company profile if we really need it (reduces API calls)
+            # For basic display, we can use symbol as name
             company = finnhub_client.company_profile2(symbol=symbol)
+            company_name = company.get('name', symbol)
         except Exception as e:
-            print(f"Warning: Could not fetch company profile for {symbol}: {e}")
+            logger.warning(f"Could not fetch company profile for {symbol}: {e}")
             company = {}
         
         # Calculate price change and percentage
@@ -216,9 +305,9 @@ def get_stock_data(request):
         change = current_price - previous_close
         change_percent = (change / previous_close * 100) if previous_close != 0 else 0
         
-        return Response({
+        response_data = {
             "symbol": symbol,
-            "name": company.get('name', symbol),
+            "name": company_name,
             "price": round(current_price, 2),
             "change": round(change, 2),
             "changePercent": round(change_percent, 2),
@@ -226,11 +315,16 @@ def get_stock_data(request):
             "high": quote.get('h', 0),
             "low": quote.get('l', 0),
             "volume": quote.get('v', 0),
-            "marketCap": company.get('marketCapitalization', 0),
-            "peRatio": company.get('pe', 0),
+            "marketCap": company.get('marketCapitalization', 0) if company else 0,
+            "peRatio": company.get('pe', 0) if company else 0,
             "yearHigh": quote.get('h', 0),  # Using current high as year high for now
             "yearLow": quote.get('l', 0),   # Using current low as year low for now
-        })
+        }
+        
+        # Cache the response for 1 minute
+        cache.set(cache_key, response_data, 60)
+        
+        return Response(response_data)
         
     except Exception as e:
         print(f"Error fetching data for {symbol}: {str(e)}")
@@ -268,13 +362,23 @@ def get_market_movers(request):
     Market Movers Dashboard - Feature 2: Top Gainers & Losers
     Endpoint: /api/market-movers/
     Purpose: Get top gainers and losers from the market
-    Features: Real-time market data, sorted by percentage change
+    Features: Real-time market data, sorted by percentage change, caching
     Example: /api/market-movers/
     """
+    # Check cache first (2 minute cache)
+    cache_key = 'market_movers'
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        logger.info('Returning cached market movers data')
+        return Response(cached_data)
+    
     try:
         # Use service layer to handle business logic
         market_data_service = MarketDataService()
         market_movers_data = market_data_service.get_market_movers()
+        
+        # Cache the response for 2 minutes
+        cache.set(cache_key, market_movers_data, 120)
         
         return Response(market_movers_data)
         
@@ -294,10 +398,21 @@ def get_news(request):
     Financial News Feed - Feature 3: Market News & Analysis
     Endpoint: /api/news/?symbol=AAPL (optional)
     Purpose: Get financial news from NewsAPI.org
-    Features: General news, symbol-specific filtering, time formatting
+    Features: General news, symbol-specific filtering, time formatting, caching
     Example: /api/news/?symbol=AAPL (optional)
     """
     symbol = request.GET.get("symbol", "").upper()
+    force_refresh = request.GET.get("force_refresh", "false").lower() == "true"
+    
+    # Check cache first (5 minute cache) - skip if force_refresh is True
+    cache_key = f'news_{symbol or "general"}'
+    if not force_refresh:
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            logger.info(f'Returning cached news data for {symbol or "general"}')
+            return Response(cached_data)
+    else:
+        logger.info(f'Force refresh requested for news {symbol or "general"}, bypassing cache')
     
     # Check if API key is available, if not use fallback data
     if not settings.NEWS_API_KEY or not newsapi:
@@ -310,24 +425,44 @@ def get_news(request):
     try:
         if symbol:
             # Get company-specific news using everything endpoint
+            # Limit to 3 articles for stock-specific news
             try:
-                # Use today's date for better results
-                from_date = datetime.now().strftime('%Y-%m-%d')
+                # Free plan has 24-hour delay, so search from yesterday back to a month ago
+                # Use date range to get recent articles (yesterday to 30 days ago)
+                to_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')  # Yesterday (24h delay)
+                from_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')  # 30 days ago
                 articles = newsapi.get_everything(
                     q=f"{symbol} stock",
                     from_param=from_date,
+                    to=to_date,
                     language='en',
                     sort_by='popularity',  # Use popularity as recommended in docs
-                    page_size=10
+                    page_size=3  # Limit to 3 articles for stock-specific news
                 )
+                # Check if API returned an error response
+                if articles and articles.get('status') == 'error':
+                    error_msg = articles.get('message', 'Unknown error')
+                    error_code = articles.get('code', 'unknown')
+                    logger.warning(f"News API error for {symbol}: {error_code} - {error_msg}")
+                    # Check for rate limit errors
+                    if 'rate' in error_msg.lower() or 'limit' in error_msg.lower() or error_code == 'rateLimited':
+                        logger.error(f"News API rate limit reached for {symbol}. Consider upgrading plan or reducing requests.")
+                    raise Exception(f"News API error: {error_msg}")
             except Exception as e:
-                print(f"Warning: News API failed for {symbol}: {e}")
-                # Fallback to top headlines for business category
-                articles = newsapi.get_top_headlines(
-                    category='business',
-                    language='en',
-                    page_size=10
-                )
+                logger.warning(f"News API failed for {symbol}: {e}")
+                # Try fallback to top headlines for business category
+                try:
+                    articles = newsapi.get_top_headlines(
+                        category='business',
+                        language='en',
+                        page_size=3
+                    )
+                    # Check if fallback also returned an error
+                    if articles and articles.get('status') == 'error':
+                        raise Exception(f"News API fallback also failed: {articles.get('message', 'Unknown error')}")
+                except Exception as fallback_error:
+                    logger.error(f"News API fallback also failed for {symbol}: {fallback_error}")
+                    raise fallback_error
         else:
             # Get general financial market news using top headlines
             try:
@@ -336,15 +471,32 @@ def get_news(request):
                     language='en',
                     page_size=10
                 )
+                # Check if API returned an error response
+                if articles and articles.get('status') == 'error':
+                    error_msg = articles.get('message', 'Unknown error')
+                    logger.warning(f"News API error for general news: {error_msg}")
+                    raise Exception(f"News API error: {error_msg}")
             except Exception as e:
-                print(f"Warning: News API top headlines failed: {e}")
+                logger.warning(f"News API top headlines failed: {e}")
                 # Fallback to everything endpoint
-                articles = newsapi.get_everything(
-                    q='stock market OR finance OR economy',
-                    language='en',
-                    sort_by='popularity',
-                    page_size=10
-                )
+                try:
+                    # Free plan has 24-hour delay, so search from yesterday back to a month ago
+                    to_date = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')  # Yesterday (24h delay)
+                    from_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')  # 30 days ago
+                    articles = newsapi.get_everything(
+                        q='stock market OR finance OR economy',
+                        from_param=from_date,
+                        to=to_date,
+                        language='en',
+                        sort_by='popularity',
+                        page_size=10
+                    )
+                    # Check if fallback also returned an error
+                    if articles and articles.get('status') == 'error':
+                        raise Exception(f"News API fallback also failed: {articles.get('message', 'Unknown error')}")
+                except Exception as fallback_error:
+                    logger.error(f"News API fallback also failed: {fallback_error}")
+                    raise fallback_error
         
         # Check if we got valid articles
         if not articles or 'articles' not in articles:
@@ -395,19 +547,28 @@ def get_news(request):
                 "fallback": True
             })
         
-        return Response({
+        response_data = {
             "articles": news_items,
             "totalResults": articles.get('totalResults', 0)
-        })
+        }
+        
+        # Cache the response for 10 minutes to reduce API calls (free plan: 100 requests/day)
+        # Longer cache helps stay within rate limits
+        cache.set(cache_key, response_data, 600)
+        
+        return Response(response_data)
         
     except Exception as e:
-        print(f"Error fetching news: {str(e)}")
+        logger.error(f"Error fetching news: {str(e)}")
         # Return fallback news on error
-        return Response({
+        fallback_data = {
             "articles": FALLBACK_NEWS,
             "totalResults": len(FALLBACK_NEWS),
             "fallback": True
-        })
+        }
+        # Cache fallback data too (shorter duration)
+        cache.set(cache_key, fallback_data, 60)
+        return Response(fallback_data)
 
 
 # ============================================================================
@@ -603,3 +764,171 @@ def portfolai_analysis(request):
             "error": f"Failed to generate analysis for {symbol}: {str(e)}",
             "fallback": True
         }, status=500)
+
+
+# ============================================================================
+# SECTION 5: WATCHLIST MANAGEMENT (FEATURE 5)
+# ============================================================================
+# User-specific watchlist endpoints with authentication
+
+@api_view(["GET"])
+def get_watchlist(request):
+    """
+    Get current user's watchlist
+    Endpoint: /api/watchlist/
+    Requires: User authentication
+    Returns: List of stock symbols in user's watchlist
+    """
+    if not request.user.is_authenticated:
+        return Response({"error": "Authentication required"}, status=401)
+    
+    try:
+        watchlist_items = Watchlist.objects.filter(user=request.user)
+        symbols = [item.symbol for item in watchlist_items]
+        return Response({
+            "symbols": symbols,
+            "count": len(symbols)
+        })
+    except Exception as e:
+        logger.error(f"Error fetching watchlist for user {request.user.username}: {str(e)}")
+        return Response({"error": f"Failed to fetch watchlist: {str(e)}"}, status=500)
+
+
+@api_view(["POST"])
+def add_to_watchlist(request):
+    """
+    Add a stock symbol to user's watchlist
+    Endpoint: /api/watchlist/
+    Method: POST
+    Body: {"symbol": "AAPL"}
+    Requires: User authentication
+    """
+    if not request.user.is_authenticated:
+        return Response({"error": "Authentication required"}, status=401)
+    
+    try:
+        symbol = request.data.get("symbol", "").strip().upper()
+        
+        if not symbol:
+            return Response({"error": "Symbol is required"}, status=400)
+        
+        # Check if already in watchlist
+        if Watchlist.objects.filter(user=request.user, symbol=symbol).exists():
+            return Response({
+                "message": f"{symbol} is already in your watchlist",
+                "symbol": symbol
+            }, status=200)
+        
+        # Add to watchlist
+        Watchlist.objects.create(user=request.user, symbol=symbol)
+        
+        return Response({
+            "message": f"{symbol} added to watchlist",
+            "symbol": symbol
+        }, status=201)
+        
+    except Exception as e:
+        logger.error(f"Error adding {request.data.get('symbol')} to watchlist for user {request.user.username}: {str(e)}")
+        return Response({"error": f"Failed to add to watchlist: {str(e)}"}, status=500)
+
+
+@api_view(["DELETE"])
+def remove_from_watchlist(request):
+    """
+    Remove a stock symbol from user's watchlist
+    Endpoint: /api/watchlist/?symbol=AAPL
+    Method: DELETE
+    Requires: User authentication
+    """
+    if not request.user.is_authenticated:
+        return Response({"error": "Authentication required"}, status=401)
+    
+    try:
+        symbol = request.GET.get("symbol", "").strip().upper()
+        
+        if not symbol:
+            return Response({"error": "Symbol is required"}, status=400)
+        
+        # Remove from watchlist
+        deleted_count, _ = Watchlist.objects.filter(user=request.user, symbol=symbol).delete()
+        
+        if deleted_count == 0:
+            return Response({
+                "message": f"{symbol} is not in your watchlist",
+                "symbol": symbol
+            }, status=404)
+        
+        return Response({
+            "message": f"{symbol} removed from watchlist",
+            "symbol": symbol
+        }, status=200)
+        
+    except Exception as e:
+        logger.error(f"Error removing {request.GET.get('symbol')} from watchlist for user {request.user.username}: {str(e)}")
+        return Response({"error": f"Failed to remove from watchlist: {str(e)}"}, status=500)
+
+
+# ============================================================================
+# SECTION 4: CHATBOT API (FEATURE 6)
+# ============================================================================
+
+@csrf_exempt
+def chat_api(request):
+    """
+    PortfolAI Chatbot API Endpoint
+    Responds to user chat messages with AI-powered answers.
+    Maintains test expectations (400 on invalid, fallback on API error)
+    while keeping PortfolAI's custom system prompt.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "POST method required"}, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+        user_message = data.get("message", "").strip()
+    except Exception:
+        user_message = ""
+
+    if not user_message:
+        return JsonResponse({"error": "Message cannot be empty"}, status=400)
+
+    # Check if API key or client unavailable
+    if not getattr(settings, "OPENAI_API_KEY", None) or openai_client is None:
+        return JsonResponse(
+            {"response": f"(Fallback) You said: {user_message}", "fallback": True},
+            status=200,
+        )
+
+    # Define the chatbot's behavior and tone
+    system_prompt = (
+        "You are PortfolAI Assistant — a friendly, knowledgeable AI chatbot "
+        "that helps users with stock market insights, portfolio strategy, and "
+        "investment education. You do NOT have live data, but you can reason "
+        "about historical trends, company performance, and general market context. "
+        "If users ask for live prices, politely explain that you can't provide them, "
+        "but offer useful historical or strategic insights instead. "
+        "Keep your tone concise, analytical, and beginner-friendly."
+    )
+
+    try:
+        completion = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            temperature=0.7,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+        )
+
+        reply = completion.choices[0].message.content.strip()
+        return JsonResponse({"response": reply}, status=200)
+
+    except Exception as e:
+        logger.error(f"Chatbot error: {e}")
+        return JsonResponse(
+            {
+                "response": f"(Fallback after error) Could not reach AI: {str(e)}",
+                "fallback": True,
+            },
+            status=200,
+        )

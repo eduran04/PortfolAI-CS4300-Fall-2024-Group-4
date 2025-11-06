@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign Up - PortfolAI{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Create Account</h2>
+            </div>
+            
+            {% if form.errors %}
+            <div class="mb-4 p-3 bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-300 rounded">
+                <ul class="text-sm list-disc list-inside">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <form method="POST" action="{% url 'signup' %}">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="id_username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.username.label }}</label>
+                    {{ form.username }}
+                </div>
+                <div class="mb-4">
+                    <label for="id_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.email.label }}</label>
+                    {{ form.email }}
+                </div>
+                <div class="mb-4">
+                    <label for="id_password1" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.password1.label }}</label>
+                    {{ form.password1 }}
+                </div>
+                <div class="mb-4">
+                    <label for="id_password2" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ form.password2.label }}</label>
+                    {{ form.password2 }}
+                </div>
+                <button 
+                    type="submit" 
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-colors"
+                >
+                    Register
+                </button>
+            </form>
+            
+            <p class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                Already a member? <a href="{% url 'login' %}" class="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">Login here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

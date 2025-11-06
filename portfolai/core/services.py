@@ -93,19 +93,23 @@ class MarketDataService:
             
             for symbol in major_symbols:
                 try:
-                    quote = self.finnhub_client.quote(symbol)
+                    try:
+                        quote = self.finnhub_client.quote(symbol)
+                    except Exception as api_error:
+                        error_str = str(api_error).lower()
+                        # Check for rate limit errors - stop fetching if rate limited
+                        if 'rate limit' in error_str or '429' in error_str or 'too many requests' in error_str:
+                            logger.warning(f'Rate limit hit while fetching market movers, using partial data')
+                            # Break out of loop if rate limited
+                            break
+                        raise api_error
                     
                     # Check if quote data is valid
                     if not quote or quote.get('c') is None:
                         continue
                     
-                    # Try to get company profile, but don't fail if it's not available
-                    company = {}
-                    try:
-                        company = self.finnhub_client.company_profile2(symbol=symbol)
-                    except:
-                        company = {}
-                    
+                    # Skip company profile to reduce API calls - use symbol as name
+                    # This reduces API calls by 50% for market movers
                     current_price = quote.get('c', 0)
                     previous_close = quote.get('pc', 0)
                     change = current_price - previous_close
@@ -113,7 +117,7 @@ class MarketDataService:
                     
                     market_data.append({
                         "symbol": symbol,
-                        "name": company.get('name', symbol),
+                        "name": symbol,  # Use symbol as name to avoid extra API call
                         "price": round(current_price, 2),
                         "change": round(change, 2),
                         "changePercent": round(change_percent, 2)

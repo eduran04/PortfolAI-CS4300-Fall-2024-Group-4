@@ -1,28 +1,93 @@
 /**
  * Watchlist Management
- * Handles watchlist CRUD operations and localStorage persistence
+ * Handles watchlist CRUD operations with database persistence via API
  */
 
-// Watchlist state
-let watchlist = JSON.parse(localStorage.getItem('stockWatchlist')) || [];
+// Get CSRF token for API requests
+function getCSRFToken() {
+  return getCookie('csrftoken');
+}
 
-// DOM references (these are already declared in stock.js, reuse them)
+// Watchlist state (loaded from API)
+let watchlist = [];
+
+// DOM references
 const watchlistItemsDiv = document.getElementById('watchlist-items');
 const emptyWatchlistMessage = document.getElementById('empty-watchlist-message');
 
 /**
- * Load watchlist from localStorage
- * @returns {Array} Array of stock symbols
+ * Load watchlist from API
+ * @returns {Promise<Array>} Array of stock symbols
  */
-function loadWatchlist() {
-  return JSON.parse(localStorage.getItem('stockWatchlist')) || [];
+async function loadWatchlist() {
+  try {
+    const response = await fetch('/api/watchlist/', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken(),
+      },
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.warn('User not authenticated, watchlist unavailable');
+        return [];
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    watchlist = data.symbols || [];
+    return watchlist;
+  } catch (error) {
+    console.error('Error loading watchlist:', error);
+    // Return empty array on error
+    return [];
+  }
 }
 
 /**
- * Save watchlist to localStorage
+ * Migrate localStorage watchlist to database
+ * Called once on page load if user has localStorage data
  */
-function saveWatchlist() {
-  localStorage.setItem('stockWatchlist', JSON.stringify(watchlist));
+async function migrateLocalStorageWatchlist() {
+  try {
+    const localWatchlist = JSON.parse(localStorage.getItem('stockWatchlist')) || [];
+    
+    if (localWatchlist.length === 0) {
+      return; // Nothing to migrate
+    }
+
+    console.log(`Migrating ${localWatchlist.length} items from localStorage to database...`);
+    
+    // Add each symbol from localStorage to database
+    for (const symbol of localWatchlist) {
+      try {
+        await fetch('/api/watchlist/add/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify({ symbol: symbol }),
+        });
+      } catch (error) {
+        console.warn(`Failed to migrate ${symbol}:`, error);
+      }
+    }
+    
+    // Clear localStorage after successful migration
+    localStorage.removeItem('stockWatchlist');
+    console.log('LocalStorage watchlist migrated successfully');
+    
+    // Reload watchlist from API
+    await loadWatchlist();
+  } catch (error) {
+    console.error('Error migrating localStorage watchlist:', error);
+  }
 }
 
 /**
@@ -38,22 +103,65 @@ function isStockInWatchlist(symbol) {
  * Toggle a stock in the watchlist (add if not present, remove if present)
  * @param {string} symbol - Stock symbol to toggle
  */
-function toggleWatchlist(symbol) {
+async function toggleWatchlist(symbol) {
   if (!symbol) return;
 
-  const index = watchlist.indexOf(symbol);
-  if (index > -1) {
-    watchlist.splice(index, 1);
-  } else {
-    watchlist.push(symbol);
-  }
-  saveWatchlist();
-  renderWatchlist();
+  const isInWatchlist = isStockInWatchlist(symbol);
+  
+  try {
+    if (isInWatchlist) {
+      // Remove from watchlist
+      const response = await fetch(`/api/watchlist/remove/?symbol=${encodeURIComponent(symbol)}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+        },
+        credentials: 'same-origin',
+      });
 
-  const searchInput = document.getElementById('stock-search');
-  const currentSearchSymbol = searchInput.value.toUpperCase().trim();
-  if (currentSearchSymbol === symbol) {
-    updateWatchlistButton(symbol);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Remove from local state
+      const index = watchlist.indexOf(symbol);
+      if (index > -1) {
+        watchlist.splice(index, 1);
+      }
+    } else {
+      // Add to watchlist
+      const response = await fetch('/api/watchlist/add/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ symbol: symbol }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Add to local state
+      if (!watchlist.includes(symbol)) {
+        watchlist.push(symbol);
+      }
+    }
+
+    // Update UI
+    renderWatchlist();
+
+    const searchInput = document.getElementById('stock-search');
+    const currentSearchSymbol = searchInput.value.toUpperCase().trim();
+    if (currentSearchSymbol === symbol) {
+      updateWatchlistButton(symbol);
+    }
+  } catch (error) {
+    console.error(`Error toggling watchlist for ${symbol}:`, error);
+    alert(`Failed to update watchlist: ${error.message}`);
   }
 }
 
@@ -63,6 +171,8 @@ function toggleWatchlist(symbol) {
  */
 function updateWatchlistButton(symbol) {
   const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
+  if (!addToWatchlistBtn) return;
+  
   const isInWatchlist = isStockInWatchlist(symbol);
   
   addToWatchlistBtn.textContent = isInWatchlist
@@ -79,12 +189,17 @@ function updateWatchlistButton(symbol) {
  * Render the watchlist table with current data
  */
 async function renderWatchlist() {
+  // Ensure watchlist is loaded
+  if (watchlist.length === 0) {
+    await loadWatchlist();
+  }
+
   if (watchlist.length === 0) {
     watchlistItemsDiv.innerHTML = '<tr id="empty-watchlist-message" class="bg-white dark:bg-gray-800"><td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Your watchlist is empty. Search for a stock and add it!</td></tr>';
-    emptyWatchlistMessage.classList.remove('hidden');
+    if (emptyWatchlistMessage) emptyWatchlistMessage.classList.remove('hidden');
     return;
   }
-  emptyWatchlistMessage.classList.add('hidden');
+  if (emptyWatchlistMessage) emptyWatchlistMessage.classList.add('hidden');
   
   // Fetch data for each symbol in watchlist
   const fetchedData = await Promise.all(
@@ -178,12 +293,31 @@ async function renderWatchlist() {
 
 /**
  * Initialize watchlist functionality
+ * Loads watchlist from API and migrates localStorage if needed
  */
-function initializeWatchlist() {
+async function initializeWatchlist() {
+  // Check for localStorage data and migrate if user is authenticated
+  const localWatchlist = JSON.parse(localStorage.getItem('stockWatchlist')) || [];
+  if (localWatchlist.length > 0) {
+    // Try to migrate localStorage data to database
+    await migrateLocalStorageWatchlist();
+  } else {
+    // Just load from API
+    await loadWatchlist();
+  }
+  
+  // Render the watchlist
+  await renderWatchlist();
+  
+  // Set up button event listener
   const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
   const searchInput = document.getElementById('stock-search');
-  addToWatchlistBtn.addEventListener('click', () => {
-    const symbol = searchInput.value.toUpperCase().trim();
-    toggleWatchlist(symbol);
-  });
+  if (addToWatchlistBtn && searchInput) {
+    addToWatchlistBtn.addEventListener('click', async () => {
+      const symbol = searchInput.value.toUpperCase().trim();
+      if (symbol) {
+        await toggleWatchlist(symbol);
+      }
+    });
+  }
 }

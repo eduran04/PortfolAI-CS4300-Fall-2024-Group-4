@@ -1,0 +1,230 @@
+/* --- Chat Widget Container --- */
+#chat-widget {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  max-width: 90%;
+  max-height: calc(100vh - 100px); /* Prevent chat from covering navbar */
+  z-index: 1000; /* Lower than navbar to prevent interference */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: "Inter", sans-serif;
+  /* Ensure chat widget doesn't interfere with navbar */
+  pointer-events: auto;
+}
+
+/* --- Visibility --- */
+/* Scoped to chat widget only to avoid conflicts with Tailwind's responsive classes */
+#chat-widget .hidden {
+  display: none !important;
+}
+#chat-widget .show {
+  display: flex !important;
+}
+
+/* --- Chat Header --- */
+#chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #7289da, #5865f2);
+  color: rgb(255, 255, 255);
+  border-radius: 16px 16px 0 0;
+  padding: 10px 14px;
+  width: 100%;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#chat-header.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chat-title {
+  font-size: 15px;
+}
+
+#chat-close {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+#chat-close:hover {
+  opacity: 0.7;
+}
+
+/* --- Chat History --- */
+#chat-history {
+  background: #fff;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-height: 360px; /* Changed from height to max-height */
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  transition: opacity 0.4s ease;
+  /* Ensure chat widget doesn't expand beyond viewport */
+  max-width: 100vw;
+}
+
+#chat-history .message {
+  margin-bottom: 8px;
+}
+
+/* --- Scrollbar Styling --- */
+#chat-history::-webkit-scrollbar {
+  width: 8px;
+}
+#chat-history::-webkit-scrollbar-thumb {
+  background: #c7c9cf;
+  border-radius: 4px;
+}
+#chat-history::-webkit-scrollbar-thumb:hover {
+  background: #a8abb4;
+}
+
+/* --- Messages --- */
+.message {
+  width: fit-content;
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: slideUpFade 0.4s ease forwards;
+}
+
+.message.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #7289da, #5865f2);
+  color: white;
+  border-bottom-right-radius: 6px;
+  margin-left: auto;
+}
+
+.message.bot {
+  align-self: flex-start;
+  background: #f3f4f6;
+  color: #111827;
+  border-bottom-left-radius: 6px;
+  margin-right: auto;
+}
+
+/* --- Typing Animation --- */
+.typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+  opacity: 0.8;
+}
+
+.typing span {
+  width: 6px;
+  height: 6px;
+  background: #5865f2;
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+
+/* --- Chat Bar --- */
+#chat-bar {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #e4e8ff, #f4f7ff);
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 8px 14px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+#chat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  margin-left: 10px;
+  color: #333;
+}
+
+#chat-send {
+  background: linear-gradient(135deg, #7289da, #5865f2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+#chat-send:hover {
+  transform: scale(1.1);
+  opacity: 0.9;
+}
+
+/* --- Chat Icon --- */
+.chat-icon {
+  width: 35px;
+  height: 35px;
+  transition: transform 0.3s ease;
+}
+
+.chat-icon.active {
+  animation: pulse 1.8s infinite ease-in-out;
+  transform: scale(1.05);
+}
+
+/* --- Animations --- */
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.3; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+  }
+}

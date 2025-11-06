@@ -33,17 +33,49 @@ const NYSE_SYMBOLS = [
   'OKLO'                                           // Energy/Utilities
 ];
 
+/** @type {string[]} List of NYSE Arca (AMEX) listed ETFs */
+const NYSE_ARCA_ETFS = [
+  'VOO', 'SPY', 'QQQ', 'VTI', 'IVV', 'IWM',      // Broad market ETFs
+  'VEA', 'VWO', 'EFA', 'EEM',                     // International ETFs
+  'BND', 'TLT', 'AGG',                            // Bond ETFs
+  'GLD', 'SLV', 'USO',                            // Commodity ETFs
+  'ARKK', 'ARKQ', 'ARKG',                         // ARK ETFs
+  'XLF', 'XLE', 'XLK', 'XLV', 'XLI', 'XLP',      // Sector ETFs
+  'XLY', 'XLB', 'XLU', 'XME', 'XPH', 'XRT'       // More sector ETFs
+];
+
 // ============================================================================
 // DOM Element References
 // ============================================================================
+// These are accessed via getter functions to ensure DOM is ready
 
-const searchInput = document.getElementById('stock-search');
-const searchButton = document.getElementById('search-button');
-const stockDetailsDiv = document.getElementById('stock-details');
-const companyNameHeader = document.getElementById('company-name');
-const searchErrorDiv = document.getElementById('search-error');
-const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
-const portfolaiAnalysisBtn = document.getElementById('portfolaiAnalysisBtn');
+function getSearchInput() {
+  return document.getElementById('stock-search');
+}
+
+function getSearchButton() {
+  return document.getElementById('search-button');
+}
+
+function getStockDetailsDiv() {
+  return document.getElementById('stock-details');
+}
+
+function getCompanyNameHeader() {
+  return document.getElementById('company-name');
+}
+
+function getSearchErrorDiv() {
+  return document.getElementById('search-error');
+}
+
+function getAddToWatchlistBtn() {
+  return document.getElementById('addToWatchlistBtn');
+}
+
+function getPortfolaiAnalysisBtn() {
+  return document.getElementById('portfolaiAnalysisBtn');
+}
 
 /**
  * Perform stock search and update UI with results
@@ -60,32 +92,48 @@ const portfolaiAnalysisBtn = document.getElementById('portfolaiAnalysisBtn');
  * @throws {Error} If stock data fetch fails
  */
 async function performSearch() {
+  console.log('performSearch called');
+  const searchInput = getSearchInput();
+  const searchErrorDiv = getSearchErrorDiv();
+  const addToWatchlistBtn = getAddToWatchlistBtn();
+  const portfolaiAnalysisBtn = getPortfolaiAnalysisBtn();
+  
+  if (!searchInput || !searchErrorDiv) {
+    console.error('Required DOM elements not found for search', { searchInput, searchErrorDiv });
+    return;
+  }
+  
   const searchTerm = searchInput.value.toUpperCase().trim();
+  console.log('Search term:', searchTerm);
   searchErrorDiv.classList.add('hidden');
   
   // Handle empty search - reset UI to default state
   if (!searchTerm) {
     displayStockDetails(null);
     clearTradingViewWidget();
-    addToWatchlistBtn.disabled = true;
-    portfolaiAnalysisBtn.disabled = true;
+    if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+    if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
     return;
   }
 
   try {
     // Show loading indicators
-    document.getElementById('chart-loader').classList.remove('hidden');
-    addToWatchlistBtn.disabled = true;
-    portfolaiAnalysisBtn.disabled = true;
+    const chartLoader = document.getElementById('chart-loader');
+    if (chartLoader) chartLoader.classList.remove('hidden');
+    if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+    if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
 
-    // Fetch stock data from API
-    const stockData = await fetchStockData(searchTerm);
+    // Fetch stock data from API - always force refresh for search to ensure accurate data
+    console.log('Fetching stock data for:', searchTerm, '(force refresh)');
+    const stockData = await fetchStockData(searchTerm, true); // Force refresh for search
+    console.log('Stock data received:', stockData);
 
     // Display stock details in the sidebar
     displayStockDetails(stockData, searchTerm);
     
     // Show fallback notice if API is unavailable (using demo data)
-    if (stockData.fallback) {
+    const stockDetailsDiv = getStockDetailsDiv();
+    if (stockData.fallback && stockDetailsDiv) {
       const fallbackNotice = document.createElement('div');
       fallbackNotice.className = 'bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded mb-4';
       fallbackNotice.innerHTML = '⚠️ Using demo data - API not configured or unavailable';
@@ -101,32 +149,57 @@ async function performSearch() {
 
     // Render TradingView widget with the searched stock
     renderTradingViewWidget(searchTerm);
+    
+    // Update news feed with stock-specific news (limit to 3 articles)
+    // Force refresh to get latest news for the searched stock
+    if (typeof populateNewsFeed === 'function') {
+      console.log('Updating news feed for symbol:', searchTerm);
+      populateNewsFeed(searchTerm);
+    } else {
+      console.warn('populateNewsFeed function not available');
+    }
+    
+    // Safety timeout to ensure loader is hidden even if widget fails
+    setTimeout(() => {
+      const chartLoader = document.getElementById('chart-loader');
+      if (chartLoader && !chartLoader.classList.contains('hidden')) {
+        console.warn('Chart loader still visible after timeout, hiding it');
+        chartLoader.classList.add('hidden');
+      }
+    }, 5000); // 5 second timeout
 
     // Update button states based on watchlist status
-    addToWatchlistBtn.disabled = false;
-    portfolaiAnalysisBtn.disabled = false;
-    
-    // Toggle watchlist button text and colors
-    const isInWatchlist = isStockInWatchlist(searchTerm);
-    addToWatchlistBtn.textContent = isInWatchlist
-      ? 'Remove from Watchlist'
-      : 'Add to Watchlist';
-    
-    // Update button styling based on watchlist status
-    addToWatchlistBtn.classList.toggle('bg-red-500', isInWatchlist);
-    addToWatchlistBtn.classList.toggle('hover:bg-red-600', isInWatchlist);
-    addToWatchlistBtn.classList.toggle('bg-green-500', !isInWatchlist);
-    addToWatchlistBtn.classList.toggle('hover:bg-green-600', !isInWatchlist);
+    if (addToWatchlistBtn) {
+      addToWatchlistBtn.disabled = false;
+      // Toggle watchlist button text and colors
+      const isInWatchlist = isStockInWatchlist(searchTerm);
+      addToWatchlistBtn.textContent = isInWatchlist
+        ? 'Remove from Watchlist'
+        : 'Add to Watchlist';
+      
+      // Update button styling based on watchlist status
+      addToWatchlistBtn.classList.toggle('bg-red-500', isInWatchlist);
+      addToWatchlistBtn.classList.toggle('hover:bg-red-600', isInWatchlist);
+      addToWatchlistBtn.classList.toggle('bg-green-500', !isInWatchlist);
+      addToWatchlistBtn.classList.toggle('hover:bg-green-600', !isInWatchlist);
+    }
+    if (portfolaiAnalysisBtn) {
+      portfolaiAnalysisBtn.disabled = false;
+    }
 
   } catch (error) {
     console.error('Error fetching stock data:', error);
-    searchErrorDiv.classList.remove('hidden');
-    searchErrorDiv.textContent = `Error: ${error.message}`;
+    if (searchErrorDiv) {
+      searchErrorDiv.classList.remove('hidden');
+      searchErrorDiv.textContent = `Error: ${error.message}`;
+    }
     
-    // Reset UI on error
+    // Reset UI on error - ensure loader is hidden
+    const chartLoader = document.getElementById('chart-loader');
+    if (chartLoader) chartLoader.classList.add('hidden');
     clearTradingViewWidget();
-    addToWatchlistBtn.disabled = true;
-    portfolaiAnalysisBtn.disabled = true;
+    if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+    if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
   }
 }
 
@@ -143,6 +216,14 @@ async function performSearch() {
  * @param {string} symbol - Stock symbol (e.g., 'AAPL', 'MSFT')
  */
 function displayStockDetails(stock, symbol = 'N/A') {
+  const companyNameHeader = getCompanyNameHeader();
+  const stockDetailsDiv = getStockDetailsDiv();
+  
+  if (!companyNameHeader || !stockDetailsDiv) {
+    console.warn('DOM elements not found for displaying stock details');
+    return;
+  }
+  
   if (stock) {
     companyNameHeader.textContent = `${stock.name} (${symbol})`;
     
@@ -183,12 +264,15 @@ function displayStockDetails(stock, symbol = 'N/A') {
 /**
  * Detect the stock exchange for a given symbol
  * 
- * Determines the most likely exchange (NASDAQ or NYSE) based on known symbols.
- * TradingView supports auto-detection if the exchange is incorrect, but specifying
- * the correct exchange improves widget initialization speed.
+ * Determines the most likely exchange (NASDAQ, NYSE, or AMEX/NYSE Arca) based on known symbols.
+ * Supports both stocks and ETFs. TradingView supports auto-detection if the 
+ * exchange is incorrect, but specifying the correct exchange improves widget 
+ * initialization speed.
  * 
- * @param {string} symbol - Stock symbol to detect exchange for
- * @returns {string} Exchange identifier ('NYSE' or 'NASDAQ')
+ * Note: NYSE Arca (where many ETFs like VOO trade) is represented as "AMEX" in TradingView.
+ * 
+ * @param {string} symbol - Stock or ETF symbol to detect exchange for
+ * @returns {string} Exchange identifier ('NYSE', 'AMEX', or 'NASDAQ')
  */
 function detectExchange(symbol) {
   if (!symbol || symbol.length === 0) {
@@ -196,7 +280,19 @@ function detectExchange(symbol) {
   }
   
   const upperSymbol = symbol.toUpperCase();
-  return NYSE_SYMBOLS.includes(upperSymbol) ? 'NYSE' : 'NASDAQ';
+  
+  // Check NYSE Arca ETFs first (many ETFs trade on NYSE Arca, represented as AMEX in TradingView)
+  if (NYSE_ARCA_ETFS.includes(upperSymbol)) {
+    return 'AMEX';
+  }
+  
+  // Check NYSE stocks
+  if (NYSE_SYMBOLS.includes(upperSymbol)) {
+    return 'NYSE';
+  }
+  
+  // Default to NASDAQ
+  return 'NASDAQ';
 }
 
 /**
@@ -220,8 +316,8 @@ function getCurrentTheme() {
  * Generates the configuration JSON for the TradingView Symbol Overview widget
  * with theme-appropriate colors and settings.
  * 
- * @param {string} symbol - Stock symbol to display
- * @param {string} exchange - Exchange identifier (e.g., 'NASDAQ', 'NYSE')
+ * @param {string} symbol - Stock or ETF symbol to display
+ * @param {string} exchange - Exchange identifier (e.g., 'NASDAQ', 'NYSE', 'AMEX')
  * @param {string} theme - Theme identifier ('light' or 'dark')
  * @returns {Object} TradingView widget configuration object
  */
@@ -407,9 +503,10 @@ function clearTradingViewWidget() {
  * - Proper exchange detection (NASDAQ/NYSE)
  * 
  * TradingView Widget Support:
- * - US Exchanges: NASDAQ, NYSE, AMEX
+ * - US Exchanges: NASDAQ, NYSE, AMEX (NYSE Arca/American)
  * - International: LSE (London), TSE (Tokyo), SSE (Shanghai), ASX, TSX, etc.
  * - Auto-detection: TradingView can find symbols across exchanges if specified incorrectly
+ * - Note: NYSE Arca ETFs (like VOO, SPY) use "AMEX" as the exchange identifier
  * 
  * @param {string} symbol - Stock symbol to display (e.g., 'AAPL', 'MSFT', 'NFLX')
  * @throws {Error} If widget container element is not found in DOM
@@ -474,6 +571,9 @@ function renderTradingViewWidget(symbol) {
  * @function updateWidgetTheme
  */
 function updateWidgetTheme() {
+  const searchInput = getSearchInput();
+  if (!searchInput) return;
+  
   const currentSymbol = searchInput.value.toUpperCase().trim();
   if (currentSymbol && tradingViewWidget) {
     renderTradingViewWidget(currentSymbol);
@@ -491,6 +591,14 @@ function updateWidgetTheme() {
  * @function initializeStockSearch
  */
 function initializeStockSearch() {
+  const searchButton = getSearchButton();
+  const searchInput = getSearchInput();
+  
+  if (!searchButton || !searchInput) {
+    console.error('Search elements not found during initialization');
+    return;
+  }
+  
   // Search button click handler
   searchButton.addEventListener('click', performSearch);
   
@@ -540,7 +648,19 @@ function initializeStockSearch() {
  * @function initializePortfolAIAnalysis
  */
 function initializePortfolAIAnalysis() {
+  const portfolaiAnalysisBtn = getPortfolaiAnalysisBtn();
+  if (!portfolaiAnalysisBtn) {
+    console.error('PortfolAI analysis button not found');
+    return;
+  }
+  
   portfolaiAnalysisBtn.addEventListener('click', async () => {
+    const searchInput = getSearchInput();
+    if (!searchInput) {
+      alert('Search input not found');
+      return;
+    }
+    
     const currentSymbol = searchInput.value.toUpperCase().trim();
     
     // Validate symbol exists
