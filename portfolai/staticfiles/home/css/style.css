@@ -1,0 +1,272 @@
+/* General font and scrollbar */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #2d3748;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #718096;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* Ticker animation */
+.ticker-wrap {
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+.ticker-move {
+  display: inline-block;
+  white-space: nowrap;
+  box-sizing: border-box;
+  animation: ticker 30s linear infinite;
+}
+.ticker-move:hover {
+  animation-play-state: paused;
+}
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-item {
+  display: inline-block;
+  padding: 0 1.5rem;
+}
+
+/* Modal visibility and transitions - FIXED */
+.modal {
+  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999; /* Ensure modal is on top */
+}
+.modal.active {
+  display: flex;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Chart tooltip styling */
+.tv-lightweight-charts-tooltip {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  color: #333 !important;
+  border: 1px solid #ccc !important;
+  border-radius: 4px !important;
+  padding: 8px !important;
+  font-size: 12px !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
+}
+.dark .tv-lightweight-charts-tooltip {
+  background-color: rgba(42, 50, 68, 0.9) !important;
+  color: #f0f0f0 !important;
+  border: 1px solid #4a5568 !important;
+}
+
+/* ===== Analysis Modal Styling ===== */
+
+/* Modal background and depth - FIXED */
+#analysisModal {
+  backdrop-filter: blur(6px);
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
+}
+.dark #analysisModal {
+  background-color: rgba(0, 0, 0, 0.7); /* Darker overlay for dark mode */
+}
+
+/* Modal Header Styling - Purple gradient */
+#analysisModal .bg-gradient-to-r {
+  background: linear-gradient(to right, #6366f1, #8b5cf6) !important; /* Purple gradient */
+  background-image: linear-gradient(to right, #6366f1, #8b5cf6) !important;
+}
+.dark #analysisModal .bg-gradient-to-r {
+  background: linear-gradient(to right, #6366f1, #8b5cf6) !important;
+  background-image: linear-gradient(to right, #6366f1, #8b5cf6) !important;
+}
+
+/* PortfolAI text styling - white color */
+#analysisModal h2,
+#analysisModal .text-2xl {
+  color: #ffffff !important; /* White color for PortfolAI */
+  font-weight: 700;
+}
+
+/* Subtitle text in header */
+#analysisModal .text-sm,
+#analysisModal .text-blue-100 {
+  color: #e0e7ff !important; /* Light purple/blue for subtitle */
+}
+
+/* Modal content container */
+#analysisModal > div {
+  position: relative;
+  z-index: 10000; /* Ensure content is above backdrop */
+}
+
+/* Dark background for modal body - matching the screenshot */
+#analysisModal .bg-white,
+#analysisModal .dark\:bg-gray-800 {
+  background-color: #27272a !important; /* Dark charcoal/slate background */
+  position: relative;
+  z-index: 10001;
+}
+.dark #analysisModal .bg-white,
+.dark #analysisModal .dark\:bg-gray-800 {
+  background-color: #27272a !important;
+}
+
+/* Shadow for modal */
+#analysisModal .bg-white {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+.dark #analysisModal .bg-white {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+}
+
+/* Typography - White text on dark background */
+.prose {
+  color: #f7fafc !important; /* White/very light text */
+  line-height: 1.8;
+  font-size: 1rem;
+}
+.dark .prose {
+  color: #f7fafc !important;
+}
+
+/* Force all text elements to have proper contrast */
+.prose * {
+  color: inherit;
+}
+
+.prose span,
+.prose div,
+.prose p,
+.prose li {
+  color: #e2e8f0 !important; /* Light grey text */
+}
+
+.dark .prose span,
+.dark .prose div,
+.dark .prose p,
+.dark .prose li {
+  color: #e2e8f0 !important;
+}
+
+/* Headings - White text */
+.prose h3, .prose h4 {
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose h3 {
+  color: #ffffff !important; /* Pure white for main headings */
+  border-bottom: 2px solid #6366f1; /* Purple accent */
+  padding-bottom: 0.5rem;
+}
+.dark .prose h3 {
+  color: #ffffff !important;
+  border-bottom-color: #6366f1;
+}
+
+.prose h4 {
+  color: #f7fafc !important; /* Off-white for subheadings */
+  border-left: 4px solid #6366f1; /* Purple accent */
+  padding-left: 0.75rem;
+}
+.dark .prose h4 {
+  color: #f7fafc !important;
+  border-left-color: #818cf8;
+}
+
+/* Emphasis and strong text - White */
+.prose strong {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+.dark .prose strong {
+  color: #ffffff !important;
+}
+.prose em {
+  color: #f7fafc !important;
+  font-style: italic;
+  font-weight: 500;
+}
+.dark .prose em {
+  color: #f7fafc !important;
+}
+
+/* Lists - Light text */
+.prose ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+.prose li {
+  margin: 0.4rem 0;
+  line-height: 1.6;
+  color: #e2e8f0 !important;
+}
+.prose li::marker {
+  color: #cbd5e0 !important;
+}
+.dark .prose li::marker {
+  color: #cbd5e0 !important;
+}
+
+/* Paragraphs - Light text */
+.prose p {
+  margin-bottom: 1.25rem;
+  line-height: 1.7;
+  color: #e2e8f0 !important;
+}
+.dark .prose p {
+  color: #e2e8f0 !important;
+}
+
+/* Text color overrides - ensure light text */
+.text-gray-400,
+.text-gray-500,
+.text-gray-600,
+.text-gray-700,
+.text-gray-800 {
+  color: #e2e8f0 !important;
+}
+.dark .text-gray-400,
+.dark .text-gray-500,
+.dark .text-gray-600,
+.dark .text-gray-700,
+.dark .text-gray-800 {
+  color: #e2e8f0 !important;
+}
+
+/* Light highlight box (fallback notice) */
+.bg-gradient-to-r.from-yellow-50.to-orange-50,
+.dark .bg-gradient-to-r.from-yellow-900.to-orange-900 {
+  border-radius: 0.5rem;
+}
+
+/* End of Analysis Modal Styling */
