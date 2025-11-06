@@ -56,12 +56,12 @@ jobs:
       - name: Run Tests
         run: |
           cd portfolai
-          pytest -v core/tests.py core/auth_test.py --tb=short
+          pytest -v core/tests.py core/auth_test.py --tb=short --timeout=30 --timeout-method=thread
 
       - name: Check Coverage
         run: |
           cd portfolai
-          pytest core/tests.py core/auth_test.py --cov=core.views --cov-report=term-missing --cov-fail-under=80
+          pytest core/tests.py core/auth_test.py --cov=core.views --cov-report=term-missing --cov-fail-under=80 --timeout=30 --timeout-method=thread
 
   deploy:
     name: Deploy to Render

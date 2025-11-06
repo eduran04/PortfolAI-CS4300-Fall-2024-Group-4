@@ -25,8 +25,7 @@ jobs:
     - name: Run migrations
       run: |
         cd portfolai
-        python manage.py makemigrations
-        python manage.py migrate --noinput
+        python manage.py migrate
       env:
         DJANGO_SETTINGS_MODULE: mysite.settings
         SECRET_KEY: test-secret-key-for-ci
@@ -46,7 +45,7 @@ jobs:
     - name: Run tests with coverage
       run: |
         cd portfolai
-        pytest -v core/tests.py core/auth_test.py --cov=core.views --cov-report=term-missing
+        pytest -v --cov=core --cov-report=term-missing --timeout=30 --timeout-method=thread
       env:
         DJANGO_SETTINGS_MODULE: mysite.settings
         SECRET_KEY: test-secret-key-for-ci
