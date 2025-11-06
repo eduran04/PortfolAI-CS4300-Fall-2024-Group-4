@@ -22,13 +22,16 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", landing, name="landing"),
     path("dashboard/", trading_dashboard, name="dashboard"),
+    # Authentication URLs (login, logout, signup)
     path("accounts/", include('core.urls')),
+    # API endpoints
     path("api/hello/", hello_api, name="hello_api"),
     path("api/stock/", stock_summary, name="stock_summary"),
     path("api/stock-data/", get_stock_data, name="get_stock_data"),
     path("api/market-movers/", get_market_movers, name="get_market_movers"),
     path("api/news/", get_news, name="get_news"),
     path("api/portfolai-analysis/", portfolai_analysis, name="portfolai_analysis"),
+    # Watchlist endpoints
     path("api/watchlist/", get_watchlist, name="get_watchlist"),
     path("api/watchlist/add/", add_to_watchlist, name="add_to_watchlist"),
     path("api/watchlist/remove/", remove_from_watchlist, name="remove_from_watchlist"),
