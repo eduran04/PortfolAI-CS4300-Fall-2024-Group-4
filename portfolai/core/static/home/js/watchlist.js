@@ -3,6 +3,11 @@
  * Handles watchlist CRUD operations with database persistence via API
  */
 
+// Get CSRF token for API requests
+function getCSRFToken() {
+  return getCookie('csrftoken');
+}
+
 // Watchlist state (loaded from API)
 let watchlist = [];
 
@@ -20,6 +25,7 @@ async function loadWatchlist() {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRFToken(),
       },
       credentials: 'same-origin',
     });
@@ -63,6 +69,7 @@ async function migrateLocalStorageWatchlist() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken(),
           },
           credentials: 'same-origin',
           body: JSON.stringify({ symbol: symbol }),
@@ -108,6 +115,7 @@ async function toggleWatchlist(symbol) {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
         },
         credentials: 'same-origin',
       });
@@ -127,6 +135,7 @@ async function toggleWatchlist(symbol) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRFToken': getCSRFToken(),
         },
         credentials: 'same-origin',
         body: JSON.stringify({ symbol: symbol }),
