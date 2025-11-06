@@ -29,6 +29,8 @@ for when external APIs are unavailable.
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login
+from django.contrib import messages
+from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -88,19 +90,19 @@ class SignUpView(CreateView):
     """
     User registration view.
     Creates a new user account with email (required and unique).
+    Redirects to login page after successful registration.
     """
     form_class = UserRegistrationForm
     template_name = 'registration/signup.html'
-    success_url = '/'
+    success_url = reverse_lazy('login')
 
     def form_valid(self, form):
         """
-        Save the user and log them in after successful registration.
+        Save the user and redirect to login page.
         """
-        response = super().form_valid(form)
         user = form.save()
-        login(self.request, user)
-        return response
+        messages.success(self.request, f'Account created successfully! Please log in with your username: {user.username}')
+        return super().form_valid(form)
 
 
 @api_view(["GET"])
