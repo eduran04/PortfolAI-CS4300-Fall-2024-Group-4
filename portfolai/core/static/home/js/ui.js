@@ -119,6 +119,7 @@ function initializeMobileMenu() {
  * Populate the scrolling ticker with market data
  */
 async function populateTicker() {
+  console.log('populateTicker called');
   const tickerMove = getTickerMove();
   if (!tickerMove) {
     console.warn('Ticker element not found');
@@ -126,7 +127,9 @@ async function populateTicker() {
   }
   
   try {
+    console.log('Fetching market movers for ticker...');
     const data = await fetchMarketMovers();
+    console.log('Market movers data received:', data);
 
     // Combine gainers and losers for ticker
     tickerData = [...data.gainers, ...data.losers];
@@ -161,6 +164,7 @@ async function populateTicker() {
  * Populate market movers (gainers and losers) lists
  */
 async function populateMarketMovers() {
+  console.log('populateMarketMovers called');
   const topGainersList = getTopGainersList();
   const topLosersList = getTopLosersList();
   
@@ -170,7 +174,9 @@ async function populateMarketMovers() {
   }
   
   try {
+    console.log('Fetching market movers...');
     const data = await fetchMarketMovers();
+    console.log('Market movers data received:', data);
     const { gainers, losers } = data;
 
     // Display gainers
@@ -243,6 +249,7 @@ async function populateMarketMovers() {
  * @param {string} symbol - Optional stock symbol to filter news
  */
 async function populateNewsFeed(symbol = null) {
+  console.log('populateNewsFeed called with symbol:', symbol);
   const newsFeedDiv = getNewsFeedDiv();
   if (!newsFeedDiv) {
     console.warn('News feed element not found');
@@ -253,7 +260,9 @@ async function populateNewsFeed(symbol = null) {
   const currentSymbol = symbol || (searchInput ? searchInput.value.toUpperCase().trim() : '');
   
   try {
+    console.log('Fetching news for symbol:', currentSymbol);
     const data = await fetchNews(currentSymbol);
+    console.log('News data received:', data);
     const articles = data.articles || [];
     
     // Show fallback notice if using fallback data

@@ -81,17 +81,19 @@ function getPortfolaiAnalysisBtn() {
  * @throws {Error} If stock data fetch fails
  */
 async function performSearch() {
+  console.log('performSearch called');
   const searchInput = getSearchInput();
   const searchErrorDiv = getSearchErrorDiv();
   const addToWatchlistBtn = getAddToWatchlistBtn();
   const portfolaiAnalysisBtn = getPortfolaiAnalysisBtn();
   
   if (!searchInput || !searchErrorDiv) {
-    console.error('Required DOM elements not found for search');
+    console.error('Required DOM elements not found for search', { searchInput, searchErrorDiv });
     return;
   }
   
   const searchTerm = searchInput.value.toUpperCase().trim();
+  console.log('Search term:', searchTerm);
   searchErrorDiv.classList.add('hidden');
   
   // Handle empty search - reset UI to default state
@@ -111,7 +113,9 @@ async function performSearch() {
     if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
 
     // Fetch stock data from API
+    console.log('Fetching stock data for:', searchTerm);
     const stockData = await fetchStockData(searchTerm);
+    console.log('Stock data received:', stockData);
 
     // Display stock details in the sidebar
     displayStockDetails(stockData, searchTerm);
@@ -134,6 +138,15 @@ async function performSearch() {
 
     // Render TradingView widget with the searched stock
     renderTradingViewWidget(searchTerm);
+    
+    // Safety timeout to ensure loader is hidden even if widget fails
+    setTimeout(() => {
+      const chartLoader = document.getElementById('chart-loader');
+      if (chartLoader && !chartLoader.classList.contains('hidden')) {
+        console.warn('Chart loader still visible after timeout, hiding it');
+        chartLoader.classList.add('hidden');
+      }
+    }, 5000); // 5 second timeout
 
     // Update button states based on watchlist status
     if (addToWatchlistBtn) {
@@ -161,7 +174,9 @@ async function performSearch() {
       searchErrorDiv.textContent = `Error: ${error.message}`;
     }
     
-    // Reset UI on error
+    // Reset UI on error - ensure loader is hidden
+    const chartLoader = document.getElementById('chart-loader');
+    if (chartLoader) chartLoader.classList.add('hidden');
     clearTradingViewWidget();
     if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
     if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
