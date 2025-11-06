@@ -6,7 +6,7 @@ from github.PullRequest import PullRequest
 from openai import OpenAI, OpenAIError
 
 # Configuration
-MAX_FILES = 220
+MAX_FILES = 30
 SYSTEM_PROMPT = """Please review the following code and provide comprehensive feedback. 
 Consider the following aspects:
 
