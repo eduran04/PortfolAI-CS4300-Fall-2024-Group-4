@@ -22,9 +22,6 @@ const TRADINGVIEW_WIDGET_URL = 'https://s3.tradingview.com/external-embedding/em
 /** @type {number} Delay in milliseconds before hiding the chart loader */
 const CHART_LOADER_DELAY = 500;
 
-/** @type {number} Maximum timeout in milliseconds to ensure loader is hidden even if widget fails */
-const CHART_LOADER_MAX_TIMEOUT = 10000; // 10 seconds
-
 /** @type {string[]} List of common NYSE-listed stock symbols */
 const NYSE_SYMBOLS = [
   'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS',           // Financials
@@ -39,14 +36,35 @@ const NYSE_SYMBOLS = [
 // ============================================================================
 // DOM Element References
 // ============================================================================
+// These are accessed via getter functions to ensure DOM is ready
 
-const searchInput = document.getElementById('stock-search');
-const searchButton = document.getElementById('search-button');
-const stockDetailsDiv = document.getElementById('stock-details');
-const companyNameHeader = document.getElementById('company-name');
-const searchErrorDiv = document.getElementById('search-error');
-const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
-const portfolaiAnalysisBtn = document.getElementById('portfolaiAnalysisBtn');
+function getSearchInput() {
+  return document.getElementById('stock-search');
+}
+
+function getSearchButton() {
+  return document.getElementById('search-button');
+}
+
+function getStockDetailsDiv() {
+  return document.getElementById('stock-details');
+}
+
+function getCompanyNameHeader() {
+  return document.getElementById('company-name');
+}
+
+function getSearchErrorDiv() {
+  return document.getElementById('search-error');
+}
+
+function getAddToWatchlistBtn() {
+  return document.getElementById('addToWatchlistBtn');
+}
+
+function getPortfolaiAnalysisBtn() {
+  return document.getElementById('portfolaiAnalysisBtn');
+}
 
 /**
  * Perform stock search and update UI with results
@@ -63,6 +81,16 @@ const portfolaiAnalysisBtn = document.getElementById('portfolaiAnalysisBtn');
  * @throws {Error} If stock data fetch fails
  */
 async function performSearch() {
+  const searchInput = getSearchInput();
+  const searchErrorDiv = getSearchErrorDiv();
+  const addToWatchlistBtn = getAddToWatchlistBtn();
+  const portfolaiAnalysisBtn = getPortfolaiAnalysisBtn();
+  
+  if (!searchInput || !searchErrorDiv) {
+    console.error('Required DOM elements not found for search');
+    return;
+  }
+  
   const searchTerm = searchInput.value.toUpperCase().trim();
   searchErrorDiv.classList.add('hidden');
   
@@ -70,16 +98,17 @@ async function performSearch() {
   if (!searchTerm) {
     displayStockDetails(null);
     clearTradingViewWidget();
-    addToWatchlistBtn.disabled = true;
-    portfolaiAnalysisBtn.disabled = true;
+    if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+    if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
     return;
   }
 
   try {
     // Show loading indicators
-    document.getElementById('chart-loader').classList.remove('hidden');
-    addToWatchlistBtn.disabled = true;
-    portfolaiAnalysisBtn.disabled = true;
+    const chartLoader = document.getElementById('chart-loader');
+    if (chartLoader) chartLoader.classList.remove('hidden');
+    if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+    if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
 
     // Fetch stock data from API
     const stockData = await fetchStockData(searchTerm);
@@ -88,7 +117,8 @@ async function performSearch() {
     displayStockDetails(stockData, searchTerm);
     
     // Show fallback notice if API is unavailable (using demo data)
-    if (stockData.fallback) {
+    const stockDetailsDiv = getStockDetailsDiv();
+    if (stockData.fallback && stockDetailsDiv) {
       const fallbackNotice = document.createElement('div');
       fallbackNotice.className = 'bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded mb-4';
       fallbackNotice.innerHTML = '⚠️ Using demo data - API not configured or unavailable';
@@ -106,34 +136,35 @@ async function performSearch() {
     renderTradingViewWidget(searchTerm);
 
     // Update button states based on watchlist status
-    addToWatchlistBtn.disabled = false;
-    portfolaiAnalysisBtn.disabled = false;
-    
-    // Toggle watchlist button text and colors
-    const isInWatchlist = isStockInWatchlist(searchTerm);
-    addToWatchlistBtn.textContent = isInWatchlist
-      ? 'Remove from Watchlist'
-      : 'Add to Watchlist';
-    
-    // Update button styling based on watchlist status
-    addToWatchlistBtn.classList.toggle('bg-red-500', isInWatchlist);
-    addToWatchlistBtn.classList.toggle('hover:bg-red-600', isInWatchlist);
-    addToWatchlistBtn.classList.toggle('bg-green-500', !isInWatchlist);
-    addToWatchlistBtn.classList.toggle('hover:bg-green-600', !isInWatchlist);
+    if (addToWatchlistBtn) {
+      addToWatchlistBtn.disabled = false;
+      // Toggle watchlist button text and colors
+      const isInWatchlist = isStockInWatchlist(searchTerm);
+      addToWatchlistBtn.textContent = isInWatchlist
+        ? 'Remove from Watchlist'
+        : 'Add to Watchlist';
+      
+      // Update button styling based on watchlist status
+      addToWatchlistBtn.classList.toggle('bg-red-500', isInWatchlist);
+      addToWatchlistBtn.classList.toggle('hover:bg-red-600', isInWatchlist);
+      addToWatchlistBtn.classList.toggle('bg-green-500', !isInWatchlist);
+      addToWatchlistBtn.classList.toggle('hover:bg-green-600', !isInWatchlist);
+    }
+    if (portfolaiAnalysisBtn) {
+      portfolaiAnalysisBtn.disabled = false;
+    }
 
   } catch (error) {
     console.error('Error fetching stock data:', error);
-    searchErrorDiv.classList.remove('hidden');
-    searchErrorDiv.textContent = `Error: ${error.message}`;
-    
-    // Reset UI on error - ensure loader is hidden
-    const chartLoader = document.getElementById('chart-loader');
-    if (chartLoader) {
-      chartLoader.classList.add('hidden');
+    if (searchErrorDiv) {
+      searchErrorDiv.classList.remove('hidden');
+      searchErrorDiv.textContent = `Error: ${error.message}`;
     }
+    
+    // Reset UI on error
     clearTradingViewWidget();
-    addToWatchlistBtn.disabled = true;
-    portfolaiAnalysisBtn.disabled = true;
+    if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+    if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
   }
 }
 
@@ -150,6 +181,14 @@ async function performSearch() {
  * @param {string} symbol - Stock symbol (e.g., 'AAPL', 'MSFT')
  */
 function displayStockDetails(stock, symbol = 'N/A') {
+  const companyNameHeader = getCompanyNameHeader();
+  const stockDetailsDiv = getStockDetailsDiv();
+  
+  if (!companyNameHeader || !stockDetailsDiv) {
+    console.warn('DOM elements not found for displaying stock details');
+    return;
+  }
+  
   if (stock) {
     companyNameHeader.textContent = `${stock.name} (${symbol})`;
     
@@ -360,7 +399,6 @@ function createWidgetStructure(container, symbol, exchange, config) {
  * 
  * Attempts to hide the loading spinner after the widget has initialized.
  * Uses a timeout to allow TradingView script to load and render.
- * Includes a maximum timeout fallback to ensure loader is hidden even if widget fails.
  * 
  * @param {HTMLElement|null} chartLoader - Chart loader element
  */
@@ -369,27 +407,13 @@ function hideChartLoader(chartLoader) {
     return;
   }
   
-  // Primary timeout - hide after widget should have loaded
-  const primaryTimeout = setTimeout(() => {
+  setTimeout(() => {
     try {
       chartLoader.classList.add('hidden');
     } catch (error) {
       console.warn('Error hiding chart loader:', error);
     }
   }, CHART_LOADER_DELAY);
-  
-  // Fallback timeout - ensure loader is hidden even if widget fails completely
-  const fallbackTimeout = setTimeout(() => {
-    try {
-      chartLoader.classList.add('hidden');
-      console.warn('Chart loader hidden by fallback timeout - widget may have failed to load');
-    } catch (error) {
-      console.warn('Error hiding chart loader in fallback:', error);
-    }
-  }, CHART_LOADER_MAX_TIMEOUT);
-  
-  // Store timeouts so they can be cleared if needed
-  chartLoader._loaderTimeouts = { primary: primaryTimeout, fallback: fallbackTimeout };
 }
 
 /**
@@ -496,6 +520,9 @@ function renderTradingViewWidget(symbol) {
  * @function updateWidgetTheme
  */
 function updateWidgetTheme() {
+  const searchInput = getSearchInput();
+  if (!searchInput) return;
+  
   const currentSymbol = searchInput.value.toUpperCase().trim();
   if (currentSymbol && tradingViewWidget) {
     renderTradingViewWidget(currentSymbol);
@@ -513,6 +540,14 @@ function updateWidgetTheme() {
  * @function initializeStockSearch
  */
 function initializeStockSearch() {
+  const searchButton = getSearchButton();
+  const searchInput = getSearchInput();
+  
+  if (!searchButton || !searchInput) {
+    console.error('Search elements not found during initialization');
+    return;
+  }
+  
   // Search button click handler
   searchButton.addEventListener('click', performSearch);
   
@@ -562,7 +597,19 @@ function initializeStockSearch() {
  * @function initializePortfolAIAnalysis
  */
 function initializePortfolAIAnalysis() {
+  const portfolaiAnalysisBtn = getPortfolaiAnalysisBtn();
+  if (!portfolaiAnalysisBtn) {
+    console.error('PortfolAI analysis button not found');
+    return;
+  }
+  
   portfolaiAnalysisBtn.addEventListener('click', async () => {
+    const searchInput = getSearchInput();
+    if (!searchInput) {
+      alert('Search input not found');
+      return;
+    }
+    
     const currentSymbol = searchInput.value.toUpperCase().trim();
     
     // Validate symbol exists

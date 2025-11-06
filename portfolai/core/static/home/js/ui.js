@@ -3,18 +3,42 @@
  * Handles theme, navigation, ticker, market movers, and news functionality
  */
 
-// DOM references
-const themeToggleBtn = document.getElementById('theme-toggle');
-const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+// DOM references - accessed via getter functions to ensure DOM is ready
+function getThemeToggleBtn() {
+  return document.getElementById('theme-toggle');
+}
 
-const mobileMenuButton = document.getElementById('mobile-menu-button');
-const mobileMenu = document.getElementById('mobile-menu');
+function getThemeToggleDarkIcon() {
+  return document.getElementById('theme-toggle-dark-icon');
+}
 
-const tickerMove = document.querySelector('.ticker-move');
-const topGainersList = document.getElementById('top-gainers-list');
-const topLosersList = document.getElementById('top-losers-list');
-const newsFeedDiv = document.getElementById('news-feed');
+function getThemeToggleLightIcon() {
+  return document.getElementById('theme-toggle-light-icon');
+}
+
+function getMobileMenuButton() {
+  return document.getElementById('mobile-menu-button');
+}
+
+function getMobileMenu() {
+  return document.getElementById('mobile-menu');
+}
+
+function getTickerMove() {
+  return document.querySelector('.ticker-move');
+}
+
+function getTopGainersList() {
+  return document.getElementById('top-gainers-list');
+}
+
+function getTopLosersList() {
+  return document.getElementById('top-losers-list');
+}
+
+function getNewsFeedDiv() {
+  return document.getElementById('news-feed');
+}
 
 // Ticker data storage
 let tickerData = [];
@@ -23,6 +47,15 @@ let tickerData = [];
  * Initialize theme system with localStorage persistence
  */
 function initializeTheme() {
+  const themeToggleBtn = getThemeToggleBtn();
+  const themeToggleDarkIcon = getThemeToggleDarkIcon();
+  const themeToggleLightIcon = getThemeToggleLightIcon();
+  
+  if (!themeToggleBtn || !themeToggleDarkIcon || !themeToggleLightIcon) {
+    console.warn('Theme toggle elements not found');
+    return;
+  }
+  
   if (
     localStorage.getItem('color-theme') === 'dark' ||
     (!('color-theme' in localStorage) &&
@@ -42,6 +75,11 @@ function initializeTheme() {
  * Toggle between light and dark themes
  */
 function toggleTheme() {
+  const themeToggleDarkIcon = getThemeToggleDarkIcon();
+  const themeToggleLightIcon = getThemeToggleLightIcon();
+  
+  if (!themeToggleDarkIcon || !themeToggleLightIcon) return;
+  
   themeToggleDarkIcon.classList.toggle('hidden');
   themeToggleLightIcon.classList.toggle('hidden');
   document.documentElement.classList.toggle('dark');
@@ -58,6 +96,14 @@ function toggleTheme() {
  * Initialize mobile menu functionality
  */
 function initializeMobileMenu() {
+  const mobileMenuButton = getMobileMenuButton();
+  const mobileMenu = getMobileMenu();
+  
+  if (!mobileMenuButton || !mobileMenu) {
+    console.warn('Mobile menu elements not found');
+    return;
+  }
+  
   mobileMenuButton.addEventListener('click', () => {
     mobileMenu.classList.toggle('hidden');
     const isExpanded =
@@ -73,6 +119,7 @@ function initializeMobileMenu() {
  * Populate the scrolling ticker with market data
  */
 async function populateTicker() {
+  const tickerMove = getTickerMove();
   if (!tickerMove) {
     console.warn('Ticker element not found');
     return;
@@ -106,9 +153,7 @@ async function populateTicker() {
 
   } catch (error) {
     console.error('Error fetching ticker data:', error);
-    if (tickerMove) {
-      tickerMove.innerHTML = '<div class="ticker-item text-gray-400">Unable to load market data</div>';
-    }
+    tickerMove.innerHTML = '<div class="ticker-item text-gray-400">Loading market data...</div>';
   }
 }
 
@@ -116,6 +161,9 @@ async function populateTicker() {
  * Populate market movers (gainers and losers) lists
  */
 async function populateMarketMovers() {
+  const topGainersList = getTopGainersList();
+  const topLosersList = getTopLosersList();
+  
   if (!topGainersList || !topLosersList) {
     console.warn('Market movers elements not found');
     return;
@@ -126,75 +174,67 @@ async function populateMarketMovers() {
     const { gainers, losers } = data;
 
     // Display gainers
-    if (topGainersList) {
-      topGainersList.innerHTML = gainers && gainers.length
-        ? gainers
-            .map(
-                      (stock) => `
-                    <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
-                      stock.symbol
-                    }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
-                    <div>
-                    <span class="font-semibold text-gray-800 dark:text-gray-200">${
-                              stock.symbol
-                            }</span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
-                              0,
-                              20
-                            )}${stock.name.length > 20 ? '...' : ''}</span>
-                            </div>
-                            <div class="text-right">
-                            <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
-                              2
-                            )}</span>
-                            <span class="block text-sm text-green-500 dark:text-green-400">+${stock.changePercent.toFixed(2)}%</span>
-                            </div>
-                    </li>
-                `
-            )
-            .join('')
-        : '<li class="text-sm text-gray-500 dark:text-gray-400">No significant gainers today.</li>';
-    }
+    topGainersList.innerHTML = gainers.length
+      ? gainers
+          .map(
+                    (stock) => `
+                  <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
+                    stock.symbol
+                  }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
+                  <div>
+                  <span class="font-semibold text-gray-800 dark:text-gray-200">${
+                            stock.symbol
+                          }</span>
+                          <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
+                            0,
+                            20
+                          )}${stock.name.length > 20 ? '...' : ''}</span>
+                          </div>
+                          <div class="text-right">
+                          <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
+                            2
+                          )}</span>
+                          <span class="block text-sm text-green-500 dark:text-green-400">+${stock.changePercent.toFixed(2)}%</span>
+                          </div>
+                  </li>
+              `
+          )
+          .join('')
+      : '<li class="text-sm text-gray-500 dark:text-gray-400">No significant gainers today.</li>';
 
     // Display losers
-    if (topLosersList) {
-      topLosersList.innerHTML = losers && losers.length
-        ? losers
-            .map(
-              (stock) => `
-              <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
-                stock.symbol
-              }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
-                  <div>
-                      <span class="font-semibold text-gray-800 dark:text-gray-200">${
-                        stock.symbol
-                      }</span>
-                      <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
-                              0,
-                              20
-                            )}${stock.name.length > 20 ? '...' : ''}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
-                                  2
-                                )}</span>
-                                <span class="block text-sm text-red-500 dark:text-red-400">${stock.changePercent.toFixed(2)}%</span>
-                            </div>
-                        </li>
-                `
-            )
-            .join('')
-        : '<li class="text-sm text-gray-500 dark:text-gray-400">No significant losers today.</li>';
-    }
+    topLosersList.innerHTML = losers.length
+      ? losers
+          .map(
+            (stock) => `
+            <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
+              stock.symbol
+            }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
+                <div>
+                    <span class="font-semibold text-gray-800 dark:text-gray-200">${
+                      stock.symbol
+                    }</span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
+                            0,
+                            20
+                          )}${stock.name.length > 20 ? '...' : ''}</span>
+                          </div>
+                          <div class="text-right">
+                              <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
+                                2
+                              )}</span>
+                              <span class="block text-sm text-red-500 dark:text-red-400">${stock.changePercent.toFixed(2)}%</span>
+                          </div>
+                      </li>
+              `
+          )
+          .join('')
+      : '<li class="text-sm text-gray-500 dark:text-gray-400">No significant losers today.</li>';
 
   } catch (error) {
     console.error('Error fetching market movers:', error);
-    if (topGainersList) {
-      topGainersList.innerHTML = '<li class="text-sm text-red-500 dark:text-red-400">Error loading market data. Please refresh the page.</li>';
-    }
-    if (topLosersList) {
-      topLosersList.innerHTML = '<li class="text-sm text-red-500 dark:text-red-400">Error loading market data. Please refresh the page.</li>';
-    }
+    topGainersList.innerHTML = '<li class="text-sm text-red-500 dark:text-red-400">Error loading market data</li>';
+    topLosersList.innerHTML = '<li class="text-sm text-red-500 dark:text-red-400">Error loading market data</li>';
   }
 }
 
@@ -203,6 +243,7 @@ async function populateMarketMovers() {
  * @param {string} symbol - Optional stock symbol to filter news
  */
 async function populateNewsFeed(symbol = null) {
+  const newsFeedDiv = getNewsFeedDiv();
   if (!newsFeedDiv) {
     console.warn('News feed element not found');
     return;
@@ -221,32 +262,28 @@ async function populateNewsFeed(symbol = null) {
       fallbackNotice = '<div class="bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded mb-4">⚠️ Using demo news - API not configured or unavailable</div>';
     }
 
-    if (newsFeedDiv) {
-      newsFeedDiv.innerHTML = fallbackNotice + (articles.length
-        ? articles
-            .map(
-              (news) => `
-              <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
-              <a href="${news.url}" target="_blank" rel="noopener noreferrer" class="block hover:text-indigo-600 dark:hover:text-indigo-400">
-                  <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">${news.title}</h4>
-                  ${news.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${news.description.substring(0, 100)}${news.description.length > 100 ? '...' : ''}</p>` : ''}
-              </a>
-              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  <span>${news.source}</span>
-                  <span>${news.time}</span>
-              </div>
-          </div>
-                `
-            )
-            .join('')
-        : '<p class="text-sm text-gray-500 dark:text-gray-400">No news available at the moment.</p>');
-    }
+    newsFeedDiv.innerHTML = fallbackNotice + (articles.length
+      ? articles
+          .map(
+            (news) => `
+            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
+            <a href="${news.url}" target="_blank" rel="noopener noreferrer" class="block hover:text-indigo-600 dark:hover:text-indigo-400">
+                <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">${news.title}</h4>
+                ${news.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${news.description.substring(0, 100)}${news.description.length > 100 ? '...' : ''}</p>` : ''}
+            </a>
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <span>${news.source}</span>
+                <span>${news.time}</span>
+            </div>
+        </div>
+              `
+          )
+          .join('')
+      : '<p class="text-sm text-gray-500 dark:text-gray-400">No news available at the moment.</p>');
 
   } catch (error) {
     console.error('Error fetching news:', error);
-    if (newsFeedDiv) {
-      newsFeedDiv.innerHTML = '<p class="text-sm text-red-500 dark:text-red-400">Error loading news. Please try again later.</p>';
-    }
+    newsFeedDiv.innerHTML = '<p class="text-sm text-red-500 dark:text-red-400">Error loading news. Please try again later.</p>';
   }
 }
 
@@ -254,6 +291,9 @@ async function populateNewsFeed(symbol = null) {
  * Initialize smooth scrolling for navigation links
  */
 function initializeSmoothScrolling() {
+  const mobileMenu = getMobileMenu();
+  const mobileMenuButton = getMobileMenuButton();
+  
   document.querySelectorAll('nav a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener('click', function (e) {
       e.preventDefault();
@@ -271,7 +311,7 @@ function initializeSmoothScrolling() {
           behavior: 'smooth',
         });
 
-        if (!mobileMenu.classList.contains('hidden')) {
+        if (mobileMenu && mobileMenuButton && !mobileMenu.classList.contains('hidden')) {
           mobileMenu.classList.add('hidden');
           mobileMenuButton.setAttribute('aria-expanded', 'false');
           mobileMenuButton
@@ -306,10 +346,14 @@ function initializeUI() {
   // Set up news feed updates on search
   const searchButton = document.getElementById('search-button');
   const searchInput = document.getElementById('stock-search');
-  searchButton.addEventListener('click', () => populateNewsFeed());
-  searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      populateNewsFeed();
-    }
-  });
+  if (searchButton) {
+    searchButton.addEventListener('click', () => populateNewsFeed());
+  }
+  if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        populateNewsFeed();
+      }
+    });
+  }
 }
