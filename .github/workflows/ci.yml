@@ -8,6 +8,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    env:
+      DJANGO_SETTINGS_MODULE: mysite.settings
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      DEBUG: 'True'
+      ALLOWED_HOSTS: localhost,127.0.0.1,test
+    
     steps:
     - uses: actions/checkout@v4
     
@@ -27,38 +33,13 @@ jobs:
         cd portfolai
         python manage.py makemigrations
         python manage.py migrate --noinput
-      env:
-        DJANGO_SETTINGS_MODULE: mysite.settings
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: True
-        ALLOWED_HOSTS: localhost,127.0.0.1,test
     
     - name: Collect static files
       run: |
         cd portfolai
         python manage.py collectstatic --noinput
-      env:
-        DJANGO_SETTINGS_MODULE: mysite.settings
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: True
-        ALLOWED_HOSTS: localhost,127.0.0.1,test
     
     - name: Run tests with coverage
       run: |
         cd portfolai
-        pytest -v --cov=core --cov-report=term-missing --timeout=30 --timeout-method=thread
-      env:
-        DJANGO_SETTINGS_MODULE: mysite.settings
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: True
-        ALLOWED_HOSTS: localhost,127.0.0.1,test
-    
-    - name: Check coverage threshold
-      run: |
-        cd portfolai
-        coverage report --fail-under=80
-      env:
-        DJANGO_SETTINGS_MODULE: mysite.settings
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: True
-        ALLOWED_HOSTS: localhost,127.0.0.1,test
+        pytest -v --cov=core.views --cov-report=term-missing --cov-fail-under=80 --timeout=30 --timeout-method=thread

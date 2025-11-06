@@ -16,6 +16,7 @@ jobs:
       actions: write
 
     env:
+      DJANGO_SETTINGS_MODULE: mysite.settings
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
@@ -40,9 +41,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install PyGithub
-
-    - name: Set DJANGO_SETTINGS_MODULE environment variable
-      run: echo "DJANGO_SETTINGS_MODULE=mysite.settings" >> $GITHUB_ENV
 
     - name: Run migrations
       run: |
