@@ -146,8 +146,11 @@ class AuthenticationTests(TestCase):
         
         # Should return form with error
         self.assertEqual(response.status_code, 200)
-        # Check for password mismatch error (can be in different formats)
-        self.assertContains(response, "didn't match", status_code=200)
+        # Check for password mismatch error (handles Unicode apostrophe)
+        # The error message is "The two password fields didn't match."
+        # where the apostrophe may be Unicode U+2019
+        self.assertContains(response, "password fields", status_code=200)
+        self.assertContains(response, "match", status_code=200)
         
         # Verify user was NOT created
         self.assertFalse(User.objects.filter(username='newuser2').exists())
