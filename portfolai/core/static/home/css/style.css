@@ -3,6 +3,26 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
+/* Ensure navbar is always clickable */
+nav {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 10000 !important;
+}
+
+nav * {
+  pointer-events: auto !important;
+}
+
+nav a,
+nav button,
+nav form button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  position: relative;
+  z-index: 10001 !important;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
