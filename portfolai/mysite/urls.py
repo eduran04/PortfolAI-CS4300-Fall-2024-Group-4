@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from core.views import landing, trading_dashboard, hello_api, stock_summary, get_stock_data, get_market_movers, get_news, portfolai_analysis, get_watchlist, add_to_watchlist, remove_from_watchlist
+from core.views import landing, trading_dashboard, hello_api, stock_summary, get_stock_data, get_market_movers, get_news, portfolai_analysis, get_watchlist, add_to_watchlist, remove_from_watchlist, chat_api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -31,6 +31,9 @@ urlpatterns = [
     path("api/market-movers/", get_market_movers, name="get_market_movers"),
     path("api/news/", get_news, name="get_news"),
     path("api/portfolai-analysis/", portfolai_analysis, name="portfolai_analysis"),
+    # Chatbot API endpoints
+    path("api/chat/", chat_api, name="chat_api"),
+    path("api/chatbot/", chat_api, name="chatbot"),
     # Watchlist endpoints
     path("api/watchlist/", get_watchlist, name="get_watchlist"),
     path("api/watchlist/add/", add_to_watchlist, name="add_to_watchlist"),
