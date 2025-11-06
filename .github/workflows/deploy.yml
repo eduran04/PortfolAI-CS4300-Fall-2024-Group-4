@@ -1,0 +1,71 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SETTINGS_MODULE: mysite.settings
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      DEBUG: 'True'
+      ALLOWED_HOSTS: localhost,127.0.0.1,test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.3'
+
+      - name: Install dependencies
+        run: |
+          cd portfolai
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run migrations
+        run: |
+          cd portfolai
+          python manage.py makemigrations
+          python manage.py migrate --noinput
+
+      - name: Collect static files
+        run: |
+          cd portfolai
+          python manage.py collectstatic --noinput
+
+      - name: Run Pylint
+        run: |
+          cd portfolai
+          python -m pylint core || true
+
+      - name: Run Bandit Security Scan
+        run: |
+          pip install bandit || true
+          cd portfolai
+          bandit -r core/ -f txt || true
+
+      - name: Run tests with coverage
+        run: |
+          cd portfolai
+          pytest -v --cov=core --cov-report=term-missing --cov-fail-under=80 --timeout=30 --timeout-method=thread
+
+  deploy:
+    name: Deploy to Render
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Trigger Render Deployment
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+

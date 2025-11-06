@@ -60,10 +60,10 @@ jobs:
         cd portfolai
         python -m pylint core || true
 
-    - name: Run tests with coverage for views.py and auth_test.py
+    - name: Run tests with coverage for views.py only
       run: |
         cd portfolai
-        pytest core/tests.py core/auth_test.py --cov=core.views --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=80
+        pytest --cov=core.views --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
 
     - name: Post coverage comment using pytest-coverage-comment
       uses: MishaKav/pytest-coverage-comment@v1

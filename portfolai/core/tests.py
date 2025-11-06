@@ -96,14 +96,14 @@ class APITests(TestCase):
 
     def test_get_stock_data_no_symbol(self):
         """Test stock data endpoint without symbol parameter"""
-        # When no symbol, defaults to AAPL - may or may not have fallback depending on API
-        url = reverse('get_stock_data')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('symbol', data)
-        # Don't check for fallback as it depends on API availability
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.finnhub_client', None):
+            url = reverse('get_stock_data')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
 
     def test_portfolai_analysis_no_symbol(self):
         """Test PortfolAI analysis without symbol"""
@@ -127,12 +127,14 @@ class APITests(TestCase):
 
     def test_get_news_endpoint(self):
         """Test news endpoint returns response"""
-        url = reverse('get_news')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('articles', data)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.newsapi', None):
+            url = reverse('get_news')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('articles', data)
 
     # ============================================================================
     # SECTION 4: MARKET MOVERS DASHBOARD TESTS
@@ -147,33 +149,39 @@ class APITests(TestCase):
 
     def test_get_market_movers_endpoint(self):
         """Test market movers endpoint returns response"""
-        url = reverse('get_market_movers')
-        response = self.client.get(url)
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('gainers', data)
-        self.assertIn('losers', data)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.finnhub_client', None):
+            url = reverse('get_market_movers')
+            response = self.client.get(url)
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('gainers', data)
+            self.assertIn('losers', data)
 
     def test_get_stock_data_with_symbol_fallback(self):
         """Test stock data with symbol using fallback data"""
-        url = reverse('get_stock_data')
-        response = self.client.get(url, {'symbol': 'AAPL'})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('symbol', data)
-        self.assertIn('name', data)
-        self.assertIn('price', data)
+        # Mock API client to ensure fallback is used and prevent real API calls
+        with patch('core.views.finnhub_client', None):
+            url = reverse('get_stock_data')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('symbol', data)
+            self.assertIn('name', data)
+            self.assertIn('price', data)
 
     def test_get_news_with_symbol(self):
         """Test news endpoint with symbol parameter"""
-        url = reverse('get_news')
-        response = self.client.get(url, {'symbol': 'AAPL'})
-        
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn('articles', data)
+        # Mock API client to prevent real API calls and ensure fast test execution
+        with patch('core.views.newsapi', None):
+            url = reverse('get_news')
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertIn('articles', data)
 
     def test_portfolai_analysis_with_symbol_fallback(self):
         """Test PortfolAI analysis with symbol using fallback"""
@@ -906,44 +914,68 @@ class APITests(TestCase):
     def test_portfolai_analysis_with_web_search_success(self):
         """Test PortfolAI analysis with successful web search API"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.openai_client') as mock_openai:
-                # Mock successful web search response
-                mock_response = type('obj', (object,), {
-                    'output_text': 'Detailed AI analysis with web search data'
-                })
-                mock_openai.responses.create.return_value = mock_response
-                
-                url = reverse('portfolai_analysis')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('analysis', data)
-                self.assertEqual(data['analysis'], 'Detailed AI analysis with web search data')
+            with patch('core.views.finnhub_client') as mock_finnhub:
+                with patch('core.views.newsapi') as mock_newsapi:
+                    with patch('core.views.openai_client') as mock_openai:
+                        # Mock finnhub to return valid quote data
+                        mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                        mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.'}
+                        
+                        # Mock newsapi to return valid news
+                        mock_newsapi.get_everything.return_value = {
+                            'articles': [
+                                {'title': 'Test News', 'publishedAt': '2024-01-01T10:00:00Z'}
+                            ]
+                        }
+                        
+                        # Mock successful chat completions response
+                        mock_chat_response = type('obj', (object,), {
+                            'choices': [type('obj', (object,), {
+                                'message': type('obj', (object,), {
+                                    'content': 'Detailed AI analysis with web search data'
+                                })
+                            })]
+                        })
+                        mock_openai.chat.completions.create.return_value = mock_chat_response
+                        
+                        url = reverse('portfolai_analysis')
+                        response = self.client.get(url, {'symbol': 'AAPL'})
+                        
+                        self.assertEqual(response.status_code, 200)
+                        data = response.json()
+                        self.assertIn('analysis', data)
+                        self.assertEqual(data['analysis'], 'Detailed AI analysis with web search data')
 
     def test_portfolai_analysis_chat_api_fallback(self):
         """Test PortfolAI analysis falling back to standard chat API"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.openai_client') as mock_openai:
-                # Mock web search failure, chat API success
-                mock_openai.responses.create.side_effect = Exception("Web search failed")
-                
-                mock_chat_response = type('obj', (object,), {
-                    'choices': [type('obj', (object,), {
-                        'message': type('obj', (object,), {
-                            'content': 'Standard chat API analysis'
+            with patch('core.views.finnhub_client') as mock_finnhub:
+                with patch('core.views.newsapi') as mock_newsapi:
+                    with patch('core.views.openai_client') as mock_openai:
+                        # Mock finnhub to return valid quote data
+                        mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                        mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.'}
+                        
+                        # Mock newsapi to fail (simulating fallback scenario)
+                        mock_newsapi.get_everything.side_effect = Exception("News API failed")
+                        
+                        # Mock successful chat API response
+                        mock_chat_response = type('obj', (object,), {
+                            'choices': [type('obj', (object,), {
+                                'message': type('obj', (object,), {
+                                    'content': 'Standard chat API analysis'
+                                })
+                            })]
                         })
-                    })]
-                })
-                mock_openai.chat.completions.create.return_value = mock_chat_response
-                
-                url = reverse('portfolai_analysis')
-                response = self.client.get(url, {'symbol': 'AAPL'})
-                
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('analysis', data)
-                self.assertEqual(data['analysis'], 'Standard chat API analysis')
+                        mock_openai.chat.completions.create.return_value = mock_chat_response
+                        
+                        url = reverse('portfolai_analysis')
+                        response = self.client.get(url, {'symbol': 'AAPL'})
+                        
+                        self.assertEqual(response.status_code, 200)
+                        data = response.json()
+                        self.assertIn('analysis', data)
+                        self.assertEqual(data['analysis'], 'Standard chat API analysis')
 
     def test_get_stock_data_with_finnhub_client_none(self):
         """Test stock data when finnhub_client is None"""

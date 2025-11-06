@@ -84,10 +84,18 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# For Render deployment: ensure database is on persistent disk
+# The persistent disk is mounted at /opt/render/project/src/portfolai
+# BASE_DIR should resolve to this path on Render
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,  # Wait 20 seconds before raising "database is locked" error
+        },
+        # Connection pooling settings for SQLite
+        'CONN_MAX_AGE': 0,  # Don't persist connections (SQLite doesn't support connection pooling)
     }
 }
 
