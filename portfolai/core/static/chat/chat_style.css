@@ -6,7 +6,7 @@
   transform: translateX(-50%);
   width: 600px;
   max-width: 90%;
-  z-index: 9999;
+  z-index: 1000; /* Lower than navbar to prevent interference */
   display: flex;
   flex-direction: column;
   align-items: center;

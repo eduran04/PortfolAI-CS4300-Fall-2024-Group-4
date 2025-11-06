@@ -323,37 +323,42 @@ async function populateNewsFeed(symbol = null) {
 
 /**
  * Initialize smooth scrolling for navigation links
+ * Only handles anchor links (href starting with #), not forms or other links
  */
 function initializeSmoothScrolling() {
   const mobileMenu = getMobileMenu();
   const mobileMenuButton = getMobileMenuButton();
   
+  // Only target anchor links within nav that start with # (exclude forms and other links)
   document.querySelectorAll('nav a[href^="#"]').forEach((anchor) => {
-    anchor.addEventListener('click', function (e) {
-      e.preventDefault();
-      const targetId = this.getAttribute('href');
-      const targetElement = document.querySelector(targetId);
-      if (targetElement) {
-        const navbarHeight = document.querySelector('nav').offsetHeight;
-        const tickerHeight =
-          document.querySelector('.ticker-wrap').offsetHeight;
-        const offsetPosition =
-          targetElement.offsetTop - navbarHeight - tickerHeight - 20;
+    // Double-check it's an anchor link and not inside a form
+    if (anchor.tagName === 'A' && anchor.closest('form') === null) {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+          const navbarHeight = document.querySelector('nav').offsetHeight;
+          const tickerHeight =
+            document.querySelector('.ticker-wrap').offsetHeight;
+          const offsetPosition =
+            targetElement.offsetTop - navbarHeight - tickerHeight - 20;
 
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth',
-        });
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth',
+          });
 
-        if (mobileMenu && mobileMenuButton && !mobileMenu.classList.contains('hidden')) {
-          mobileMenu.classList.add('hidden');
-          mobileMenuButton.setAttribute('aria-expanded', 'false');
-          mobileMenuButton
-            .querySelectorAll('svg')
-            .forEach((icon) => icon.classList.toggle('hidden'));
+          if (mobileMenu && mobileMenuButton && !mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.add('hidden');
+            mobileMenuButton.setAttribute('aria-expanded', 'false');
+            mobileMenuButton
+              .querySelectorAll('svg')
+              .forEach((icon) => icon.classList.toggle('hidden'));
+          }
         }
-      }
-    });
+      });
+    }
   });
 }
 
