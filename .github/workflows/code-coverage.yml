@@ -1,69 +1,72 @@
-name: Run Django Tests with Coverage
+name: CI Pipeline
 
 on:
+  push:
+    branches: [ main ]
   pull_request:
     branches:
       - main
       - develop
 
 jobs:
-  coverage:
+  test:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
       issues: read
       contents: read
       actions: write
-
+    
     env:
       DJANGO_SETTINGS_MODULE: mysite.settings
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
-
+      DEBUG: 'True'
+      ALLOWED_HOSTS: localhost,127.0.0.1,test
+    
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-
+      uses: actions/checkout@v4
+    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12.3'
-
+    
     - name: Install system dependencies
       run: |
         sudo apt-get update -y
         sudo apt-get install -y libzbar-dev
-
+    
     - name: Install Python dependencies
       run: |
         cd portfolai
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install PyGithub
-
+    
     - name: Run migrations
       run: |
         cd portfolai
         python manage.py makemigrations
         python manage.py migrate --noinput
-
+    
     - name: Collect static files
       run: |
         cd portfolai
         python manage.py collectstatic --noinput
-
-    - name: Run linting with coverage
+    
+    - name: Run linting
       run: |
         cd portfolai
         python -m pylint core || true
-
-    - name: Run tests with coverage for views.py and forms.py
+    
+    - name: Run tests with coverage
       run: |
         cd portfolai
-        pytest --cov=core.views --cov=core.forms --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
-
-    - name: Post coverage comment using pytest-coverage-comment
+        pytest -v --cov=core.views --cov=core.forms --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
+    
+    - name: Post coverage comment to PR
+      if: github.event_name == 'pull_request'
       uses: MishaKav/pytest-coverage-comment@v1
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
