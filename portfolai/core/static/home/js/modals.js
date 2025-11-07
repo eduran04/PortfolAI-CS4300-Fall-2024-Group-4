@@ -64,7 +64,7 @@ function showAnalysisModal(symbol, analysis, isFallback) {
   if (!analysisModal) {
     analysisModal = document.createElement('div');
     analysisModal.id = 'analysisModal';
-    analysisModal.className = 'modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300 ease-in-out';
+    analysisModal.className = 'modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[10001] transition-opacity duration-300 ease-in-out';
     analysisModal.innerHTML = `
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-5xl w-full mx-4 max-h-[85vh] overflow-hidden transform transition-all duration-300 ease-in-out scale-95 opacity-0">
         <div class="bg-gradient-to-r from-purple-900 to-indigo-900 text-white p-6">

@@ -209,12 +209,12 @@ nav form button {
 
 /* Modal Header Styling - Purple gradient */
 #analysisModal .bg-gradient-to-r {
-  background: linear-gradient(to right, #6366f1, #8b5cf6) !important; /* Purple gradient */
-  background-image: linear-gradient(to right, #6366f1, #8b5cf6) !important;
+  background: linear-gradient(to right, #4c1d95, #581c87) !important; /* Dark purple gradient */
+  background-image: linear-gradient(to right, #4c1d95, #581c87) !important;
 }
 .dark #analysisModal .bg-gradient-to-r {
-  background: linear-gradient(to right, #6366f1, #8b5cf6) !important;
-  background-image: linear-gradient(to right, #6366f1, #8b5cf6) !important;
+  background: linear-gradient(to right, #4c1d95, #581c87) !important;
+  background-image: linear-gradient(to right, #4c1d95, #581c87) !important;
 }
 
 /* PortfolAI text styling - white color */
