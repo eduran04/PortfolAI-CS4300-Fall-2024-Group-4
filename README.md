@@ -2,7 +2,7 @@
 
 Django-based web application for stock analysis and portfolio management with real-time market data.
 
-[![CI Pipeline](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ci.yml/badge.svg)](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/code-coverage.yml/badge.svg)](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/code-coverage.yml)
 [![AI Code Review](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ai-code-review.yml/badge.svg)](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ai-code-review.yml)
 [![Deployed on Render](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?logo=render)](https://portfolai.onrender.com)
 
@@ -98,7 +98,7 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 ├── .github/                                # GitHub configuration
 │   └── workflows/                          # GitHub Actions workflows
 │       ├── ai-code-review.yml              # AI code review workflow
-│       └── ci.yml                          # Continuous integration workflow
+│       └── code-coverage.yml               # CI pipeline with code coverage workflow
 ├── portfolai/                              # Main Django project directory
 │   ├── core/                               # Django app for core functionality
 │   │   ├── __init__.py
