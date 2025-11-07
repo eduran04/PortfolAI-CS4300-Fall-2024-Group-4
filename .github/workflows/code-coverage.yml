@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Django Test Coverage Metrics
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
     env:
       DJANGO_SETTINGS_MODULE: mysite.settings
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
-      DEBUG: 'True'
+      DEBUG: ${{ secrets.DEBUG_ENABLED }}
       ALLOWED_HOSTS: localhost,127.0.0.1,test
     
     steps:
