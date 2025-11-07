@@ -49,7 +49,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install PyGithub pylint
+        pip install PyGithub
 
     - name: Run migrations
       working-directory: portfolai
@@ -68,8 +68,8 @@ jobs:
         python -m pylint core
 
     - name: Run tests with coverage for views.py and forms.py
-      working-directory: portfolai
       run: |
+        cd portfolai
         pytest --cov=core.views --cov=core.forms --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
 
     - name: Post coverage comment using pytest-coverage-comment
