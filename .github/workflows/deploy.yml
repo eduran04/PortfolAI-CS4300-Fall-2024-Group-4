@@ -28,6 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.SECRET_KEY }}" ]; then
+            echo "Error: SECRET_KEY secret is not set"
+            exit 1
+          fi
+          echo "Required secrets validated"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -65,13 +73,17 @@ jobs:
         continue-on-error: true
         working-directory: portfolai
         run: |
+          # Pylint continues on error to report code quality issues without blocking deployment
+          # Critical security issues should be caught by Bandit
           python -m pylint core
 
       - name: Run Bandit Security Scan
-        continue-on-error: true
         working-directory: portfolai
         run: |
-          bandit -r core/ -f txt
+          # Bandit fails if any security issues are found (MEDIUM, HIGH, CRITICAL severity)
+          # Exclude test files to avoid false positives from hardcoded test passwords
+          # --severity-level medium: Only report MEDIUM and above severity issues
+          bandit -r core/ -f txt --severity-level medium -x core/tests.py,core/auth_test.py,core/*test*.py
 
       - name: Run tests with coverage
         working-directory: portfolai

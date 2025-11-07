@@ -40,9 +40,13 @@ jobs:
       - name: Run Safety (Dependency Vulnerability Check)
         working-directory: portfolai
         run: |
-          safety check --json || safety check
+          # Safety check fails if vulnerabilities are found
+          safety check || (echo "Dependency vulnerabilities detected. Review and update dependencies." && exit 1)
 
       - name: Run Bandit (Static Code Analysis)
         working-directory: portfolai
         run: |
-          bandit -r core -s MEDIUM
+          # Bandit fails on MEDIUM, HIGH, and CRITICAL severity issues
+          # Exclude test files to avoid false positives from hardcoded test passwords
+          # --severity-level medium: Only report MEDIUM and above severity issues
+          bandit -r core --severity-level medium -x core/tests.py,core/auth_test.py,core/*test*.py

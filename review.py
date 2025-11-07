@@ -1,7 +1,7 @@
 """AI-powered code review automation for GitHub pull requests."""
 
 import os
-from github import Github, GithubException
+from github import Github, GithubException, Auth
 from github.PullRequest import PullRequest
 from openai import OpenAI, OpenAIError
 
@@ -68,7 +68,7 @@ def initialize() -> tuple[OpenAI, Github, str, str]:
             raise ValueError("GITHUB_PR_ID is not set")
         
         client = OpenAI(api_key=openai_key)
-        g = Github(github_token)
+        g = Github(auth=Auth.Token(github_token))
         
         return client, g, repo_name, pr_id
         

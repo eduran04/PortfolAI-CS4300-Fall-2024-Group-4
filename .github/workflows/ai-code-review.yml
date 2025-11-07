@@ -18,6 +18,18 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v4
 
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.GITHUB_TOKEN }}" ]; then
+            echo "Error: GITHUB_TOKEN secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "Error: OPENAI_API_KEY secret is not set"
+            exit 1
+          fi
+          echo "Required secrets validated"
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:

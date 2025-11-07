@@ -26,6 +26,17 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Validate required secrets
+      run: |
+        if [ -z "${{ secrets.SECRET_KEY }}" ]; then
+          echo "Error: SECRET_KEY secret is not set"
+          exit 1
+        fi
+        if [ -z "${{ secrets.ALLOWED_HOSTS }}" ]; then
+          echo "Warning: ALLOWED_HOSTS secret is not set, using default"
+        fi
+        echo "Required secrets validated"
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -65,6 +76,8 @@ jobs:
       continue-on-error: true
       working-directory: portfolai
       run: |
+        # Pylint continues on error to report code quality issues without blocking PRs
+        # Critical security issues should be caught by security-check workflow
         python -m pylint core
 
     - name: Run tests with coverage for views.py and forms.py

@@ -21,6 +21,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Validate required secrets
+      run: |
+        if [ -z "${{ secrets.SECRET_KEY }}" ]; then
+          echo "Error: SECRET_KEY secret is not set"
+          exit 1
+        fi
+        echo "Required secrets validated"
+    
     - name: Set up Python
       uses: actions/setup-python@v5
       with:

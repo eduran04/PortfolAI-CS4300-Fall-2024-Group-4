@@ -1,0 +1,6 @@
+[bandit]
+# Exclude test files and directories to avoid false positives
+exclude_dirs = migrations,__pycache__,venv
+# Skip B106 (hardcoded password) since test files are excluded via command line
+skips = B106
+
