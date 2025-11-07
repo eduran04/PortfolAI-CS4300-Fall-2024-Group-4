@@ -1,4 +1,4 @@
-name: Custom Code Review
+name: AI Code Review
 
 permissions:
   contents: read
