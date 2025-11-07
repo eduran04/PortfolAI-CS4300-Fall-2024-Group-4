@@ -1,5 +1,8 @@
 name: Python Security Checks
 
+permissions:
+  contents: read
+
 on:
   pull_request:
     branches:
@@ -9,31 +12,37 @@ on:
 jobs:
   security:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12.3'
 
       - name: Set up cache for pip
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('portfolai/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
+        working-directory: portfolai
         run: |
-          cd portfolai
           pip install -r requirements.txt
           pip install safety bandit
 
-      - name: Run Bandit (Static Code Analysis)
+      - name: Run Safety (Dependency Vulnerability Check)
+        working-directory: portfolai
         run: |
-          cd portfolai
-          bandit -r core -s MEDIUM --exit-zero
+          safety check --json || safety check
+
+      - name: Run Bandit (Static Code Analysis)
+        working-directory: portfolai
+        run: |
+          bandit -r core -s MEDIUM

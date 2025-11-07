@@ -1,5 +1,10 @@
 name: Run Django Tests with Coverage
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
 on:
   pull_request:
     branches:
@@ -9,25 +14,30 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      issues: read
-      contents: read
-      actions: write
+    timeout-minutes: 60
 
     env:
+      DJANGO_SETTINGS_MODULE: mysite.settings
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
       ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12.3'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('portfolai/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Install system dependencies
       run: |
@@ -35,35 +45,32 @@ jobs:
         sudo apt-get install -y libzbar-dev
 
     - name: Install Python dependencies
+      working-directory: portfolai
       run: |
-        cd portfolai
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install PyGithub
-
-    - name: Set DJANGO_SETTINGS_MODULE environment variable
-      run: echo "DJANGO_SETTINGS_MODULE=mysite.settings" >> $GITHUB_ENV
+        pip install PyGithub pylint
 
     - name: Run migrations
+      working-directory: portfolai
       run: |
-        cd portfolai
-        python manage.py makemigrations
         python manage.py migrate --noinput
 
     - name: Collect static files
+      working-directory: portfolai
       run: |
-        cd portfolai
         python manage.py collectstatic --noinput
 
     - name: Run linting with coverage
+      continue-on-error: true
+      working-directory: portfolai
       run: |
-        cd portfolai
-        python -m pylint core || true
+        python -m pylint core
 
-    - name: Run tests with coverage for views.py only
+    - name: Run tests with coverage for views.py and forms.py
+      working-directory: portfolai
       run: |
-        cd portfolai
-        pytest --cov=core.views --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
+        pytest --cov=core.views --cov=core.forms --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
 
     - name: Post coverage comment using pytest-coverage-comment
       uses: MishaKav/pytest-coverage-comment@v1

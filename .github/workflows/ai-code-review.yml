@@ -3,6 +3,7 @@ name: Custom Code Review
 permissions:
   contents: read
   pull-requests: write
+  issues: read
 
 on:
   pull_request:
@@ -12,19 +13,23 @@ on:
 jobs:
   review:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      issues: read
-      contents: read
-      actions: write
+    timeout-minutes: 30
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12.3'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-review-${{ hashFiles('review.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-review-
 
       - name: Install dependencies
         run: |

@@ -1,15 +1,23 @@
 name: Deploy to Render
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
       - main
   workflow_dispatch:  # Allow manual trigger
 
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
 jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     env:
       DJANGO_SETTINGS_MODULE: mysite.settings
@@ -25,47 +33,74 @@ jobs:
         with:
           python-version: '3.12.3'
 
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('portfolai/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
+        working-directory: portfolai
         run: |
-          cd portfolai
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run migrations
+        working-directory: portfolai
         run: |
-          cd portfolai
-          python manage.py makemigrations
           python manage.py migrate --noinput
 
       - name: Collect static files
+        working-directory: portfolai
         run: |
-          cd portfolai
           python manage.py collectstatic --noinput
 
-      - name: Run Pylint
+      - name: Install linting and security tools
         run: |
-          cd portfolai
-          python -m pylint core || true
+          pip install pylint bandit
+
+      - name: Run Pylint
+        continue-on-error: true
+        working-directory: portfolai
+        run: |
+          python -m pylint core
 
       - name: Run Bandit Security Scan
+        continue-on-error: true
+        working-directory: portfolai
         run: |
-          pip install bandit || true
-          cd portfolai
-          bandit -r core/ -f txt || true
+          bandit -r core/ -f txt
 
       - name: Run tests with coverage
+        working-directory: portfolai
         run: |
-          cd portfolai
           pytest -v --cov=core --cov-report=term-missing --cov-fail-under=80 --timeout=30 --timeout-method=thread
 
   deploy:
     name: Deploy to Render
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Trigger Render Deployment
         run: |
-          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "Error: RENDER_DEPLOY_HOOK_URL secret is not set"
+            exit 1
+          fi
+          response=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            echo "Deployment triggered successfully (HTTP $http_code)"
+            echo "$body"
+          else
+            echo "Error: Deployment trigger failed with HTTP $http_code"
+            echo "$body"
+            exit 1
+          fi
 

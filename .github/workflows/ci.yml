@@ -1,5 +1,8 @@
 name: CI Pipeline
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main ]
@@ -7,58 +10,52 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      DJANGO_SETTINGS_MODULE: mysite.settings
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      DEBUG: True
+      ALLOWED_HOSTS: localhost,127.0.0.1,test
     
     steps:
     - uses: actions/checkout@v4
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12.3'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('portfolai/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
     
     - name: Install dependencies
+      working-directory: portfolai
       run: |
-        cd portfolai
         pip install --upgrade pip
         pip install -r requirements.txt
     
     - name: Run migrations
+      working-directory: portfolai
       run: |
-        cd portfolai
-        python manage.py makemigrations
         python manage.py migrate --noinput
-      env:
-        DJANGO_SETTINGS_MODULE: mysite.settings
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: True
-        ALLOWED_HOSTS: localhost,127.0.0.1,test
     
     - name: Collect static files
+      working-directory: portfolai
       run: |
-        cd portfolai
         python manage.py collectstatic --noinput
-      env:
-        DJANGO_SETTINGS_MODULE: mysite.settings
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: True
-        ALLOWED_HOSTS: localhost,127.0.0.1,test
     
-    - name: Run tests with coverage
+    - name: Run tests with coverage for views.py and forms.py
+      working-directory: portfolai
       run: |
-        cd portfolai
-        pytest -v --cov=core --cov-report=term-missing --timeout=30 --timeout-method=thread
-      env:
-        DJANGO_SETTINGS_MODULE: mysite.settings
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: True
-        ALLOWED_HOSTS: localhost,127.0.0.1,test
+        pytest -v --cov=core.views --cov=core.forms --cov-report=term-missing --timeout=30 --timeout-method=thread
     
     - name: Check coverage threshold
+      working-directory: portfolai
       run: |
-        cd portfolai
         coverage report --fail-under=80
-      env:
-        DJANGO_SETTINGS_MODULE: mysite.settings
-        SECRET_KEY: ${{ secrets.SECRET_KEY }}
-        DEBUG: True
-        ALLOWED_HOSTS: localhost,127.0.0.1,test
