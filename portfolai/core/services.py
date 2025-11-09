@@ -950,11 +950,8 @@ class ChatService:
         
         # Check if question is financial-related (pre-filter non-financial questions)
         if not self._is_financial_question(content):
-            raise ValidationError(
-                "I'm specialized in financial and investment topics only. "
-                "I can help you with stock analysis, portfolio strategy, or investment questions instead. "
-                "What would you like to know about?"
-            )
+            # Raise a special validation error that will be caught and returned as a friendly message
+            raise ValidationError("NON_FINANCIAL_QUESTION")
         
         # Check rate limit
         self._check_rate_limit(user)

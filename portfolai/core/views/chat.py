@@ -101,12 +101,24 @@ def chat_api(request):
         }, status=200)
         
     except ValidationError as e:
-        # Handle validation errors (rate limit, sanitization, etc.)
+        # Handle validation errors (rate limit, sanitization, non-financial questions, etc.)
+        error_message = str(e)
+        
+        # Check if this is a non-financial question rejection
+        if error_message == "NON_FINANCIAL_QUESTION":
+            # Return a user-friendly response instead of error
+            return JsonResponse({
+                "conversation_id": None,
+                "response": "I'm sorry, but I'm a financial assistant specialized in stocks, investments, and portfolio management. I can help you with stock analysis, portfolio strategy, or investment questions instead. What would you like to know about?",
+                "status": "restricted"
+            }, status=200)
+        
+        # For other validation errors (rate limit, etc.), return as error
         logger.warning(
-            f"Validation error for user {request.user.username}: {str(e)}"
+            f"Validation error for user {request.user.username}: {error_message}"
         )
         return JsonResponse(
-            {"error": str(e)},
+            {"error": error_message},
             status=400
         )
     except Exception as e:
