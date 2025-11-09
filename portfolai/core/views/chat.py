@@ -5,9 +5,11 @@ Chat Views - PortfolAI Chatbot API
 Chatbot endpoint for AI-powered user interactions with conversation tracking.
 """
 
-from django.http import JsonResponse
 from django.core.exceptions import ValidationError
-from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 import json
 import logging
 from ..services import ChatService
@@ -16,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@csrf_exempt
 def chat_api(request):
     """
     PortfolAI Chatbot API Endpoint
@@ -33,16 +37,14 @@ def chat_api(request):
         - status (str): 'success' or 'error'
         - fallback (bool, optional): True if fallback response used
     """
-    # Check authentication
-    if not request.user.is_authenticated:
-        return JsonResponse(
-            {"error": "Authentication required"},
-            status=401
-        )
-    
     # Parse request body
     try:
-        data = json.loads(request.body.decode("utf-8"))
+        # DRF handles JSON parsing automatically, but we can also use request.data
+        if hasattr(request, 'data'):
+            data = request.data
+        else:
+            data = json.loads(request.body.decode("utf-8"))
+        
         user_message = data.get("message", "").strip()
         conversation_id = data.get("conversation_id")
         
@@ -51,20 +53,20 @@ def chat_api(request):
             try:
                 conversation_id = int(conversation_id)
             except (ValueError, TypeError):
-                return JsonResponse(
+                return Response(
                     {"error": "Invalid conversation_id format"},
                     status=400
                 )
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
         logger.warning(f"Invalid JSON in chat request: {e}")
-        return JsonResponse(
+        return Response(
             {"error": "Invalid JSON format"},
             status=400
         )
     
     # Validate message
     if not user_message:
-        return JsonResponse(
+        return Response(
             {"error": "Message cannot be empty"},
             status=400
         )
@@ -81,7 +83,7 @@ def chat_api(request):
         )
         
         # Return success response
-        return JsonResponse({
+        return Response({
             "conversation_id": result.get("conversation_id"),
             "response": result.get("response"),
             "status": result.get("status", "success")
@@ -92,7 +94,7 @@ def chat_api(request):
         logger.warning(
             f"Validation error for user {request.user.username}: {str(e)}"
         )
-        return JsonResponse(
+        return Response(
             {"error": str(e)},
             status=400
         )
@@ -107,7 +109,7 @@ def chat_api(request):
         from django.conf import settings
         from ._clients import openai_client
         if not getattr(settings, "OPENAI_API_KEY", None) or openai_client is None:
-            return JsonResponse(
+            return Response(
                 {
                     "response": "(Fallback) You said: " + user_message,
                     "fallback": True,
@@ -117,7 +119,7 @@ def chat_api(request):
             )
         
         # Return generic error message (don't expose internal errors)
-        return JsonResponse(
+        return Response(
             {
                 "error": "An error occurred while processing your message. Please try again later.",
                 "status": "error"
