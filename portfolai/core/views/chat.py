@@ -6,8 +6,8 @@ Chatbot endpoint for AI-powered user interactions with conversation tracking.
 """
 
 from django.core.exceptions import ValidationError
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.response import Response
 import json
 import logging
 from ..services import ChatService
@@ -36,7 +36,7 @@ def chat_api(request):
     """
     # Check authentication manually since we're using csrf_exempt
     if not request.user.is_authenticated:
-        return Response(
+        return JsonResponse(
             {"error": "Authentication required"},
             status=401
         )
@@ -57,20 +57,20 @@ def chat_api(request):
             try:
                 conversation_id = int(conversation_id)
             except (ValueError, TypeError):
-                return Response(
+                return JsonResponse(
                     {"error": "Invalid conversation_id format"},
                     status=400
                 )
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
         logger.warning(f"Invalid JSON in chat request: {e}")
-        return Response(
+        return JsonResponse(
             {"error": "Invalid JSON format"},
             status=400
         )
     
     # Validate message
     if not user_message:
-        return Response(
+        return JsonResponse(
             {"error": "Message cannot be empty"},
             status=400
         )
@@ -87,7 +87,7 @@ def chat_api(request):
         )
         
         # Return success response
-        return Response({
+        return JsonResponse({
             "conversation_id": result.get("conversation_id"),
             "response": result.get("response"),
             "status": result.get("status", "success")
@@ -98,7 +98,7 @@ def chat_api(request):
         logger.warning(
             f"Validation error for user {request.user.username}: {str(e)}"
         )
-        return Response(
+        return JsonResponse(
             {"error": str(e)},
             status=400
         )
@@ -113,7 +113,7 @@ def chat_api(request):
         from django.conf import settings
         from ._clients import openai_client
         if not getattr(settings, "OPENAI_API_KEY", None) or openai_client is None:
-            return Response(
+            return JsonResponse(
                 {
                     "response": "(Fallback) You said: " + user_message,
                     "fallback": True,
@@ -123,7 +123,7 @@ def chat_api(request):
             )
         
         # Return generic error message (don't expose internal errors)
-        return Response(
+        return JsonResponse(
             {
                 "error": "An error occurred while processing your message. Please try again later.",
                 "status": "error"

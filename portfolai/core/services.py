@@ -651,7 +651,7 @@ class ChatService:
         Returns:
             str: AI response content
         """
-        from ..views._clients import openai_client
+        from .views._clients import openai_client
         
         if not openai_client:
             raise Exception("OpenAI client not available")
