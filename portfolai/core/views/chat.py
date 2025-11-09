@@ -7,8 +7,6 @@ Chatbot endpoint for AI-powered user interactions with conversation tracking.
 
 from django.core.exceptions import ValidationError
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 import json
 import logging
@@ -17,8 +15,7 @@ from ..services import ChatService
 logger = logging.getLogger(__name__)
 
 
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
+# Apply csrf_exempt to the DRF view function
 @csrf_exempt
 def chat_api(request):
     """
@@ -37,6 +34,13 @@ def chat_api(request):
         - status (str): 'success' or 'error'
         - fallback (bool, optional): True if fallback response used
     """
+    # Check authentication manually since we're using csrf_exempt
+    if not request.user.is_authenticated:
+        return Response(
+            {"error": "Authentication required"},
+            status=401
+        )
+    
     # Parse request body
     try:
         # DRF handles JSON parsing automatically, but we can also use request.data
