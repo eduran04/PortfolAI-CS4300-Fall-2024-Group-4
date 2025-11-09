@@ -403,13 +403,14 @@ class ChatService:
         # Rough estimation: 1 token ≈ 4 characters for English text
         return len(text) // 4
     
-    def create_conversation(self, user, title=None):
+    def create_conversation(self, user, title=None, current_stock=None):
         """
         Create a new conversation session for a user.
         
         Args:
             user: Django User instance
             title (str, optional): Optional title for the conversation
+            current_stock (str, optional): Currently viewed stock symbol
             
         Returns:
             AIChatSession: Created session instance
@@ -422,13 +423,13 @@ class ChatService:
             title=title or f"Conversation {timezone.now().strftime('%Y-%m-%d %H:%M')}"
         )
         
-        # Create welcome message
-        self.create_first_message(session)
+        # Create welcome message with current stock context
+        self.create_first_message(session, current_stock=current_stock)
         
         logger.info(f"Created new conversation {session.id} for user {user.username}")
         return session
     
-    def get_or_create_conversation(self, user, conversation_id=None):
+    def get_or_create_conversation(self, user, conversation_id=None, current_stock=None):
         """
         Get existing conversation or create a new one.
         
@@ -438,6 +439,7 @@ class ChatService:
         Args:
             user: Django User instance
             conversation_id (int, optional): ID of conversation to retrieve
+            current_stock (str, optional): Currently viewed stock symbol
             
         Returns:
             tuple: (AIChatSession, bool) - session and whether it was created
@@ -468,16 +470,17 @@ class ChatService:
         if session:
             return session, False
         
-        # Create new conversation
-        session = self.create_conversation(user)
+        # Create new conversation with current stock context
+        session = self.create_conversation(user, current_stock=current_stock)
         return session, True
     
-    def create_first_message(self, session):
+    def create_first_message(self, session, current_stock=None):
         """
         Create the initial system/welcome message for a conversation.
         
         Args:
             session: AIChatSession instance
+            current_stock (str, optional): Currently viewed stock symbol
             
         Returns:
             AIRequest: Created system message
@@ -493,6 +496,16 @@ class ChatService:
                 "You can reference these stocks when providing insights."
             )
         
+        # Add current stock context if provided
+        current_stock_context = ""
+        if current_stock:
+            current_stock_context = (
+                f"\n\nUser is currently viewing/searching for stock: {current_stock}. "
+                "When the user asks about 'this stock', 'the current stock', or similar references, "
+                "they are referring to this stock. You can provide insights, analysis, and "
+                "context about this specific stock."
+            )
+        
         system_prompt = (
             "You are PortfolAI Assistant — a friendly, knowledgeable AI chatbot "
             "that helps users with stock market insights, portfolio strategy, and "
@@ -502,6 +515,7 @@ class ChatService:
             "but offer useful historical or strategic insights instead. "
             "Keep your tone concise, analytical, and beginner-friendly."
             f"{watchlist_context}"
+            f"{current_stock_context}"
         )
         
         return AIRequest.objects.create(
@@ -670,8 +684,72 @@ class ChatService:
             logger.error(f"OpenAI API error: {str(e)}")
             raise
     
+    def _update_system_message_with_current_stock(self, session, current_stock):
+        """
+        Update or create a system message with current stock context.
+        
+        If a system message exists, update it. Otherwise, create a new one.
+        This ensures the AI is always aware of the current stock being viewed.
+        
+        Args:
+            session: AIChatSession instance
+            current_stock (str): Currently viewed stock symbol
+        """
+        # Get existing system message
+        system_message = AIRequest.objects.filter(
+            session=session,
+            role=AIRequest.ROLE_SYSTEM
+        ).order_by('created_at').first()
+        
+        # Get user's watchlist for context
+        watchlist_items = Watchlist.objects.filter(user=session.user)
+        watchlist_symbols = [item.symbol for item in watchlist_items]
+        
+        watchlist_context = ""
+        if watchlist_symbols:
+            watchlist_context = (
+                f"\n\nUser's Watchlist: {', '.join(watchlist_symbols)}. "
+                "You can reference these stocks when providing insights."
+            )
+        
+        # Add current stock context
+        current_stock_context = ""
+        if current_stock:
+            current_stock_context = (
+                f"\n\nUser is currently viewing/searching for stock: {current_stock}. "
+                "When the user asks about 'this stock', 'the current stock', or similar references, "
+                "they are referring to this stock. You can provide insights, analysis, and "
+                "context about this specific stock."
+            )
+        
+        system_prompt = (
+            "You are PortfolAI Assistant — a friendly, knowledgeable AI chatbot "
+            "that helps users with stock market insights, portfolio strategy, and "
+            "investment education. You do NOT have live data, but you can reason "
+            "about historical trends, company performance, and general market context. "
+            "If users ask for live prices, politely explain that you can't provide them, "
+            "but offer useful historical or strategic insights instead. "
+            "Keep your tone concise, analytical, and beginner-friendly."
+            f"{watchlist_context}"
+            f"{current_stock_context}"
+        )
+        
+        if system_message:
+            # Update existing system message
+            system_message.content = system_prompt
+            system_message.save()
+        else:
+            # Create new system message
+            AIRequest.objects.create(
+                user=session.user,
+                session=session,
+                role=AIRequest.ROLE_SYSTEM,
+                content=system_prompt,
+                status=AIRequest.COMPLETED
+            )
+    
     @transaction.atomic
-    def send_message(self, user, content, conversation_id=None, async_processing=False):
+    def send_message(self, user, content, conversation_id=None, current_stock=None, async_processing=False):
         """
         Handle the full message flow: validation → AI processing → response → storage.
         
@@ -681,6 +759,7 @@ class ChatService:
             user: Django User instance
             content (str): User message content
             conversation_id (int, optional): ID of conversation to use
+            current_stock (str, optional): Currently viewed stock symbol
             async_processing (bool): Whether to process asynchronously via Celery
             
         Returns:
@@ -694,7 +773,11 @@ class ChatService:
         self._check_rate_limit(user)
         
         # Get or create conversation
-        session, created = self.get_or_create_conversation(user, conversation_id)
+        session, created = self.get_or_create_conversation(user, conversation_id, current_stock=current_stock)
+        
+        # Update system message with current stock if provided and conversation already exists
+        if not created and current_stock:
+            self._update_system_message_with_current_stock(session, current_stock)
         
         # Create user message
         user_message = self.create_message(

@@ -86,6 +86,15 @@ function hideChatHistory() {
   }
 }
 
+// --- Get Current Stock Symbol --- //
+function getCurrentStockSymbol() {
+  const searchInput = document.getElementById("stock-search");
+  if (searchInput && searchInput.value) {
+    return searchInput.value.toUpperCase().trim();
+  }
+  return null;
+}
+
 // --- Send Message --- //
 async function sendMessage() {
   const msg = input.value.trim();
@@ -99,6 +108,14 @@ async function sendMessage() {
   const typingDots = showTypingAnimation();
 
   try {
+    // Get current stock symbol from the search input
+    const currentStock = getCurrentStockSymbol();
+    
+    const requestBody = { message: msg };
+    if (currentStock) {
+      requestBody.current_stock = currentStock;
+    }
+
     const res = await fetch("/api/chat/", {
       method: "POST",
       headers: { 
@@ -106,7 +123,7 @@ async function sendMessage() {
         "X-CSRFToken": getCookie("csrftoken") || ""
       },
       credentials: "same-origin",
-      body: JSON.stringify({ message: msg }),
+      body: JSON.stringify(requestBody),
     });
 
     const data = await res.json();

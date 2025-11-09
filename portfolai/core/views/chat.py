@@ -22,11 +22,12 @@ def chat_api(request):
     PortfolAI Chatbot API Endpoint
     
     Handles authenticated user chat messages with full conversation tracking.
-    Supports conversation continuation via optional conversation_id.
+    Supports conversation continuation via optional conversation_id and current stock awareness.
     
     Request Body:
         - message (str, required): User message content
         - conversation_id (int, optional): ID of conversation to continue
+        - current_stock (str, optional): Currently viewed stock symbol (e.g., 'AAPL')
         
     Returns:
         - conversation_id (int): ID of the conversation
@@ -51,6 +52,7 @@ def chat_api(request):
         
         user_message = data.get("message", "").strip()
         conversation_id = data.get("conversation_id")
+        current_stock = data.get("current_stock", "").strip().upper() if data.get("current_stock") else None
         
         # Validate conversation_id if provided
         if conversation_id is not None:
@@ -61,6 +63,10 @@ def chat_api(request):
                     {"error": "Invalid conversation_id format"},
                     status=400
                 )
+        
+        # Validate current_stock if provided (should be a valid stock symbol)
+        if current_stock and len(current_stock) > 10:
+            current_stock = None  # Invalid symbol length, ignore it
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
         logger.warning(f"Invalid JSON in chat request: {e}")
         return JsonResponse(
@@ -83,7 +89,8 @@ def chat_api(request):
         result = chat_service.send_message(
             user=request.user,
             content=user_message,
-            conversation_id=conversation_id
+            conversation_id=conversation_id,
+            current_stock=current_stock
         )
         
         # Return success response
