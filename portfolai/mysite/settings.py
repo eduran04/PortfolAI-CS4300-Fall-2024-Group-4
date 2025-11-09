@@ -175,3 +175,14 @@ CACHES = {
         }
     }
 }
+
+# Chat configuration
+CHAT_CONFIG = {
+    'CONTEXT_WINDOW_TOKENS': 8000,  # Maximum tokens for conversation context
+    'RATE_LIMIT_REQUESTS': 30,  # Maximum requests per user per window
+    'RATE_LIMIT_WINDOW': 60,  # Time window in seconds (1 minute)
+    'MAX_MESSAGE_LENGTH': 5000,  # Maximum characters per user message
+    'ENABLE_CELERY': False,  # Set to True when Celery is configured
+    'DEFAULT_MODEL': 'gpt-4o-mini',  # Default OpenAI model
+    'TEMPERATURE': 0.7,  # Default temperature for AI responses
+}
