@@ -105,8 +105,30 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │   │   ├── admin.py                        # Django admin configuration
 │   │   ├── apps.py                         # App configuration
 │   │   ├── models.py                       # Database models
-│   │   ├── tests.py                        # Unit tests
-│   │   ├── views.py                        # View functions and API endpoints
+│   │   ├── forms.py                        # Django forms
+│   │   ├── services.py                     # Business logic and services
+│   │   ├── views/                          # View functions organized by feature
+│   │   │   ├── __init__.py                 # Exports all views
+│   │   │   ├── _clients.py                 # Shared API client initialization
+│   │   │   ├── basic.py                    # Landing, dashboard, hello_api
+│   │   │   ├── auth.py                     # SignUpView
+│   │   │   ├── stock_data.py               # get_stock_data, stock_summary
+│   │   │   ├── market_movers.py            # get_market_movers
+│   │   │   ├── news.py                     # get_news
+│   │   │   ├── analysis.py                 # portfolai_analysis
+│   │   │   ├── chat.py                     # chat_api
+│   │   │   └── watchlist.py                # Watchlist endpoints
+│   │   ├── tests/                          # Test directory
+│   │   │   ├── __init__.py
+│   │   │   ├── view_test.py                # Basic views tests
+│   │   │   ├── auth_test.py                # Authentication tests
+│   │   │   ├── stock_data_test.py          # Stock data tests
+│   │   │   ├── summary_test.py             # Stock summary tests
+│   │   │   ├── market_movers_test.py       # Market movers tests
+│   │   │   ├── news_test.py                # News feed tests
+│   │   │   ├── analysis_test.py            # AI analysis tests
+│   │   │   ├── chat_test.py                # Chatbot tests
+│   │   │   └── watchlist_test.py           # Watchlist tests
 │   │   ├── migrations/                     # Database migration files
 │   │   │   └── __init__.py
 │   │   ├── static/                         # Static files (CSS, JS, images)
