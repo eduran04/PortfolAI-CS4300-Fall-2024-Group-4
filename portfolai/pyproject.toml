@@ -3,6 +3,7 @@ source = ["core"]
 omit = [
     "*/migrations/*",
     "*/tests.py",
+    "*/tests/*.py",
     "*/test_*.py",
     "*/__init__.py",
     "*/apps.py",
