@@ -102,10 +102,25 @@ def chat_api(request):
         
     except ValidationError as e:
         # Handle validation errors (rate limit, sanitization, non-financial questions, etc.)
+        # Django ValidationError stores messages as a list, so we need to check properly
         error_message = str(e)
         
+        # Get the actual message(s) from ValidationError
+        # ValidationError can have messages as a list or single value
+        if hasattr(e, 'messages') and e.messages:
+            error_messages = e.messages if isinstance(e.messages, list) else [e.messages]
+        elif hasattr(e, 'message'):
+            error_messages = [e.message] if e.message else [str(e)]
+        else:
+            error_messages = [str(e)]
+        
         # Check if this is a non-financial question rejection
-        if error_message == "NON_FINANCIAL_QUESTION":
+        # Check if "NON_FINANCIAL_QUESTION" appears in any of the error messages
+        is_non_financial = any(
+            "NON_FINANCIAL_QUESTION" in str(msg) for msg in error_messages
+        )
+        
+        if is_non_financial:
             # Return a user-friendly response instead of error
             friendly_message = (
                 "I'm sorry, but I'm a financial assistant specialized in stocks, "
