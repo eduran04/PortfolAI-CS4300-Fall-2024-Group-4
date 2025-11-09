@@ -107,9 +107,18 @@ def chat_api(request):
         # Check if this is a non-financial question rejection
         if error_message == "NON_FINANCIAL_QUESTION":
             # Return a user-friendly response instead of error
+            friendly_message = (
+                "I'm sorry, but I'm a financial assistant specialized in stocks, "
+                "investments, and portfolio management. I can help you with stock analysis, "
+                "portfolio strategy, or investment questions instead. What would you like to know about?"
+            )
+            logger.info(
+                f"Non-financial question rejected for user {request.user.username}, "
+                f"returning friendly message"
+            )
             return JsonResponse({
                 "conversation_id": None,
-                "response": "I'm sorry, but I'm a financial assistant specialized in stocks, investments, and portfolio management. I can help you with stock analysis, portfolio strategy, or investment questions instead. What would you like to know about?",
+                "response": friendly_message,
                 "status": "restricted"
             }, status=200)
         

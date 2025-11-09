@@ -129,8 +129,15 @@ async function sendMessage() {
     const data = await res.json();
     typingDots.remove();
 
-    if (data.response) appendMessage("bot", data.response);
-    else appendMessage("bot", "Sorry, something went wrong.");
+    // Handle response - check for response field first, then error field
+    if (data.response) {
+      appendMessage("bot", data.response);
+    } else if (data.error) {
+      // If there's an error field, show it (for validation errors, rate limits, etc.)
+      appendMessage("bot", data.error);
+    } else {
+      appendMessage("bot", "Sorry, something went wrong.");
+    }
   } catch (err) {
     console.error("Chat error:", err);
     typingDots.remove();

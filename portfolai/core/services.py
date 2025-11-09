@@ -348,18 +348,22 @@ class ChatService:
             return True
         
         # Non-financial keywords that should be rejected (strong signal)
+        # Order matters: check longer phrases first to avoid false positives
         non_financial_keywords = [
+            'hello world', 'write a program', 'make a program', 'how to code',
+            'web development', 'app development', 'mobile app', 'data structure',
+            'build a', 'create a',  # Check these before single words
             'python', 'program', 'code', 'coding', 'programming', 'script', 'function',
-            'hello world', 'javascript', 'java', 'c++', 'html', 'css', 'sql', 'database',
-            'algorithm', 'data structure', 'api', 'web development', 'software',
-            'app development', 'mobile app', 'game', 'website', 'build a', 'create a',
-            'write a program', 'make a program', 'how to code', 'tutorial', 'compile',
-            'debug', 'variable', 'class', 'object', 'method', 'library', 'framework'
+            'javascript', 'java', 'c++', 'html', 'css', 'sql', 'database',
+            'algorithm', 'api', 'software', 'game', 'website',
+            'tutorial', 'compile', 'debug', 'variable', 'class', 'object', 
+            'method', 'library', 'framework'
         ]
         
         # Check for non-financial keywords (strong rejection signal)
         for keyword in non_financial_keywords:
             if keyword in content_lower:
+                logger.debug(f"Non-financial keyword detected: '{keyword}' in message")
                 return False
         
         # Check for patterns that indicate programming requests
@@ -458,6 +462,100 @@ class ChatService:
         # Rough estimation: 1 token ≈ 4 characters for English text
         return len(text) // 4
     
+    def _build_watchlist_context(self, user):
+        """
+        Build watchlist context string for system prompts.
+        
+        Args:
+            user: Django User instance
+            
+        Returns:
+            str: Watchlist context string (empty if no watchlist)
+        """
+        watchlist_items = Watchlist.objects.filter(user=user)
+        watchlist_symbols = [item.symbol for item in watchlist_items]
+        
+        if not watchlist_symbols:
+            return ""
+        
+        context = f"\n\nUSER'S WATCHLIST: {', '.join(watchlist_symbols)}\n"
+        context += "You have access to the user's watchlist. When they ask about their watchlist, "
+        context += "you can reference these stocks. You can list them, analyze them, or provide "
+        context += "insights about any of these stocks.\n"
+        
+        return context
+    
+    def _build_current_stock_context(self, current_stock):
+        """
+        Build current stock context string for system prompts.
+        
+        Args:
+            current_stock (str, optional): Currently viewed stock symbol
+            
+        Returns:
+            str: Current stock context string (empty if no stock provided)
+        """
+        if not current_stock:
+            return ""
+        
+        context = f"\n\nCURRENT STOCK BEING VIEWED: {current_stock}\n"
+        context += "The user is currently viewing/searching for this stock on their dashboard. "
+        context += "When they ask about 'this stock', 'the current stock', 'the stock I searched', "
+        context += "or similar references, they are referring to " + current_stock + ". "
+        context += "You can provide insights, analysis, and context about this specific stock. "
+        context += "You ARE aware of what stock they searched for - it is " + current_stock + ".\n"
+        
+        return context
+    
+    def _build_system_prompt(self, context_info=""):
+        """
+        Build the complete system prompt for the AI assistant.
+        
+        Args:
+            context_info (str, optional): Additional context information (watchlist, current stock, etc.)
+            
+        Returns:
+            str: Complete system prompt
+        """
+        return (
+            "You are PortfolAI Assistant — a specialized financial AI chatbot. "
+            "You ONLY answer questions about finance, stocks, investments, portfolios, and financial markets.\n\n"
+            
+            "CRITICAL RULES - YOU MUST FOLLOW THESE:\n"
+            "1. You MUST REFUSE to answer any questions about programming, coding, software development, "
+            "or any non-financial topics. If asked about these, say: 'I'm specialized in financial and "
+            "investment topics only. I can help you with stock analysis, portfolio strategy, or investment "
+            "questions instead. What would you like to know about?'\n"
+            "2. You MUST NOT write code, create programs, or provide programming tutorials.\n"
+            "3. You MUST ONLY discuss: stocks, investments, portfolios, market analysis, financial concepts, "
+            "company analysis, trading strategies, and related financial topics.\n\n"
+            
+            "WHAT YOU CAN HELP WITH:\n"
+            "- Stock market insights and analysis\n"
+            "- Portfolio strategy and management\n"
+            "- Investment education and financial concepts\n"
+            "- Company analysis and market trends\n"
+            "- Risk assessment and investment advice (educational only)\n"
+            "- Watchlist management and analysis\n"
+            "- Current stock information and insights\n\n"
+            
+            f"{context_info}\n"
+            
+            "RESPONSE FORMATTING:\n"
+            "- Use plain text only - NO markdown (no **bold**, *italic*, # headers, code blocks)\n"
+            "- Use proper paragraph breaks for readability\n"
+            "- Keep formatting clean and simple\n"
+            "- Write conversationally without formatting artifacts\n\n"
+            
+            "DATA LIMITATIONS:\n"
+            "You do NOT have live/real-time data, but you can reason about historical trends, "
+            "company performance, and general market context. If users ask for live prices, "
+            "politely explain you can't provide them, but offer useful historical or strategic insights instead.\n\n"
+            
+            "TONE: Keep responses concise, analytical, and beginner-friendly. Always remind users "
+            "that investment advice is for educational purposes only and not financial advice."
+        )
+    
     def create_conversation(self, user, title=None, current_stock=None):
         """
         Create a new conversation session for a user.
@@ -540,64 +638,12 @@ class ChatService:
         Returns:
             AIRequest: Created system message
         """
-        # Get user's watchlist for context
-        watchlist_items = Watchlist.objects.filter(user=session.user)
-        watchlist_symbols = [item.symbol for item in watchlist_items]
+        # Build context information using helper methods
+        context_info = self._build_watchlist_context(session.user)
+        context_info += self._build_current_stock_context(current_stock)
         
-        # Build context information
-        context_info = ""
-        if watchlist_symbols:
-            context_info += f"\n\nUSER'S WATCHLIST: {', '.join(watchlist_symbols)}\n"
-            context_info += "You have access to the user's watchlist. When they ask about their watchlist, "
-            context_info += "you can reference these stocks. You can list them, analyze them, or provide "
-            context_info += "insights about any of these stocks.\n"
-        
-        if current_stock:
-            context_info += f"\n\nCURRENT STOCK BEING VIEWED: {current_stock}\n"
-            context_info += "The user is currently viewing/searching for this stock on their dashboard. "
-            context_info += "When they ask about 'this stock', 'the current stock', 'the stock I searched', "
-            context_info += "or similar references, they are referring to " + current_stock + ". "
-            context_info += "You can provide insights, analysis, and context about this specific stock. "
-            context_info += "You ARE aware of what stock they searched for - it is " + current_stock + ".\n"
-        
-        system_prompt = (
-            "You are PortfolAI Assistant — a specialized financial AI chatbot. "
-            "You ONLY answer questions about finance, stocks, investments, portfolios, and financial markets.\n\n"
-            
-            "CRITICAL RULES - YOU MUST FOLLOW THESE:\n"
-            "1. You MUST REFUSE to answer any questions about programming, coding, software development, "
-            "or any non-financial topics. If asked about these, say: 'I'm specialized in financial and "
-            "investment topics only. I can help you with stock analysis, portfolio strategy, or investment "
-            "questions instead. What would you like to know about?'\n"
-            "2. You MUST NOT write code, create programs, or provide programming tutorials.\n"
-            "3. You MUST ONLY discuss: stocks, investments, portfolios, market analysis, financial concepts, "
-            "company analysis, trading strategies, and related financial topics.\n\n"
-            
-            "WHAT YOU CAN HELP WITH:\n"
-            "- Stock market insights and analysis\n"
-            "- Portfolio strategy and management\n"
-            "- Investment education and financial concepts\n"
-            "- Company analysis and market trends\n"
-            "- Risk assessment and investment advice (educational only)\n"
-            "- Watchlist management and analysis\n"
-            "- Current stock information and insights\n\n"
-            
-            f"{context_info}\n"
-            
-            "RESPONSE FORMATTING:\n"
-            "- Use plain text only - NO markdown (no **bold**, *italic*, # headers, code blocks)\n"
-            "- Use proper paragraph breaks for readability\n"
-            "- Keep formatting clean and simple\n"
-            "- Write conversationally without formatting artifacts\n\n"
-            
-            "DATA LIMITATIONS:\n"
-            "You do NOT have live/real-time data, but you can reason about historical trends, "
-            "company performance, and general market context. If users ask for live prices, "
-            "politely explain you can't provide them, but offer useful historical or strategic insights instead.\n\n"
-            
-            "TONE: Keep responses concise, analytical, and beginner-friendly. Always remind users "
-            "that investment advice is for educational purposes only and not financial advice."
-        )
+        # Build system prompt using helper method
+        system_prompt = self._build_system_prompt(context_info)
         
         return AIRequest.objects.create(
             user=session.user,
@@ -758,8 +804,6 @@ class ChatService:
         Returns:
             str: Cleaned response with plain text formatting
         """
-        import re
-        
         # Remove markdown bold (**text** or __text__)
         response = re.sub(r'\*\*(.*?)\*\*', r'\1', response)
         response = re.sub(r'__(.*?)__', r'\1', response)
@@ -847,71 +891,12 @@ class ChatService:
             role=AIRequest.ROLE_SYSTEM
         ).order_by('created_at').first()
         
-        # Get user's watchlist for context
-        watchlist_items = Watchlist.objects.filter(user=session.user)
-        watchlist_symbols = [item.symbol for item in watchlist_items]
+        # Build context information using helper methods
+        context_info = self._build_watchlist_context(session.user)
+        context_info += self._build_current_stock_context(current_stock)
         
-        watchlist_context = ""
-        if watchlist_symbols:
-            watchlist_context = (
-                f"\n\nUser's Watchlist: {', '.join(watchlist_symbols)}. "
-                "You can reference these stocks when providing insights."
-            )
-        
-        # Build context information
-        context_info = ""
-        if watchlist_symbols:
-            context_info += f"\n\nUSER'S WATCHLIST: {', '.join(watchlist_symbols)}\n"
-            context_info += "You have access to the user's watchlist. When they ask about their watchlist, "
-            context_info += "you can reference these stocks. You can list them, analyze them, or provide "
-            context_info += "insights about any of these stocks.\n"
-        
-        if current_stock:
-            context_info += f"\n\nCURRENT STOCK BEING VIEWED: {current_stock}\n"
-            context_info += "The user is currently viewing/searching for this stock on their dashboard. "
-            context_info += "When they ask about 'this stock', 'the current stock', 'the stock I searched', "
-            context_info += "or similar references, they are referring to " + current_stock + ". "
-            context_info += "You can provide insights, analysis, and context about this specific stock. "
-            context_info += "You ARE aware of what stock they searched for - it is " + current_stock + ".\n"
-        
-        system_prompt = (
-            "You are PortfolAI Assistant — a specialized financial AI chatbot. "
-            "You ONLY answer questions about finance, stocks, investments, portfolios, and financial markets.\n\n"
-            
-            "CRITICAL RULES - YOU MUST FOLLOW THESE:\n"
-            "1. You MUST REFUSE to answer any questions about programming, coding, software development, "
-            "or any non-financial topics. If asked about these, say: 'I'm specialized in financial and "
-            "investment topics only. I can help you with stock analysis, portfolio strategy, or investment "
-            "questions instead. What would you like to know about?'\n"
-            "2. You MUST NOT write code, create programs, or provide programming tutorials.\n"
-            "3. You MUST ONLY discuss: stocks, investments, portfolios, market analysis, financial concepts, "
-            "company analysis, trading strategies, and related financial topics.\n\n"
-            
-            "WHAT YOU CAN HELP WITH:\n"
-            "- Stock market insights and analysis\n"
-            "- Portfolio strategy and management\n"
-            "- Investment education and financial concepts\n"
-            "- Company analysis and market trends\n"
-            "- Risk assessment and investment advice (educational only)\n"
-            "- Watchlist management and analysis\n"
-            "- Current stock information and insights\n\n"
-            
-            f"{context_info}\n"
-            
-            "RESPONSE FORMATTING:\n"
-            "- Use plain text only - NO markdown (no **bold**, *italic*, # headers, code blocks)\n"
-            "- Use proper paragraph breaks for readability\n"
-            "- Keep formatting clean and simple\n"
-            "- Write conversationally without formatting artifacts\n\n"
-            
-            "DATA LIMITATIONS:\n"
-            "You do NOT have live/real-time data, but you can reason about historical trends, "
-            "company performance, and general market context. If users ask for live prices, "
-            "politely explain you can't provide them, but offer useful historical or strategic insights instead.\n\n"
-            
-            "TONE: Keep responses concise, analytical, and beginner-friendly. Always remind users "
-            "that investment advice is for educational purposes only and not financial advice."
-        )
+        # Build system prompt using helper method
+        system_prompt = self._build_system_prompt(context_info)
         
         if system_message:
             # Update existing system message
@@ -951,6 +936,7 @@ class ChatService:
         # Check if question is financial-related (pre-filter non-financial questions)
         if not self._is_financial_question(content):
             # Raise a special validation error that will be caught and returned as a friendly message
+            logger.info(f"Non-financial question detected and rejected: {content[:50]}...")
             raise ValidationError("NON_FINANCIAL_QUESTION")
         
         # Check rate limit
