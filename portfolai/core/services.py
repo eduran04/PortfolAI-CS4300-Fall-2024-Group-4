@@ -507,13 +507,35 @@ class ChatService:
             )
         
         system_prompt = (
-            "You are PortfolAI Assistant — a friendly, knowledgeable AI chatbot "
-            "that helps users with stock market insights, portfolio strategy, and "
-            "investment education. You do NOT have live data, but you can reason "
-            "about historical trends, company performance, and general market context. "
-            "If users ask for live prices, politely explain that you can't provide them, "
-            "but offer useful historical or strategic insights instead. "
-            "Keep your tone concise, analytical, and beginner-friendly."
+            "You are PortfolAI Assistant — a specialized AI chatbot focused exclusively on "
+            "financial and investment topics. Your purpose is to help users with:\n"
+            "- Stock market insights and analysis\n"
+            "- Portfolio strategy and management\n"
+            "- Investment education and financial concepts\n"
+            "- Company analysis and market trends\n"
+            "- Risk assessment and investment advice (educational only)\n\n"
+            "IMPORTANT RESTRICTIONS:\n"
+            "- You MUST ONLY answer questions related to finance, stocks, investments, portfolios, "
+            "and financial markets.\n"
+            "- If users ask about programming, general technology, or any non-financial topics, "
+            "politely decline and redirect them back to financial topics.\n"
+            "- Example responses for out-of-scope questions: 'I'm specialized in financial and "
+            "investment topics. I can help you with stock analysis, portfolio strategy, or "
+            "investment questions instead. What would you like to know about?'\n\n"
+            "RESPONSE FORMATTING REQUIREMENTS:\n"
+            "- Use plain text only - NO markdown formatting (no **bold**, *italic*, # headers, "
+            "code blocks, or other markdown syntax)\n"
+            "- Use proper paragraph breaks (double line breaks) for readability\n"
+            "- Keep indentation consistent and minimal - use natural paragraph flow\n"
+            "- Use simple bullet points with dashes (-) if needed, not markdown lists\n"
+            "- Write in a conversational, natural tone without formatting artifacts\n"
+            "- Ensure responses are clean, well-structured, and easy to read as plain text\n\n"
+            "You do NOT have live data, but you can reason about historical trends, company "
+            "performance, and general market context. If users ask for live prices, politely "
+            "explain that you can't provide them, but offer useful historical or strategic "
+            "insights instead.\n"
+            "Keep your tone concise, analytical, and beginner-friendly. Always remind users "
+            "that investment advice is for educational purposes only and not financial advice."
             f"{watchlist_context}"
             f"{current_stock_context}"
         )
@@ -642,17 +664,77 @@ class ChatService:
             })
             total_tokens += msg_tokens
         
-        # Ensure we have at least the system message
-        if not messages or messages[0]['role'] != AIRequest.ROLE_SYSTEM:
-            # Get system message if exists
-            system_msg = all_messages.filter(role=AIRequest.ROLE_SYSTEM).first()
-            if system_msg:
-                messages.insert(0, {
-                    'role': system_msg.role,
-                    'content': system_msg.content
-                })
+        # Ensure we have at least the system message and it's always the most recent one
+        # Get the most recent system message (should be the updated one with current stock)
+        system_msg = AIRequest.objects.filter(
+            session=session,
+            role=AIRequest.ROLE_SYSTEM
+        ).order_by('-updated_at', '-created_at').first()
+        
+        if system_msg:
+            # Remove any existing system messages from the list
+            messages = [msg for msg in messages if msg['role'] != AIRequest.ROLE_SYSTEM]
+            # Insert the most recent system message at the beginning
+            messages.insert(0, {
+                'role': system_msg.role,
+                'content': system_msg.content
+            })
+        elif not messages:
+            # If no messages at all, create a default system message
+            logger.warning(f"No system message found for session {session.id}")
+            messages.insert(0, {
+                'role': AIRequest.ROLE_SYSTEM,
+                'content': "You are PortfolAI Assistant — a friendly, knowledgeable AI chatbot that helps users with stock market insights."
+            })
         
         return messages
+    
+    def _clean_response_formatting(self, response):
+        """
+        Clean and format AI response to remove markdown and ensure plain text.
+        
+        Args:
+            response (str): Raw AI response
+            
+        Returns:
+            str: Cleaned response with plain text formatting
+        """
+        import re
+        
+        # Remove markdown bold (**text** or __text__)
+        response = re.sub(r'\*\*(.*?)\*\*', r'\1', response)
+        response = re.sub(r'__(.*?)__', r'\1', response)
+        
+        # Remove markdown italic (*text* or _text_)
+        response = re.sub(r'(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)', r'\1', response)
+        response = re.sub(r'(?<!_)_(?!_)(.*?)(?<!_)_(?!_)', r'\1', response)
+        
+        # Remove markdown headers (# Header)
+        response = re.sub(r'^#{1,6}\s+(.*)$', r'\1', response, flags=re.MULTILINE)
+        
+        # Remove markdown code blocks (```code```)
+        response = re.sub(r'```[\s\S]*?```', '', response)
+        
+        # Remove inline code (`code`)
+        response = re.sub(r'`([^`]+)`', r'\1', response)
+        
+        # Remove markdown links [text](url) -> text
+        response = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', response)
+        
+        # Normalize whitespace - replace multiple spaces with single space
+        response = re.sub(r' +', ' ', response)
+        
+        # Normalize line breaks - ensure consistent paragraph breaks
+        response = re.sub(r'\n{3,}', '\n\n', response)
+        
+        # Remove leading/trailing whitespace from each line
+        lines = [line.strip() for line in response.split('\n')]
+        response = '\n'.join(lines)
+        
+        # Final cleanup - remove excessive blank lines
+        response = re.sub(r'\n\n\n+', '\n\n', response)
+        
+        return response.strip()
     
     def _call_openai_api(self, messages, model=None):
         """
@@ -663,7 +745,7 @@ class ChatService:
             model (str, optional): Model to use (defaults to configured model)
             
         Returns:
-            str: AI response content
+            str: AI response content (cleaned and formatted)
         """
         from .views._clients import openai_client
         
@@ -679,7 +761,12 @@ class ChatService:
                 messages=messages,
             )
             
-            return completion.choices[0].message.content.strip()
+            raw_response = completion.choices[0].message.content.strip()
+            
+            # Clean response to remove markdown and ensure plain text formatting
+            cleaned_response = self._clean_response_formatting(raw_response)
+            
+            return cleaned_response
         except Exception as e:
             logger.error(f"OpenAI API error: {str(e)}")
             raise
@@ -723,13 +810,35 @@ class ChatService:
             )
         
         system_prompt = (
-            "You are PortfolAI Assistant — a friendly, knowledgeable AI chatbot "
-            "that helps users with stock market insights, portfolio strategy, and "
-            "investment education. You do NOT have live data, but you can reason "
-            "about historical trends, company performance, and general market context. "
-            "If users ask for live prices, politely explain that you can't provide them, "
-            "but offer useful historical or strategic insights instead. "
-            "Keep your tone concise, analytical, and beginner-friendly."
+            "You are PortfolAI Assistant — a specialized AI chatbot focused exclusively on "
+            "financial and investment topics. Your purpose is to help users with:\n"
+            "- Stock market insights and analysis\n"
+            "- Portfolio strategy and management\n"
+            "- Investment education and financial concepts\n"
+            "- Company analysis and market trends\n"
+            "- Risk assessment and investment advice (educational only)\n\n"
+            "IMPORTANT RESTRICTIONS:\n"
+            "- You MUST ONLY answer questions related to finance, stocks, investments, portfolios, "
+            "and financial markets.\n"
+            "- If users ask about programming, general technology, or any non-financial topics, "
+            "politely decline and redirect them back to financial topics.\n"
+            "- Example responses for out-of-scope questions: 'I'm specialized in financial and "
+            "investment topics. I can help you with stock analysis, portfolio strategy, or "
+            "investment questions instead. What would you like to know about?'\n\n"
+            "RESPONSE FORMATTING REQUIREMENTS:\n"
+            "- Use plain text only - NO markdown formatting (no **bold**, *italic*, # headers, "
+            "code blocks, or other markdown syntax)\n"
+            "- Use proper paragraph breaks (double line breaks) for readability\n"
+            "- Keep indentation consistent and minimal - use natural paragraph flow\n"
+            "- Use simple bullet points with dashes (-) if needed, not markdown lists\n"
+            "- Write in a conversational, natural tone without formatting artifacts\n"
+            "- Ensure responses are clean, well-structured, and easy to read as plain text\n\n"
+            "You do NOT have live data, but you can reason about historical trends, company "
+            "performance, and general market context. If users ask for live prices, politely "
+            "explain that you can't provide them, but offer useful historical or strategic "
+            "insights instead.\n"
+            "Keep your tone concise, analytical, and beginner-friendly. Always remind users "
+            "that investment advice is for educational purposes only and not financial advice."
             f"{watchlist_context}"
             f"{current_stock_context}"
         )
@@ -775,8 +884,9 @@ class ChatService:
         # Get or create conversation
         session, created = self.get_or_create_conversation(user, conversation_id, current_stock=current_stock)
         
-        # Update system message with current stock if provided and conversation already exists
-        if not created and current_stock:
+        # Update system message with current stock if provided
+        # This ensures the AI always has the latest context about what stock the user is viewing
+        if current_stock:
             self._update_system_message_with_current_stock(session, current_stock)
         
         # Create user message
