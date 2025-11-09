@@ -120,8 +120,9 @@ class WatchlistTests(TestCase):
             content_type='application/json'
         )
         
-        # Should return error for nonexistent symbol
+        # Should return 404 for nonexistent symbol
         self.assertEqual(response.status_code, 404)
         data = response.json()
-        self.assertIn('error', data)
+        self.assertIn('message', data)
+        self.assertIn('not in your watchlist', data['message'])
 

@@ -107,8 +107,8 @@ class NewsTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('articles', data)
-                # Should only have 3 valid articles (filtered out invalid ones)
-                self.assertEqual(len(data['articles']), 3)
+                # Should only have 2 valid articles (filtered out invalid ones: article 2 has no title, article 3 has no URL)
+                self.assertEqual(len(data['articles']), 2)
 
     def test_get_news_time_formatting(self):
         """Test news time formatting logic"""
@@ -301,12 +301,14 @@ class NewsTests(TestCase):
 
     def test_get_news_with_invalid_response_structure(self):
         """Test news with invalid response structure"""
+        from django.core.cache import cache
+        cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
                 mock_newsapi.get_top_headlines.return_value = {'invalid': 'data'}
                 
                 url = reverse('get_news')
-                response = self.client.get(url)
+                response = self.client.get(url, {'force_refresh': 'true'})
                 
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
