@@ -22,7 +22,7 @@ class ChatTests(TestCase):
         """Test chatbot endpoint with a valid user message"""
         url = reverse('chatbot')
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.openai_client') as mock_openai:
+            with patch('core.views.chat.openai_client') as mock_openai:
                 mock_response = type('obj', (object,), {
                     'choices': [type('obj', (object,), {
                         'message': type('obj', (object,), {'content': 'AI: Hello, how can I assist you today?'})
@@ -70,7 +70,7 @@ class ChatTests(TestCase):
         """Test chatbot error handling when OpenAI API fails"""
         url = reverse('chatbot')
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.openai_client') as mock_openai:
+            with patch('core.views.chat.openai_client') as mock_openai:
                 mock_openai.chat.completions.create.side_effect = Exception("API Error")
 
                 response = self.client.post(url, {'message': 'Test error'}, content_type='application/json')
@@ -86,7 +86,7 @@ class ChatTests(TestCase):
         long_message = "Tell me about AI and stock trading. " * 50  # simulate long input
 
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.openai_client') as mock_openai:
+            with patch('core.views.chat.openai_client') as mock_openai:
                 mock_response = type('obj', (object,), {
                     'choices': [type('obj', (object,), {
                         'message': type('obj', (object,), {'content': "That is a long query, but here's a summary."})
@@ -104,7 +104,7 @@ class ChatTests(TestCase):
         """Test chatbot conversation retains simple context (if implemented)"""
         url = reverse('chatbot')
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.openai_client') as mock_openai:
+            with patch('core.views.chat.openai_client') as mock_openai:
                 mock_openai.chat.completions.create.side_effect = [
                     type('obj', (object,), {
                         'choices': [type('obj', (object,), {

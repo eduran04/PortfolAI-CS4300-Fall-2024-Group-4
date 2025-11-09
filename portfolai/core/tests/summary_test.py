@@ -82,8 +82,8 @@ class StockSummaryTests(TestCase):
         """Test stock summary with API error handling"""
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-                with patch('core.views.finnhub_client') as mock_finnhub:
-                    with patch('core.views.openai_client') as mock_openai:
+                with patch('core.views.stock_data.finnhub_client') as mock_finnhub:
+                    with patch('core.views.stock_data.openai_client') as mock_openai:
                         mock_finnhub.quote.side_effect = Exception("API Error")
                         
                         url = reverse('stock_summary')
@@ -110,8 +110,8 @@ class StockSummaryTests(TestCase):
         """Test stock summary with working API mocks"""
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-                with patch('core.views.finnhub_client') as mock_finnhub:
-                    with patch('core.views.openai_client') as mock_openai:
+                with patch('core.views.stock_data.finnhub_client') as mock_finnhub:
+                    with patch('core.views.stock_data.openai_client') as mock_openai:
                         # Mock successful API responses
                         mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0}
                         mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.'}
@@ -137,7 +137,7 @@ class StockSummaryTests(TestCase):
         """Test stock summary when finnhub_client is None"""
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-                with patch('core.views.finnhub_client', None):
+                with patch('core.views.stock_data.finnhub_client', None):
                     url = reverse('stock_summary')
                     response = self.client.get(url, {'symbol': 'AAPL'})
                     
@@ -149,7 +149,7 @@ class StockSummaryTests(TestCase):
         """Test stock summary when openai_client is None"""
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-                with patch('core.views.openai_client', None):
+                with patch('core.views.stock_data.openai_client', None):
                     url = reverse('stock_summary')
                     response = self.client.get(url, {'symbol': 'AAPL'})
                     

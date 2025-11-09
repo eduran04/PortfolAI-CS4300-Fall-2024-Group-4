@@ -105,10 +105,11 @@ class WatchlistTests(TestCase):
             content_type='application/json'
         )
         
-        # Should return error for duplicate
-        self.assertEqual(response.status_code, 400)
+        # Should return 200 for duplicate (idempotent behavior)
+        self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIn('error', data)
+        self.assertIn('message', data)
+        self.assertIn('already in your watchlist', data['message'])
 
     def test_remove_nonexistent_symbol(self):
         """Test removing symbol that doesn't exist in watchlist"""

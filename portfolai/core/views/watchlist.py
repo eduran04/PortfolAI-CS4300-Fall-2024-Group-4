@@ -86,15 +86,18 @@ def add_to_watchlist(request):
 def remove_from_watchlist(request):
     """
     Remove a stock symbol from user's watchlist
-    Endpoint: /api/watchlist/?symbol=AAPL
+    Endpoint: /api/watchlist/remove/?symbol=AAPL
     Method: DELETE
+    Body (optional): {"symbol": "AAPL"}
     Requires: User authentication
     """
     if not request.user.is_authenticated:
         return Response({"error": "Authentication required"}, status=401)
     
     try:
-        symbol = request.GET.get("symbol", "").strip().upper()
+        # Support both query params and JSON body (like POST does)
+        symbol = request.data.get("symbol") or request.GET.get("symbol", "")
+        symbol = symbol.strip().upper() if symbol else ""
         
         if not symbol:
             return Response({"error": "Symbol is required"}, status=400)
@@ -114,6 +117,7 @@ def remove_from_watchlist(request):
         }, status=200)
         
     except Exception as e:
-        logger.error(f"Error removing {request.GET.get('symbol')} from watchlist for user {request.user.username}: {str(e)}")
+        symbol_attempted = request.data.get('symbol') or request.GET.get('symbol', 'unknown')
+        logger.error(f"Error removing {symbol_attempted} from watchlist for user {request.user.username}: {str(e)}")
         return Response({"error": f"Failed to remove from watchlist: {str(e)}"}, status=500)
 

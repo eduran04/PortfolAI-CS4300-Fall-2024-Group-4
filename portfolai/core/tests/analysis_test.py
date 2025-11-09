@@ -123,8 +123,8 @@ class AnalysisTests(TestCase):
     def test_portfolai_analysis_stock_data_fetch_exception(self):
         """Test PortfolAI analysis when stock data fetch fails"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
-                with patch('core.views.openai_client') as mock_openai:
+            with patch('core.views.analysis.finnhub_client') as mock_finnhub:
+                with patch('core.views.analysis.openai_client') as mock_openai:
                     mock_finnhub.quote.side_effect = Exception("Stock data error")
                     
                     # Mock OpenAI response
@@ -147,10 +147,10 @@ class AnalysisTests(TestCase):
     def test_portfolai_analysis_news_fetch_exception(self):
         """Test PortfolAI analysis when news fetch fails"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
+            with patch('core.views.analysis.finnhub_client') as mock_finnhub:
                 mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
-                with patch('core.views.newsapi') as mock_newsapi:
-                    with patch('core.views.openai_client') as mock_openai:
+                with patch('core.views.analysis.newsapi') as mock_newsapi:
+                    with patch('core.views.analysis.openai_client') as mock_openai:
                         mock_newsapi.get_everything.side_effect = Exception("News error")
                         
                         # Mock OpenAI response
@@ -173,8 +173,8 @@ class AnalysisTests(TestCase):
     def test_portfolai_analysis_company_profile_exception(self):
         """Test PortfolAI analysis when company profile fetch fails"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.finnhub_client') as mock_finnhub:
-                with patch('core.views.openai_client') as mock_openai:
+            with patch('core.views.analysis.finnhub_client') as mock_finnhub:
+                with patch('core.views.analysis.openai_client') as mock_openai:
                     mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
                     mock_finnhub.company_profile2.side_effect = Exception("Company profile error")
                     
@@ -198,7 +198,7 @@ class AnalysisTests(TestCase):
     def test_portfolai_analysis_web_search_api_fallback(self):
         """Test PortfolAI analysis web search API fallback"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.openai_client') as mock_openai:
+            with patch('core.views.analysis.openai_client') as mock_openai:
                 mock_openai.responses.create.side_effect = Exception("Web search API error")
                 mock_openai.chat.completions.create.return_value.choices = [type('obj', (object,), {'message': type('obj', (object,), {'content': 'Test analysis'})})]
                 
@@ -212,7 +212,7 @@ class AnalysisTests(TestCase):
     def test_portfolai_analysis_general_exception(self):
         """Test PortfolAI analysis general exception handling"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.openai_client') as mock_openai:
+            with patch('core.views.analysis.openai_client') as mock_openai:
                 mock_openai.responses.create.side_effect = Exception("General error")
                 mock_openai.chat.completions.create.side_effect = Exception("General error")
                 
@@ -228,7 +228,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
                 with patch('core.views.newsapi') as mock_newsapi:
-                    with patch('core.views.openai_client') as mock_openai:
+                    with patch('core.views.analysis.openai_client') as mock_openai:
                         # Mock finnhub to return valid quote data
                         mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
                         mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.'}
@@ -263,7 +263,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
                 with patch('core.views.newsapi') as mock_newsapi:
-                    with patch('core.views.openai_client') as mock_openai:
+                    with patch('core.views.analysis.openai_client') as mock_openai:
                         # Mock finnhub to return valid quote data
                         mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
                         mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.'}
@@ -292,7 +292,7 @@ class AnalysisTests(TestCase):
     def test_portfolai_analysis_with_openai_client_none(self):
         """Test PortfolAI analysis when openai_client is None"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.openai_client', None):
+            with patch('core.views.analysis.openai_client', None):
                 url = reverse('portfolai_analysis')
                 response = self.client.get(url, {'symbol': 'AAPL'})
                 
@@ -318,7 +318,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.finnhub_client') as mock_finnhub:
                 with patch('core.views.newsapi') as mock_newsapi:
-                    with patch('core.views.openai_client') as mock_openai:
+                    with patch('core.views.analysis.openai_client') as mock_openai:
                         mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0}
                         mock_finnhub.company_profile2.return_value = {'name': 'Test Company'}
                         mock_newsapi.get_everything.side_effect = Exception("News error")
