@@ -327,6 +327,61 @@ class ChatService:
         self.temperature = self.config.get('TEMPERATURE', 0.7)
         self.enable_celery = self.config.get('ENABLE_CELERY', False)
     
+    def _is_financial_question(self, content):
+        """
+        Check if the question is related to finance/investments.
+        
+        Allows greetings and general questions, but blocks clearly non-financial topics
+        like programming, coding, etc.
+        
+        Args:
+            content (str): User message content
+            
+        Returns:
+            bool: True if question should be allowed, False if it's clearly non-financial
+        """
+        content_lower = content.lower().strip()
+        
+        # Allow greetings and general questions (let AI handle context)
+        greetings = ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'good evening']
+        if any(content_lower.startswith(greeting) for greeting in greetings):
+            return True
+        
+        # Non-financial keywords that should be rejected (strong signal)
+        non_financial_keywords = [
+            'python', 'program', 'code', 'coding', 'programming', 'script', 'function',
+            'hello world', 'javascript', 'java', 'c++', 'html', 'css', 'sql', 'database',
+            'algorithm', 'data structure', 'api', 'web development', 'software',
+            'app development', 'mobile app', 'game', 'website', 'build a', 'create a',
+            'write a program', 'make a program', 'how to code', 'tutorial', 'compile',
+            'debug', 'variable', 'class', 'object', 'method', 'library', 'framework'
+        ]
+        
+        # Check for non-financial keywords (strong rejection signal)
+        for keyword in non_financial_keywords:
+            if keyword in content_lower:
+                return False
+        
+        # Check for patterns that indicate programming requests
+        programming_patterns = [
+            r'build.*python',
+            r'create.*python',
+            r'write.*python',
+            r'make.*python',
+            r'python.*program',
+            r'python.*code',
+            r'hello.*world',
+            r'print.*hello'
+        ]
+        
+        for pattern in programming_patterns:
+            if re.search(pattern, content_lower):
+                return False
+        
+        # Default to allowing (let AI decide based on context and system prompt)
+        # The system prompt will enforce financial-only responses
+        return True
+    
     def _sanitize_input(self, content):
         """
         Sanitize user input to prevent injection attacks while preserving content.
@@ -489,55 +544,59 @@ class ChatService:
         watchlist_items = Watchlist.objects.filter(user=session.user)
         watchlist_symbols = [item.symbol for item in watchlist_items]
         
-        watchlist_context = ""
+        # Build context information
+        context_info = ""
         if watchlist_symbols:
-            watchlist_context = (
-                f"\n\nUser's Watchlist: {', '.join(watchlist_symbols)}. "
-                "You can reference these stocks when providing insights."
-            )
+            context_info += f"\n\nUSER'S WATCHLIST: {', '.join(watchlist_symbols)}\n"
+            context_info += "You have access to the user's watchlist. When they ask about their watchlist, "
+            context_info += "you can reference these stocks. You can list them, analyze them, or provide "
+            context_info += "insights about any of these stocks.\n"
         
-        # Add current stock context if provided
-        current_stock_context = ""
         if current_stock:
-            current_stock_context = (
-                f"\n\nUser is currently viewing/searching for stock: {current_stock}. "
-                "When the user asks about 'this stock', 'the current stock', or similar references, "
-                "they are referring to this stock. You can provide insights, analysis, and "
-                "context about this specific stock."
-            )
+            context_info += f"\n\nCURRENT STOCK BEING VIEWED: {current_stock}\n"
+            context_info += "The user is currently viewing/searching for this stock on their dashboard. "
+            context_info += "When they ask about 'this stock', 'the current stock', 'the stock I searched', "
+            context_info += "or similar references, they are referring to " + current_stock + ". "
+            context_info += "You can provide insights, analysis, and context about this specific stock. "
+            context_info += "You ARE aware of what stock they searched for - it is " + current_stock + ".\n"
         
         system_prompt = (
-            "You are PortfolAI Assistant — a specialized AI chatbot focused exclusively on "
-            "financial and investment topics. Your purpose is to help users with:\n"
+            "You are PortfolAI Assistant — a specialized financial AI chatbot. "
+            "You ONLY answer questions about finance, stocks, investments, portfolios, and financial markets.\n\n"
+            
+            "CRITICAL RULES - YOU MUST FOLLOW THESE:\n"
+            "1. You MUST REFUSE to answer any questions about programming, coding, software development, "
+            "or any non-financial topics. If asked about these, say: 'I'm specialized in financial and "
+            "investment topics only. I can help you with stock analysis, portfolio strategy, or investment "
+            "questions instead. What would you like to know about?'\n"
+            "2. You MUST NOT write code, create programs, or provide programming tutorials.\n"
+            "3. You MUST ONLY discuss: stocks, investments, portfolios, market analysis, financial concepts, "
+            "company analysis, trading strategies, and related financial topics.\n\n"
+            
+            "WHAT YOU CAN HELP WITH:\n"
             "- Stock market insights and analysis\n"
             "- Portfolio strategy and management\n"
             "- Investment education and financial concepts\n"
             "- Company analysis and market trends\n"
-            "- Risk assessment and investment advice (educational only)\n\n"
-            "IMPORTANT RESTRICTIONS:\n"
-            "- You MUST ONLY answer questions related to finance, stocks, investments, portfolios, "
-            "and financial markets.\n"
-            "- If users ask about programming, general technology, or any non-financial topics, "
-            "politely decline and redirect them back to financial topics.\n"
-            "- Example responses for out-of-scope questions: 'I'm specialized in financial and "
-            "investment topics. I can help you with stock analysis, portfolio strategy, or "
-            "investment questions instead. What would you like to know about?'\n\n"
-            "RESPONSE FORMATTING REQUIREMENTS:\n"
-            "- Use plain text only - NO markdown formatting (no **bold**, *italic*, # headers, "
-            "code blocks, or other markdown syntax)\n"
-            "- Use proper paragraph breaks (double line breaks) for readability\n"
-            "- Keep indentation consistent and minimal - use natural paragraph flow\n"
-            "- Use simple bullet points with dashes (-) if needed, not markdown lists\n"
-            "- Write in a conversational, natural tone without formatting artifacts\n"
-            "- Ensure responses are clean, well-structured, and easy to read as plain text\n\n"
-            "You do NOT have live data, but you can reason about historical trends, company "
-            "performance, and general market context. If users ask for live prices, politely "
-            "explain that you can't provide them, but offer useful historical or strategic "
-            "insights instead.\n"
-            "Keep your tone concise, analytical, and beginner-friendly. Always remind users "
+            "- Risk assessment and investment advice (educational only)\n"
+            "- Watchlist management and analysis\n"
+            "- Current stock information and insights\n\n"
+            
+            f"{context_info}\n"
+            
+            "RESPONSE FORMATTING:\n"
+            "- Use plain text only - NO markdown (no **bold**, *italic*, # headers, code blocks)\n"
+            "- Use proper paragraph breaks for readability\n"
+            "- Keep formatting clean and simple\n"
+            "- Write conversationally without formatting artifacts\n\n"
+            
+            "DATA LIMITATIONS:\n"
+            "You do NOT have live/real-time data, but you can reason about historical trends, "
+            "company performance, and general market context. If users ask for live prices, "
+            "politely explain you can't provide them, but offer useful historical or strategic insights instead.\n\n"
+            
+            "TONE: Keep responses concise, analytical, and beginner-friendly. Always remind users "
             "that investment advice is for educational purposes only and not financial advice."
-            f"{watchlist_context}"
-            f"{current_stock_context}"
         )
         
         return AIRequest.objects.create(
@@ -799,48 +858,59 @@ class ChatService:
                 "You can reference these stocks when providing insights."
             )
         
-        # Add current stock context
-        current_stock_context = ""
+        # Build context information
+        context_info = ""
+        if watchlist_symbols:
+            context_info += f"\n\nUSER'S WATCHLIST: {', '.join(watchlist_symbols)}\n"
+            context_info += "You have access to the user's watchlist. When they ask about their watchlist, "
+            context_info += "you can reference these stocks. You can list them, analyze them, or provide "
+            context_info += "insights about any of these stocks.\n"
+        
         if current_stock:
-            current_stock_context = (
-                f"\n\nUser is currently viewing/searching for stock: {current_stock}. "
-                "When the user asks about 'this stock', 'the current stock', or similar references, "
-                "they are referring to this stock. You can provide insights, analysis, and "
-                "context about this specific stock."
-            )
+            context_info += f"\n\nCURRENT STOCK BEING VIEWED: {current_stock}\n"
+            context_info += "The user is currently viewing/searching for this stock on their dashboard. "
+            context_info += "When they ask about 'this stock', 'the current stock', 'the stock I searched', "
+            context_info += "or similar references, they are referring to " + current_stock + ". "
+            context_info += "You can provide insights, analysis, and context about this specific stock. "
+            context_info += "You ARE aware of what stock they searched for - it is " + current_stock + ".\n"
         
         system_prompt = (
-            "You are PortfolAI Assistant — a specialized AI chatbot focused exclusively on "
-            "financial and investment topics. Your purpose is to help users with:\n"
+            "You are PortfolAI Assistant — a specialized financial AI chatbot. "
+            "You ONLY answer questions about finance, stocks, investments, portfolios, and financial markets.\n\n"
+            
+            "CRITICAL RULES - YOU MUST FOLLOW THESE:\n"
+            "1. You MUST REFUSE to answer any questions about programming, coding, software development, "
+            "or any non-financial topics. If asked about these, say: 'I'm specialized in financial and "
+            "investment topics only. I can help you with stock analysis, portfolio strategy, or investment "
+            "questions instead. What would you like to know about?'\n"
+            "2. You MUST NOT write code, create programs, or provide programming tutorials.\n"
+            "3. You MUST ONLY discuss: stocks, investments, portfolios, market analysis, financial concepts, "
+            "company analysis, trading strategies, and related financial topics.\n\n"
+            
+            "WHAT YOU CAN HELP WITH:\n"
             "- Stock market insights and analysis\n"
             "- Portfolio strategy and management\n"
             "- Investment education and financial concepts\n"
             "- Company analysis and market trends\n"
-            "- Risk assessment and investment advice (educational only)\n\n"
-            "IMPORTANT RESTRICTIONS:\n"
-            "- You MUST ONLY answer questions related to finance, stocks, investments, portfolios, "
-            "and financial markets.\n"
-            "- If users ask about programming, general technology, or any non-financial topics, "
-            "politely decline and redirect them back to financial topics.\n"
-            "- Example responses for out-of-scope questions: 'I'm specialized in financial and "
-            "investment topics. I can help you with stock analysis, portfolio strategy, or "
-            "investment questions instead. What would you like to know about?'\n\n"
-            "RESPONSE FORMATTING REQUIREMENTS:\n"
-            "- Use plain text only - NO markdown formatting (no **bold**, *italic*, # headers, "
-            "code blocks, or other markdown syntax)\n"
-            "- Use proper paragraph breaks (double line breaks) for readability\n"
-            "- Keep indentation consistent and minimal - use natural paragraph flow\n"
-            "- Use simple bullet points with dashes (-) if needed, not markdown lists\n"
-            "- Write in a conversational, natural tone without formatting artifacts\n"
-            "- Ensure responses are clean, well-structured, and easy to read as plain text\n\n"
-            "You do NOT have live data, but you can reason about historical trends, company "
-            "performance, and general market context. If users ask for live prices, politely "
-            "explain that you can't provide them, but offer useful historical or strategic "
-            "insights instead.\n"
-            "Keep your tone concise, analytical, and beginner-friendly. Always remind users "
+            "- Risk assessment and investment advice (educational only)\n"
+            "- Watchlist management and analysis\n"
+            "- Current stock information and insights\n\n"
+            
+            f"{context_info}\n"
+            
+            "RESPONSE FORMATTING:\n"
+            "- Use plain text only - NO markdown (no **bold**, *italic*, # headers, code blocks)\n"
+            "- Use proper paragraph breaks for readability\n"
+            "- Keep formatting clean and simple\n"
+            "- Write conversationally without formatting artifacts\n\n"
+            
+            "DATA LIMITATIONS:\n"
+            "You do NOT have live/real-time data, but you can reason about historical trends, "
+            "company performance, and general market context. If users ask for live prices, "
+            "politely explain you can't provide them, but offer useful historical or strategic insights instead.\n\n"
+            
+            "TONE: Keep responses concise, analytical, and beginner-friendly. Always remind users "
             "that investment advice is for educational purposes only and not financial advice."
-            f"{watchlist_context}"
-            f"{current_stock_context}"
         )
         
         if system_message:
@@ -877,6 +947,14 @@ class ChatService:
         # Validate user
         if not user or not user.is_authenticated:
             raise ValidationError("User must be authenticated")
+        
+        # Check if question is financial-related (pre-filter non-financial questions)
+        if not self._is_financial_question(content):
+            raise ValidationError(
+                "I'm specialized in financial and investment topics only. "
+                "I can help you with stock analysis, portfolio strategy, or investment questions instead. "
+                "What would you like to know about?"
+            )
         
         # Check rate limit
         self._check_rate_limit(user)
