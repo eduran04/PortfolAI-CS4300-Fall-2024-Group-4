@@ -31,7 +31,17 @@ jobs:
         run: |
           cd portfolai
           pip install -r requirements.txt
-          pip install safety bandit
+          pip install safety bandit pylint flake8
+
+      - name: Run PyLint
+        run: |
+          cd portfolai
+          python -m pylint core --output-format=text || true
+
+      - name: Run Flake8
+        run: |
+          cd portfolai
+          flake8 core --format=default || true
 
       - name: Run Bandit (Static Code Analysis)
         run: |

@@ -55,11 +55,6 @@ jobs:
         cd portfolai
         python manage.py collectstatic --noinput
     
-    - name: Run linting
-      run: |
-        cd portfolai
-        python -m pylint core || true
-    
     - name: Run tests with coverage
       run: |
         cd portfolai
