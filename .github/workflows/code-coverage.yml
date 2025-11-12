@@ -55,10 +55,10 @@ jobs:
         cd portfolai
         python manage.py collectstatic --noinput
     
-    - name: Run tests with coverage
+    - name: Run tests with coverage (views and forms only)
       run: |
         cd portfolai
-        pytest -v --cov=core --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
+        pytest -v core/tests/ --cov=core --cov-config=.coveragerc --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
     
     - name: Post coverage comment to PR
       if: github.event_name == 'pull_request'

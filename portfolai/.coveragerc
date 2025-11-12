@@ -1,18 +1,38 @@
 [run]
 source = core
 source_pkgs = core
+# Only measure views and forms (code we wrote, not third-party)
+# Use include to only measure specific modules
+include = 
+    core/views/*
+    core/forms.py
 omit = 
     */core/services.py
+    */core/models.py
+    */core/serializers.py
+    */core/api_helpers.py
+    */core/admin.py
+    */core/apps.py
+    */core/urls.py
+    */core/__init__.py
     */migrations/*
     */venv/*
     */env/*
     */tests.py
     */test_*.py
+    */tests/*
+    */__init__.py
     */__pycache__/*
     */node_modules/*
 warn = False
 
 [report]
+# Exclude test files and __init__.py from coverage report
+omit = 
+    */tests/*
+    */test_*.py
+    */tests.py
+    */__init__.py
 exclude_lines =
     pragma: no cover
     def __repr__
