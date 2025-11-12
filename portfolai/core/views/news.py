@@ -115,8 +115,6 @@ def _get_fallback_everything():
         raise fallback_error
 
 
-
-
 def _create_fallback_response():
     """Create a fallback response with default news."""
     return {
