@@ -56,7 +56,9 @@ def add_to_watchlist(request):
             return Response({"error": "Symbol is required"}, status=400)
 
         # Check if already in watchlist
-        if Watchlist.objects.filter(user=request.user, symbol=symbol).exists():  # pylint: disable=no-member
+        if Watchlist.objects.filter(  # pylint: disable=no-member
+                user=request.user, symbol=symbol
+        ).exists():
             return Response({
                 "message": f"{symbol} is already in your watchlist",
                 "symbol": symbol
@@ -104,7 +106,9 @@ def remove_from_watchlist(request):
             return Response({"error": "Symbol is required"}, status=400)
 
         # Remove from watchlist
-        deleted_count, _ = Watchlist.objects.filter(user=request.user, symbol=symbol).delete()  # pylint: disable=no-member
+        deleted_count, _ = Watchlist.objects.filter(  # pylint: disable=no-member
+            user=request.user, symbol=symbol
+        ).delete()
 
         if deleted_count == 0:
             return Response({
