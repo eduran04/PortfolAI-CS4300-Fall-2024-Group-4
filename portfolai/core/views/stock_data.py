@@ -15,6 +15,55 @@ from ._clients import finnhub_client, openai_client, FALLBACK_STOCKS
 logger = logging.getLogger(__name__)
 
 
+def _build_fallback_response(symbol, stock_data, rate_limited=False):
+    """Build a fallback response from fallback stock data."""
+    return Response({
+        "symbol": symbol,
+        "name": stock_data['name'],
+        "price": stock_data['price'],
+        "change": stock_data['change'],
+        "changePercent": stock_data['changePercent'],
+        "open": stock_data['price'] - stock_data['change'],
+        "high": stock_data['price'] + abs(stock_data['change']),
+        "low": stock_data['price'] - abs(stock_data['change']),
+        "volume": 1000000,
+        "marketCap": 0,
+        "peRatio": 0,
+        "yearHigh": stock_data['price'] + abs(stock_data['change']),
+        "yearLow": stock_data['price'] - abs(stock_data['change']),
+        "fallback": True,
+        **({"rateLimited": True} if rate_limited else {})
+    })
+
+
+def _handle_rate_limit(symbol, cache_key):
+    """Handle rate limit errors by trying cache or fallback."""
+    logger.warning(f'Rate limit hit for {symbol}, using cached or fallback data')
+    # Try to return cached data even if expired
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        return Response(cached_data)
+    # Use fallback
+    if symbol in FALLBACK_STOCKS:
+        return _build_fallback_response(symbol, FALLBACK_STOCKS[symbol], True)
+    return None
+
+
+def _get_fallback_or_error(symbol):
+    """Get fallback data if available, otherwise return error."""
+    if symbol in FALLBACK_STOCKS:
+        return _build_fallback_response(symbol, FALLBACK_STOCKS[symbol])
+    return Response(
+        {
+            "error": (
+                f"No data available for symbol {symbol} "
+                "(API not configured)"
+            )
+        },
+        status=404
+    )
+
+
 @api_view(["GET"])
 def stock_summary(request):
     """
@@ -25,13 +74,16 @@ def stock_summary(request):
     Example: /api/stock/?symbol=AAPL
     """
     symbol = request.GET.get("symbol", "AAPL").strip().upper()
-    
+
     # Handle empty or whitespace symbols
     if not symbol:
         symbol = "AAPL"
 
     # Check if API keys are available - return error if not
-    if not settings.FINNHUB_API_KEY or not finnhub_client or not settings.OPENAI_API_KEY or not openai_client:
+    has_finnhub = settings.FINNHUB_API_KEY and finnhub_client
+    has_openai = settings.OPENAI_API_KEY and openai_client
+
+    if not has_finnhub or not has_openai:
         return Response({"error": "API keys not configured"}, status=500)
 
     try:
@@ -72,15 +124,15 @@ def get_stock_data(request):
     """
     symbol = request.GET.get("symbol", "").strip().upper()
     force_refresh = request.GET.get("force_refresh", "false").lower() == "true"
-    
+
     # Handle whitespace-only symbols by using default AAPL
     if not symbol:
         symbol = "AAPL"
-    
+
     # Track recent searches in session (for chatbot context)
     if 'recent_searches' not in request.session:
         request.session['recent_searches'] = []
-    
+
     recent_searches = request.session['recent_searches']
     # Remove symbol if it exists (to move it to the end as most recent)
     if symbol in recent_searches:
@@ -92,10 +144,10 @@ def get_stock_data(request):
         recent_searches.pop(0)
     request.session['recent_searches'] = recent_searches
     request.session.modified = True
-    
+
     # Define cache_key early so it's available throughout the function
     cache_key = f'stock_data_{symbol}'
-    
+
     # Check cache first (1 minute cache) - skip if force_refresh is True
     if not force_refresh:
         cached_data = cache.get(cache_key)
@@ -104,30 +156,11 @@ def get_stock_data(request):
             return Response(cached_data)
     else:
         logger.info(f'Force refresh requested for {symbol}, bypassing cache')
-    
+
     # Check if API key is available, if not use fallback data
     if not settings.FINNHUB_API_KEY or not finnhub_client:
-        if symbol in FALLBACK_STOCKS:
-            stock_data = FALLBACK_STOCKS[symbol]
-            return Response({
-                "symbol": symbol,
-                "name": stock_data['name'],
-                "price": stock_data['price'],
-                "change": stock_data['change'],
-                "changePercent": stock_data['changePercent'],
-                "open": stock_data['price'] - stock_data['change'],
-                "high": stock_data['price'] + abs(stock_data['change']),
-                "low": stock_data['price'] - abs(stock_data['change']),
-                "volume": 1000000,
-                "marketCap": 0,
-                "peRatio": 0,
-                "yearHigh": stock_data['price'] + abs(stock_data['change']),
-                "yearLow": stock_data['price'] - abs(stock_data['change']),
-                "fallback": True
-            })
-        else:
-            return Response({"error": f"No data available for symbol {symbol} (API not configured)"}, status=404)
-    
+        return _get_fallback_or_error(symbol)
+
     try:
         # Fetch stock quote from Finnhub
         try:
@@ -135,57 +168,26 @@ def get_stock_data(request):
         except Exception as api_error:
             error_str = str(api_error).lower()
             # Check for rate limit errors
-            if 'rate limit' in error_str or '429' in error_str or 'too many requests' in error_str:
-                logger.warning(f'Rate limit hit for {symbol}, using cached or fallback data')
-                # Try to return cached data even if expired
-                cached_data = cache.get(cache_key)
-                if cached_data:
-                    return Response(cached_data)
-                # Use fallback
-                if symbol in FALLBACK_STOCKS:
-                    stock_data = FALLBACK_STOCKS[symbol]
-                    return Response({
-                        "symbol": symbol,
-                        "name": stock_data['name'],
-                        "price": stock_data['price'],
-                        "change": stock_data['change'],
-                        "changePercent": stock_data['changePercent'],
-                        "open": stock_data['price'] - stock_data['change'],
-                        "high": stock_data['price'] + abs(stock_data['change']),
-                        "low": stock_data['price'] - abs(stock_data['change']),
-                        "volume": 1000000,
-                        "marketCap": 0,
-                        "peRatio": 0,
-                        "yearHigh": stock_data['price'] + abs(stock_data['change']),
-                        "yearLow": stock_data['price'] - abs(stock_data['change']),
-                        "fallback": True,
-                        "rateLimited": True
-                    })
+            is_rate_limited = (
+                'rate limit' in error_str
+                or '429' in error_str
+                or 'too many requests' in error_str
+            )
+            if is_rate_limited:
+                fallback_response = _handle_rate_limit(symbol, cache_key)
+                if fallback_response:
+                    return fallback_response
             raise api_error
-        
+
         # Check if quote data is valid
         if not quote or quote.get('c') is None:
-            # Try fallback data if available
             if symbol in FALLBACK_STOCKS:
-                stock_data = FALLBACK_STOCKS[symbol]
-                return Response({
-                    "symbol": symbol,
-                    "name": stock_data['name'],
-                    "price": stock_data['price'],
-                    "change": stock_data['change'],
-                    "changePercent": stock_data['changePercent'],
-                    "open": stock_data['price'] - stock_data['change'],
-                    "high": stock_data['price'] + abs(stock_data['change']),
-                    "low": stock_data['price'] - abs(stock_data['change']),
-                    "volume": 1000000,
-                    "marketCap": 0,
-                    "peRatio": 0,
-                    "yearHigh": stock_data['price'] + abs(stock_data['change']),
-                    "yearLow": stock_data['price'] - abs(stock_data['change']),
-                    "fallback": True
-                })
-            return Response({"error": f"No data found for symbol {symbol}"}, status=404)
-        
+                return _build_fallback_response(symbol, FALLBACK_STOCKS[symbol])
+            return Response(
+                {"error": f"No data found for symbol {symbol}"},
+                status=404
+            )
+
         # Try to get company profile, but don't fail if it's not available
         # Only fetch if we don't have name from quote (reduces API calls)
         company = {}
@@ -198,13 +200,13 @@ def get_stock_data(request):
         except Exception as e:
             logger.warning(f"Could not fetch company profile for {symbol}: {e}")
             company = {}
-        
+
         # Calculate price change and percentage
         current_price = quote.get('c', 0)
         previous_close = quote.get('pc', 0)
         change = current_price - previous_close
         change_percent = (change / previous_close * 100) if previous_close != 0 else 0
-        
+
         response_data = {
             "symbol": symbol,
             "name": company_name,
@@ -220,32 +222,18 @@ def get_stock_data(request):
             "yearHigh": quote.get('h', 0),  # Using current high as year high for now
             "yearLow": quote.get('l', 0),   # Using current low as year low for now
         }
-        
+
         # Cache the response for 1 minute
         cache.set(cache_key, response_data, 60)
-        
+
         return Response(response_data)
-        
+
     except Exception as e:
-        print(f"Error fetching data for {symbol}: {str(e)}")
+        logger.error(f"Error fetching data for {symbol}: {str(e)}")
         # Try fallback data if available
         if symbol in FALLBACK_STOCKS:
-            stock_data = FALLBACK_STOCKS[symbol]
-            return Response({
-                "symbol": symbol,
-                "name": stock_data['name'],
-                "price": stock_data['price'],
-                "change": stock_data['change'],
-                "changePercent": stock_data['changePercent'],
-                "open": stock_data['price'] - stock_data['change'],
-                "high": stock_data['price'] + abs(stock_data['change']),
-                "low": stock_data['price'] - abs(stock_data['change']),
-                "volume": 1000000,
-                "marketCap": 0,
-                "peRatio": 0,
-                "yearHigh": stock_data['price'] + abs(stock_data['change']),
-                "yearLow": stock_data['price'] - abs(stock_data['change']),
-                "fallback": True
-            })
-        return Response({"error": f"Failed to fetch data for {symbol}: {str(e)}"}, status=500)
-
+            return _build_fallback_response(symbol, FALLBACK_STOCKS[symbol])
+        return Response(
+            {"error": f"Failed to fetch data for {symbol}: {str(e)}"},
+            status=500
+        )

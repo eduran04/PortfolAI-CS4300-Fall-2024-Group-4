@@ -65,7 +65,7 @@ class AuthenticationTests(TestCase):
     # - Form validation errors
     # - Password requirements and matching
     # ============================================================================
-    
+
     def test_user_registration_success(self) -> None:
         """Test successful user registration with valid data."""
         url = reverse('signup')
@@ -86,7 +86,7 @@ class AuthenticationTests(TestCase):
         user = User.objects.get(username='newuser1')
         self.assertEqual(user.email, 'newuser1@example.com')
         self.assertTrue(user.check_password('TestPassword123!'))
-    
+
     def test_user_registration_duplicate_email(self) -> None:
         """Test registration with duplicate email should fail."""
         # Pre-create user to test duplicate email validation
@@ -113,7 +113,7 @@ class AuthenticationTests(TestCase):
 
         # Verify new user was NOT created
         self.assertFalse(User.objects.filter(username='newuser').exists())
-    
+
     def test_user_registration_duplicate_username(self) -> None:
         """Test registration with duplicate username should fail."""
         # Use unique username to avoid conflicts with other tests
@@ -146,7 +146,7 @@ class AuthenticationTests(TestCase):
         self.assertEqual(
             User.objects.filter(username=existing_username).count(), 1
         )
-    
+
     def test_user_registration_password_mismatch(self) -> None:
         """Test registration with mismatched passwords should fail."""
         url = reverse('signup')
@@ -166,7 +166,7 @@ class AuthenticationTests(TestCase):
 
         # Verify user was NOT created
         self.assertFalse(User.objects.filter(username='newuser2').exists())
-    
+
     def test_user_registration_missing_fields(self) -> None:
         """Test registration with missing required fields should fail."""
         url = reverse('signup')
@@ -183,7 +183,7 @@ class AuthenticationTests(TestCase):
 
         # Verify user was NOT created
         self.assertFalse(User.objects.filter(username='newuser3').exists())
-    
+
     def test_user_registration_invalid_email(self) -> None:
         """Test registration with invalid email format should fail."""
         url = reverse('signup')
@@ -200,7 +200,7 @@ class AuthenticationTests(TestCase):
 
         # Verify user was NOT created
         self.assertFalse(User.objects.filter(username='newuser4').exists())
-    
+
     def test_user_registration_get_request(self) -> None:
         """Test registration page renders correctly on GET request."""
         url = reverse('signup')
@@ -208,7 +208,7 @@ class AuthenticationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'signup', status_code=200)
-    
+
     # ============================================================================
     # SECTION 2: USER LOGIN TESTS
     # ============================================================================
@@ -226,7 +226,7 @@ class AuthenticationTests(TestCase):
             email='test@example.com',
             password='TestPassword123!'
         )
-    
+
     def test_user_login_success(self) -> None:
         """Test successful login with valid credentials."""
         url = reverse('login')
@@ -243,7 +243,7 @@ class AuthenticationTests(TestCase):
         user = get_user(self.client)
         self.assertTrue(user.is_authenticated)
         self.assertEqual(user.username, 'testuser')
-    
+
     def test_user_login_invalid_username(self) -> None:
         """Test login with invalid username should fail."""
         url = reverse('login')
@@ -262,7 +262,7 @@ class AuthenticationTests(TestCase):
         # Verify user is NOT authenticated
         user = get_user(self.client)
         self.assertFalse(user.is_authenticated)
-    
+
     def test_user_login_invalid_password(self) -> None:
         """Test login with invalid password should fail."""
         url = reverse('login')
@@ -281,7 +281,7 @@ class AuthenticationTests(TestCase):
         # Verify user is NOT authenticated
         user = get_user(self.client)
         self.assertFalse(user.is_authenticated)
-    
+
     def test_user_login_empty_credentials(self) -> None:
         """Test login with empty credentials should fail."""
         url = reverse('login')
@@ -297,7 +297,7 @@ class AuthenticationTests(TestCase):
         # Verify user is NOT authenticated
         user = get_user(self.client)
         self.assertFalse(user.is_authenticated)
-    
+
     def test_user_login_get_request(self) -> None:
         """Test login page renders correctly on GET request."""
         url = reverse('login')
@@ -305,7 +305,7 @@ class AuthenticationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'login', status_code=200)
-    
+
     def test_user_login_redirects_to_dashboard(self) -> None:
         """Test login redirects to dashboard after success."""
         url = reverse('login')
@@ -319,7 +319,7 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # Verify redirect based on LOGIN_REDIRECT_URL setting
         self.assertContains(response, 'PortfolAI', status_code=200)
-    
+
     # ============================================================================
     # SECTION 3: USER LOGOUT TESTS
     # ============================================================================
@@ -347,7 +347,7 @@ class AuthenticationTests(TestCase):
         # Verify user is NOT authenticated after logout
         user = get_user(self.client)
         self.assertFalse(user.is_authenticated)
-    
+
     def test_user_logout_redirects_to_landing(self) -> None:
         """Test logout redirects to landing page."""
         self.client.login(username='testuser', password='TestPassword123!')
@@ -357,7 +357,7 @@ class AuthenticationTests(TestCase):
         # Should eventually reach landing page
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'PortfolAI', status_code=200)
-    
+
     def test_user_logout_destroys_session(self) -> None:
         """Test user session is destroyed after logout."""
         # Establish authenticated session first
@@ -373,7 +373,7 @@ class AuthenticationTests(TestCase):
         # but authentication should be cleared
         user = get_user(self.client)
         self.assertFalse(user.is_authenticated)
-    
+
     # ============================================================================
     # SECTION 4: PROTECTED VIEW TESTS
     # ============================================================================
@@ -391,7 +391,7 @@ class AuthenticationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'PortfolAI')
-    
+
     def test_dashboard_access_when_unauthenticated(self) -> None:
         """Test dashboard redirects to login when user is not authenticated."""
         url = reverse('dashboard')
@@ -400,7 +400,7 @@ class AuthenticationTests(TestCase):
         # login_required decorator redirects unauthenticated users
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url.lower())
-    
+
     def test_login_required_decorator_functionality(self) -> None:
         """Test login_required decorator properly protects views."""
         url = reverse('dashboard')
@@ -414,7 +414,7 @@ class AuthenticationTests(TestCase):
         self.client.login(username='testuser', password='TestPassword123!')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-    
+
     # ============================================================================
     # SECTION 5: WATCHLIST API AUTHENTICATION TESTS
     # ============================================================================
@@ -443,7 +443,7 @@ class AuthenticationTests(TestCase):
         self.assertEqual(data['count'], 2)
         self.assertIn('AAPL', data['symbols'])
         self.assertIn('MSFT', data['symbols'])
-    
+
     def test_get_watchlist_when_unauthenticated(self) -> None:
         """Test GET /api/watchlist/ returns 401 when unauthenticated."""
         url = reverse('get_watchlist')
@@ -454,7 +454,7 @@ class AuthenticationTests(TestCase):
         data = response.json()
         self.assertIn('error', data)
         self.assertEqual(data['error'], 'Authentication required')
-    
+
     def test_get_watchlist_empty_when_authenticated(self) -> None:
         """Test GET /api/watchlist/ returns empty list for new user."""
         self.client.login(username='testuser', password='TestPassword123!')
@@ -466,7 +466,7 @@ class AuthenticationTests(TestCase):
         data = response.json()
         self.assertEqual(data['count'], 0)
         self.assertEqual(data['symbols'], [])
-    
+
     def test_add_to_watchlist_when_authenticated(self) -> None:
         """Test POST /api/watchlist/add/ succeeds when authenticated."""
         self.client.login(username='testuser', password='TestPassword123!')
@@ -489,7 +489,7 @@ class AuthenticationTests(TestCase):
                 user=self.test_user, symbol='AAPL'
             ).exists()
         )
-    
+
     def test_add_to_watchlist_when_unauthenticated(self) -> None:
         """Test POST /api/watchlist/add/ returns 401 when unauthenticated."""
         url = reverse('add_to_watchlist')
@@ -506,7 +506,7 @@ class AuthenticationTests(TestCase):
 
         # Verify item was NOT added to database
         self.assertFalse(Watchlist.objects.filter(symbol='AAPL').exists())
-    
+
     def test_add_to_watchlist_duplicate_symbol(self) -> None:
         """Test adding duplicate symbol to watchlist returns success message."""
         self.client.login(username='testuser', password='TestPassword123!')
@@ -527,7 +527,7 @@ class AuthenticationTests(TestCase):
         self.assertIn(
             'already in your watchlist', response_data['message']
         )
-    
+
     def test_add_to_watchlist_missing_symbol(self) -> None:
         """Test POST /api/watchlist/add/ with missing symbol returns 400."""
         self.client.login(username='testuser', password='TestPassword123!')
@@ -543,7 +543,7 @@ class AuthenticationTests(TestCase):
         response_data = response.json()
         self.assertIn('error', response_data)
         self.assertEqual(response_data['error'], 'Symbol is required')
-    
+
     def test_remove_from_watchlist_when_authenticated(self) -> None:
         """Test DELETE /api/watchlist/remove/ succeeds when authenticated."""
         self.client.login(username='testuser', password='TestPassword123!')
@@ -565,7 +565,7 @@ class AuthenticationTests(TestCase):
                 user=self.test_user, symbol='AAPL'
             ).exists()
         )
-    
+
     def test_remove_from_watchlist_when_unauthenticated(self) -> None:
         """Test DELETE /api/watchlist/remove/ returns 401 when unauthenticated."""
         # Pre-add item to verify it's not removed without auth
@@ -586,7 +586,7 @@ class AuthenticationTests(TestCase):
                 user=self.test_user, symbol='AAPL'
             ).exists()
         )
-    
+
     def test_remove_from_watchlist_nonexistent_symbol(self) -> None:
         """Test DELETE /api/watchlist/remove/ with nonexistent symbol."""
         self.client.login(username='testuser', password='TestPassword123!')
@@ -599,7 +599,7 @@ class AuthenticationTests(TestCase):
         response_data = response.json()
         self.assertIn('message', response_data)
         self.assertIn('not in your watchlist', response_data['message'])
-    
+
     def test_remove_from_watchlist_missing_symbol(self) -> None:
         """Test DELETE /api/watchlist/remove/ with missing symbol returns 400."""
         self.client.login(username='testuser', password='TestPassword123!')
@@ -612,7 +612,7 @@ class AuthenticationTests(TestCase):
         response_data = response.json()
         self.assertIn('error', response_data)
         self.assertEqual(response_data['error'], 'Symbol is required')
-    
+
     def test_watchlist_user_isolation(self) -> None:
         """Test watchlist isolation between different users."""
         # Create second user to test data isolation
@@ -655,7 +655,7 @@ class AuthenticationTests(TestCase):
         self.assertIn('TSLA', data['symbols'])
         self.assertNotIn('AAPL', data['symbols'])
         self.assertNotIn('MSFT', data['symbols'])
-    
+
     def test_watchlist_add_user_isolation(self) -> None:
         """Test adding to watchlist only affects current user."""
         # Create second user to test data isolation
@@ -704,4 +704,3 @@ class AuthenticationTests(TestCase):
             Watchlist.objects.filter(user=user2, symbol='AAPL').exists()
         )
         self.assertEqual(Watchlist.objects.filter(symbol='AAPL').count(), 2)
-

@@ -14,12 +14,12 @@ from django.urls import reverse
 
 class BasicViewsTests(TestCase):
     """Test suite for basic application views"""
-    
+
     def test_hello_api(self):
         """Test hello API endpoint"""
         url = reverse('hello_api')
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['message'], 'Hello from Django + Basecoat + DRF!')
@@ -28,7 +28,7 @@ class BasicViewsTests(TestCase):
         """Test landing page renders correctly"""
         url = reverse('landing')
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'PortfolAI')
 
@@ -36,11 +36,11 @@ class BasicViewsTests(TestCase):
         """Test dashboard view renders correctly"""
         # Dashboard requires authentication, so create and login a user
         from django.contrib.auth.models import User
-        user = User.objects.create_user(username='testuser', password='testpass123')
+        User.objects.create_user(username='testuser', password='testpass123')
         self.client.login(username='testuser', password='testpass123')
-        
+
         url = reverse('dashboard')
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'PortfolAI')

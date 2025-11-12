@@ -23,7 +23,7 @@ def get_watchlist(request):
     """
     if not request.user.is_authenticated:
         return Response({"error": "Authentication required"}, status=401)
-    
+
     try:
         watchlist_items = Watchlist.objects.filter(user=request.user)
         symbols = [item.symbol for item in watchlist_items]
@@ -47,28 +47,28 @@ def add_to_watchlist(request):
     """
     if not request.user.is_authenticated:
         return Response({"error": "Authentication required"}, status=401)
-    
+
     try:
         symbol = request.data.get("symbol", "").strip().upper()
-        
+
         if not symbol:
             return Response({"error": "Symbol is required"}, status=400)
-        
+
         # Check if already in watchlist
         if Watchlist.objects.filter(user=request.user, symbol=symbol).exists():
             return Response({
                 "message": f"{symbol} is already in your watchlist",
                 "symbol": symbol
             }, status=200)
-        
+
         # Add to watchlist
         Watchlist.objects.create(user=request.user, symbol=symbol)
-        
+
         return Response({
             "message": f"{symbol} added to watchlist",
             "symbol": symbol
         }, status=201)
-        
+
     except Exception as e:
         # Log detailed error information for debugging
         error_type = type(e).__name__
@@ -93,31 +93,40 @@ def remove_from_watchlist(request):
     """
     if not request.user.is_authenticated:
         return Response({"error": "Authentication required"}, status=401)
-    
+
     try:
         # Support both query params and JSON body (like POST does)
         symbol = request.data.get("symbol") or request.GET.get("symbol", "")
         symbol = symbol.strip().upper() if symbol else ""
-        
+
         if not symbol:
             return Response({"error": "Symbol is required"}, status=400)
-        
+
         # Remove from watchlist
         deleted_count, _ = Watchlist.objects.filter(user=request.user, symbol=symbol).delete()
-        
+
         if deleted_count == 0:
             return Response({
                 "message": f"{symbol} is not in your watchlist",
                 "symbol": symbol
             }, status=404)
-        
+
         return Response({
             "message": f"{symbol} removed from watchlist",
             "symbol": symbol
         }, status=200)
-        
-    except Exception as e:
-        symbol_attempted = request.data.get('symbol') or request.GET.get('symbol', 'unknown')
-        logger.error(f"Error removing {symbol_attempted} from watchlist for user {request.user.username}: {str(e)}")
-        return Response({"error": f"Failed to remove from watchlist: {str(e)}"}, status=500)
 
+    except Exception as e:
+        symbol_attempted = (
+            request.data.get('symbol')
+            or request.GET.get('symbol', 'unknown')
+        )
+        username = request.user.username
+        logger.error(
+            f"Error removing {symbol_attempted} from watchlist "
+            f"for user {username}: {str(e)}"
+        )
+        return Response(
+            {"error": f"Failed to remove from watchlist: {str(e)}"},
+            status=500
+        )

@@ -22,7 +22,7 @@ class StockSummaryTests(TestCase):
         """Test stock summary endpoint - requires API keys"""
         url = reverse('stock_summary')
         response = self.client.get(url, {'symbol': 'AAPL'})
-        
+
         # Stock summary requires API keys
         self.assertEqual(response.status_code, 500)
         data = response.json()
@@ -32,7 +32,7 @@ class StockSummaryTests(TestCase):
         """Test stock summary without symbol - requires API keys"""
         url = reverse('stock_summary')
         response = self.client.get(url)
-        
+
         # Stock summary requires API keys
         self.assertEqual(response.status_code, 500)
         data = response.json()
@@ -42,7 +42,7 @@ class StockSummaryTests(TestCase):
         """Test stock summary with empty symbol - requires API keys"""
         url = reverse('stock_summary')
         response = self.client.get(url, {'symbol': ''})
-        
+
         # Stock summary requires API keys
         self.assertEqual(response.status_code, 500)
         data = response.json()
@@ -52,7 +52,7 @@ class StockSummaryTests(TestCase):
         """Test stock summary with whitespace symbol - requires API keys"""
         url = reverse('stock_summary')
         response = self.client.get(url, {'symbol': '   '})
-        
+
         # Stock summary requires API keys
         self.assertEqual(response.status_code, 500)
         data = response.json()
@@ -62,7 +62,7 @@ class StockSummaryTests(TestCase):
         """Test stock summary with lowercase symbol - requires API keys"""
         url = reverse('stock_summary')
         response = self.client.get(url, {'symbol': 'aapl'})
-        
+
         # Stock summary requires API keys
         self.assertEqual(response.status_code, 500)
         data = response.json()
@@ -72,7 +72,7 @@ class StockSummaryTests(TestCase):
         """Test stock summary response structure - requires API keys"""
         url = reverse('stock_summary')
         response = self.client.get(url, {'symbol': 'AAPL'})
-        
+
         # Stock summary requires API keys
         self.assertEqual(response.status_code, 500)
         data = response.json()
@@ -83,12 +83,12 @@ class StockSummaryTests(TestCase):
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
                 with patch('core.views.stock_data.finnhub_client') as mock_finnhub:
-                    with patch('core.views.stock_data.openai_client') as mock_openai:
+                    with patch('core.views.stock_data.openai_client'):
                         mock_finnhub.quote.side_effect = Exception("API Error")
-                        
+
                         url = reverse('stock_summary')
                         response = self.client.get(url, {'symbol': 'AAPL'})
-                        
+
                         self.assertEqual(response.status_code, 500)
                         data = response.json()
                         self.assertIn('error', data)
@@ -99,7 +99,7 @@ class StockSummaryTests(TestCase):
             with patch.object(settings, 'OPENAI_API_KEY', None):
                 url = reverse('stock_summary')
                 response = self.client.get(url, {'symbol': 'AAPL'})
-                
+
                 # Stock summary returns 500 when API key is missing
                 self.assertEqual(response.status_code, 500)
                 data = response.json()
@@ -115,7 +115,7 @@ class StockSummaryTests(TestCase):
                         # Mock successful API responses
                         mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0}
                         mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.'}
-                        
+
                         # Mock OpenAI response
                         mock_response = type('obj', (object,), {
                             'choices': [type('obj', (object,), {
@@ -125,10 +125,10 @@ class StockSummaryTests(TestCase):
                             })]
                         })
                         mock_openai.chat.completions.create.return_value = mock_response
-                        
+
                         url = reverse('stock_summary')
                         response = self.client.get(url, {'symbol': 'AAPL'})
-                        
+
                         self.assertEqual(response.status_code, 200)
                         data = response.json()
                         self.assertIn('ai_summary', data)
@@ -140,7 +140,7 @@ class StockSummaryTests(TestCase):
                 with patch('core.views.stock_data.finnhub_client', None):
                     url = reverse('stock_summary')
                     response = self.client.get(url, {'symbol': 'AAPL'})
-                    
+
                     self.assertEqual(response.status_code, 500)
                     data = response.json()
                     self.assertIn('error', data)
@@ -152,8 +152,7 @@ class StockSummaryTests(TestCase):
                 with patch('core.views.stock_data.openai_client', None):
                     url = reverse('stock_summary')
                     response = self.client.get(url, {'symbol': 'AAPL'})
-                    
+
                     self.assertEqual(response.status_code, 500)
                     data = response.json()
                     self.assertIn('error', data)
-

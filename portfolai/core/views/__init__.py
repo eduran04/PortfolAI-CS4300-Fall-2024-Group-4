@@ -72,4 +72,3 @@ __all__ = [
     'add_to_watchlist',
     'remove_from_watchlist',
 ]
-

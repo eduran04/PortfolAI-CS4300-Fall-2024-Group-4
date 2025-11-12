@@ -28,4 +28,3 @@ class SignUpView(CreateView):
         form.save()
         messages.success(self.request, 'Account created successfully! Please log in to continue.')
         return super().form_valid(form)
-

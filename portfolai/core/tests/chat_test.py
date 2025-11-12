@@ -14,7 +14,7 @@ Tests for /api/chatbot/ endpoint (Feature 5)
 
 from django.test import TestCase
 from django.urls import reverse
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from django.conf import settings
 from django.contrib.auth.models import User
 from core.models import Watchlist
@@ -30,12 +30,16 @@ class ChatTests(TestCase):
             with patch('core.views.chat.openai_client') as mock_openai:
                 mock_response = type('obj', (object,), {
                     'choices': [type('obj', (object,), {
-                        'message': type('obj', (object,), {'content': 'AI: Hello, how can I assist you today?'})
+                        'message': type('obj', (object,), {
+                            'content': 'AI: Hello, how can I assist you today?'
+                        })
                     })]
                 })
                 mock_openai.chat.completions.create.return_value = mock_response
 
-                response = self.client.post(url, {'message': 'Hello'}, content_type='application/json')
+                response = self.client.post(
+                    url, {'message': 'Hello'}, content_type='application/json'
+                )
 
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
@@ -45,7 +49,9 @@ class ChatTests(TestCase):
     def test_chatbot_empty_message(self):
         """Test chatbot endpoint with empty message"""
         url = reverse('chatbot')
-        response = self.client.post(url, {'message': ''}, content_type='application/json')
+        response = self.client.post(
+            url, {'message': ''}, content_type='application/json'
+        )
 
         self.assertEqual(response.status_code, 400)
         data = response.json()
@@ -64,7 +70,9 @@ class ChatTests(TestCase):
         """Test chatbot fallback when OpenAI API key is missing"""
         url = reverse('chatbot')
         with patch.object(settings, 'OPENAI_API_KEY', None):
-            response = self.client.post(url, {'message': 'Hello'}, content_type='application/json')
+            response = self.client.post(
+                url, {'message': 'Hello'}, content_type='application/json'
+            )
 
             self.assertEqual(response.status_code, 200)
             data = response.json()
@@ -76,9 +84,13 @@ class ChatTests(TestCase):
         url = reverse('chatbot')
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.chat.openai_client') as mock_openai:
-                mock_openai.chat.completions.create.side_effect = Exception("API Error")
+                mock_openai.chat.completions.create.side_effect = Exception(
+                    "API Error"
+                )
 
-                response = self.client.post(url, {'message': 'Test error'}, content_type='application/json')
+                response = self.client.post(
+                    url, {'message': 'Test error'}, content_type='application/json'
+                )
 
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
@@ -94,12 +106,16 @@ class ChatTests(TestCase):
             with patch('core.views.chat.openai_client') as mock_openai:
                 mock_response = type('obj', (object,), {
                     'choices': [type('obj', (object,), {
-                        'message': type('obj', (object,), {'content': "That is a long query, but here's a summary."})
+                        'message': type('obj', (object,), {
+                            'content': "That is a long query, but here's a summary."
+                        })
                     })]
                 })
                 mock_openai.chat.completions.create.return_value = mock_response
 
-                response = self.client.post(url, {'message': long_message}, content_type='application/json')
+                response = self.client.post(
+                    url, {'message': long_message}, content_type='application/json'
+                )
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('response', data)
@@ -117,20 +133,30 @@ class ChatTests(TestCase):
                         # First message - chat response
                         type('obj', (object,), {
                             'choices': [type('obj', (object,), {
-                                'message': type('obj', (object,), {'content': 'Hi there!'})
+                                'message': type('obj', (object,), {
+                                    'content': 'Hi there!'
+                                })
                             })]
                         }),
                         # Second message - chat response with context
                         type('obj', (object,), {
                             'choices': [type('obj', (object,), {
-                                'message': type('obj', (object,), {'content': 'You just said hi earlier.'})
+                                'message': type('obj', (object,), {
+                                    'content': 'You just said hi earlier.'
+                                })
                             })]
                         })
                     ]
 
                     # Send two messages to test conversational continuity
-                    response1 = self.client.post(url, {'message': 'Hi'}, content_type='application/json')
-                    response2 = self.client.post(url, {'message': 'What did I say earlier?'}, content_type='application/json')
+                    response1 = self.client.post(
+                        url, {'message': 'Hi'}, content_type='application/json'
+                    )
+                    response2 = self.client.post(
+                        url,
+                        {'message': 'What did I say earlier?'},
+                        content_type='application/json'
+                    )
 
                     self.assertEqual(response1.status_code, 200)
                     self.assertEqual(response2.status_code, 200)
@@ -151,13 +177,18 @@ class ChatTests(TestCase):
                 mock_openai.chat.completions.create.return_value = mock_response
 
                 # First message
-                response1 = self.client.post(url, {'message': 'Hello'}, content_type='application/json')
+                response1 = self.client.post(
+                    url, {'message': 'Hello'}, content_type='application/json'
+                )
                 self.assertEqual(response1.status_code, 200)
                 self.assertIn('chat_history', self.client.session)
-                self.assertEqual(len(self.client.session['chat_history']), 2)  # user + assistant
+                # user + assistant
+                self.assertEqual(len(self.client.session['chat_history']), 2)
 
                 # Second message - should include history
-                response2 = self.client.post(url, {'message': 'Follow up'}, content_type='application/json')
+                response2 = self.client.post(
+                    url, {'message': 'Follow up'}, content_type='application/json'
+                )
                 self.assertEqual(response2.status_code, 200)
                 # Check that history was passed to OpenAI
                 call_args = mock_openai.chat.completions.create.call_args
@@ -169,7 +200,7 @@ class ChatTests(TestCase):
         """Test clear chat endpoint clears session history"""
         url = reverse('chatbot')
         clear_url = reverse('clear_chat')
-        
+
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.chat.openai_client') as mock_openai:
                 mock_response = type('obj', (object,), {
@@ -203,10 +234,10 @@ class ChatTests(TestCase):
         user = User.objects.create_user(username='testuser', password='testpass')
         Watchlist.objects.create(user=user, symbol='AAPL')
         Watchlist.objects.create(user=user, symbol='MSFT')
-        
+
         self.client.force_login(user)
         url = reverse('chatbot')
-        
+
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.chat.openai_client') as mock_openai:
                 # Mock the needs_web_search call to return False
@@ -218,9 +249,13 @@ class ChatTests(TestCase):
                     })
                     mock_openai.chat.completions.create.return_value = mock_response
 
-                    response = self.client.post(url, {'message': 'What is in my watchlist?'}, content_type='application/json')
+                    response = self.client.post(
+                        url,
+                        {'message': 'What is in my watchlist?'},
+                        content_type='application/json'
+                    )
                     self.assertEqual(response.status_code, 200)
-                    
+
                     # Check that watchlist context was included in system prompt
                     call_args = mock_openai.chat.completions.create.call_args
                     messages = call_args[1]['messages']
@@ -232,12 +267,12 @@ class ChatTests(TestCase):
     def test_chatbot_user_context_recent_searches(self):
         """Test that chatbot includes recent searches in context"""
         url = reverse('chatbot')
-        
+
         # Set up session with recent searches
         session = self.client.session
         session['recent_searches'] = ['AAPL', 'MSFT', 'GOOGL']
         session.save()
-        
+
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.chat.openai_client') as mock_openai:
                 # Mock the needs_web_search call to return False
@@ -249,9 +284,13 @@ class ChatTests(TestCase):
                     })
                     mock_openai.chat.completions.create.return_value = mock_response
 
-                    response = self.client.post(url, {'message': 'What did I search?'}, content_type='application/json')
+                    response = self.client.post(
+                        url,
+                        {'message': 'What did I search?'},
+                        content_type='application/json'
+                    )
                     self.assertEqual(response.status_code, 200)
-                    
+
                     # Check that recent searches were included in system prompt
                     call_args = mock_openai.chat.completions.create.call_args
                     messages = call_args[1]['messages']
@@ -265,7 +304,7 @@ class ChatTests(TestCase):
         user = User.objects.create_user(username='testuser', password='testpass')
         self.client.force_login(user)
         url = reverse('chatbot')
-        
+
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.chat.openai_client') as mock_openai:
                 with patch('core.views.chat._needs_web_search', return_value=False):
@@ -276,9 +315,11 @@ class ChatTests(TestCase):
                     })
                     mock_openai.chat.completions.create.return_value = mock_response
 
-                    response = self.client.post(url, {'message': 'Hello'}, content_type='application/json')
+                    response = self.client.post(
+                        url, {'message': 'Hello'}, content_type='application/json'
+                    )
                     self.assertEqual(response.status_code, 200)
-                    
+
                     # Check that empty watchlist is mentioned
                     call_args = mock_openai.chat.completions.create.call_args
                     messages = call_args[1]['messages']
@@ -288,7 +329,7 @@ class ChatTests(TestCase):
     def test_chatbot_needs_web_search_classification(self):
         """Test AI-based classification for web search needs"""
         url = reverse('chatbot')
-        
+
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.chat.openai_client') as mock_openai:
                 # Mock the classification call (first call)
@@ -297,30 +338,35 @@ class ChatTests(TestCase):
                         'message': type('obj', (object,), {'content': 'yes'})
                     })]
                 })
-                
+
                 # Mock the main chat completion (second call)
                 chat_response = type('obj', (object,), {
                     'choices': [type('obj', (object,), {
                         'message': type('obj', (object,), {'content': 'Response'})
                     })]
                 })
-                
+
                 # First call is classification, second is chat
                 mock_openai.chat.completions.create.side_effect = [
                     classification_response,
                     chat_response
                 ]
-                
+
                 # Set up session with recent searches
                 session = self.client.session
                 session['recent_searches'] = ['AAPL']
                 session.save()
-                
+
                 # Mock newsapi to avoid actual API calls
                 with patch('core.views.chat.newsapi', None):
-                    response = self.client.post(url, {'message': 'Why did it go up today?'}, content_type='application/json')
+                    response = self.client.post(
+                        url,
+                        {'message': 'Why did it go up today?'},
+                        content_type='application/json'
+                    )
                     self.assertEqual(response.status_code, 200)
-                    
-                    # Verify both classification and chat completion were called
-                    self.assertGreaterEqual(mock_openai.chat.completions.create.call_count, 1)
 
+                    # Verify both classification and chat completion were called
+                    self.assertGreaterEqual(
+                        mock_openai.chat.completions.create.call_count, 1
+                    )

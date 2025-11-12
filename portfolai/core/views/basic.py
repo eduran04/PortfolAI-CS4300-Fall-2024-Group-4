@@ -37,4 +37,3 @@ def hello_api(request):
     Returns: {"message": "Hello from Django + Basecoat + DRF!"}
     """
     return Response({"message": "Hello from Django + Basecoat + DRF!"})
-

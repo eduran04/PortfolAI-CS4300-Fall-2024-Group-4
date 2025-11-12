@@ -3,6 +3,7 @@ from .models import Watchlist
 
 # Register your models here.
 
+
 @admin.register(Watchlist)
 class WatchlistAdmin(admin.ModelAdmin):
     list_display = ('user', 'symbol', 'created_at')

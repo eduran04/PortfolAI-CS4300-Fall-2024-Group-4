@@ -32,7 +32,7 @@ class WatchlistTests(TestCase):
         """Test getting empty watchlist"""
         url = reverse('get_watchlist')
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['count'], 0)
@@ -46,12 +46,12 @@ class WatchlistTests(TestCase):
             {'symbol': 'AAPL'},
             content_type='application/json'
         )
-        
+
         self.assertEqual(response.status_code, 201)
         data = response.json()
         self.assertIn('message', data)
         self.assertEqual(data['symbol'], 'AAPL')
-        
+
         # Verify it was added to database
         self.assertTrue(
             Watchlist.objects.filter(user=self.user, symbol='AAPL').exists()
@@ -62,10 +62,10 @@ class WatchlistTests(TestCase):
         # Add some items first
         Watchlist.objects.create(user=self.user, symbol='AAPL')
         Watchlist.objects.create(user=self.user, symbol='MSFT')
-        
+
         url = reverse('get_watchlist')
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['count'], 2)
@@ -76,18 +76,18 @@ class WatchlistTests(TestCase):
         """Test removing symbol from watchlist"""
         # Add item first
         Watchlist.objects.create(user=self.user, symbol='AAPL')
-        
+
         url = reverse('remove_from_watchlist')
         response = self.client.delete(
             url,
             {'symbol': 'AAPL'},
             content_type='application/json'
         )
-        
+
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn('message', data)
-        
+
         # Verify it was removed from database
         self.assertFalse(
             Watchlist.objects.filter(user=self.user, symbol='AAPL').exists()
@@ -97,14 +97,14 @@ class WatchlistTests(TestCase):
         """Test adding duplicate symbol to watchlist"""
         # Add item first
         Watchlist.objects.create(user=self.user, symbol='AAPL')
-        
+
         url = reverse('add_to_watchlist')
         response = self.client.post(
             url,
             {'symbol': 'AAPL'},
             content_type='application/json'
         )
-        
+
         # Should return 200 for duplicate (idempotent behavior)
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -119,10 +119,9 @@ class WatchlistTests(TestCase):
             {'symbol': 'AAPL'},
             content_type='application/json'
         )
-        
+
         # Should return 404 for nonexistent symbol
         self.assertEqual(response.status_code, 404)
         data = response.json()
         self.assertIn('message', data)
         self.assertIn('not in your watchlist', data['message'])
-

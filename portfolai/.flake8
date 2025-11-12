@@ -1,0 +1,25 @@
+[flake8]
+# Maximum line length
+max-line-length = 100
+
+# Exclude Django-generated files
+exclude =
+    migrations,
+    __pycache__,
+    venv,
+    .venv,
+    staticfiles,
+    manage.py,
+    settings.py,
+    wsgi.py,
+    asgi.py
+
+# Ignore specific errors if needed
+# W503: line break before binary operator (conflicts with W504)
+ignore = W503
+
+# Per-file ignores
+per-file-ignores =
+    # Allow long lines in migration files (auto-generated)
+    */migrations/*:E501
+

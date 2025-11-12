@@ -25,7 +25,7 @@ class MarketMoversTests(TestCase):
         with patch('core.views._clients.finnhub_client', None):
             url = reverse('get_market_movers')
             response = self.client.get(url)
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('gainers', data)
@@ -37,7 +37,7 @@ class MarketMoversTests(TestCase):
         with patch('core.views._clients.finnhub_client', None):
             url = reverse('get_market_movers')
             response = self.client.get(url)
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('gainers', data)
@@ -50,7 +50,7 @@ class MarketMoversTests(TestCase):
         with patch.object(settings, 'FINNHUB_API_KEY', None):
             url = reverse('get_market_movers')
             response = self.client.get(url)
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('gainers', data)
@@ -63,7 +63,7 @@ class MarketMoversTests(TestCase):
         with patch.object(settings, 'FINNHUB_API_KEY', None):
             url = reverse('get_market_movers')
             response = self.client.get(url)
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('gainers', data)
@@ -74,12 +74,15 @@ class MarketMoversTests(TestCase):
         """Test market movers when company profile fetch fails"""
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch('core.views._clients.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                mock_finnhub.quote.return_value = {
+                    'c': 150.0, 'pc': 148.0, 'o': 149.0,
+                    'h': 151.0, 'l': 147.0, 'v': 1000000
+                }
                 mock_finnhub.company_profile2.side_effect = Exception("Company profile error")
-                
+
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('gainers', data)
@@ -89,10 +92,10 @@ class MarketMoversTests(TestCase):
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch('core.views._clients.finnhub_client') as mock_finnhub:
                 mock_finnhub.quote.side_effect = Exception("Symbol fetch error")
-                
+
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('gainers', data)
@@ -103,10 +106,10 @@ class MarketMoversTests(TestCase):
             with patch('core.views._clients.finnhub_client') as mock_finnhub:
                 # Mock the client to exist but throw exceptions
                 mock_finnhub.quote.side_effect = Exception("API Error")
-                
+
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 # The test should expect fallback=True when API exceptions occur
@@ -118,7 +121,7 @@ class MarketMoversTests(TestCase):
             with patch('core.views._clients.finnhub_client', None):
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('gainers', data)
@@ -129,10 +132,10 @@ class MarketMoversTests(TestCase):
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch('core.views._clients.finnhub_client') as mock_finnhub:
                 mock_finnhub.quote.side_effect = Exception("Quote fetch error")
-                
+
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('gainers', data)
@@ -145,10 +148,10 @@ class MarketMoversTests(TestCase):
                 # Mock quote with None current price to trigger continue
                 mock_finnhub.quote.return_value = {'c': None, 'pc': 100}
                 mock_finnhub.company_profile2.return_value = {'name': 'Test Company'}
-                
+
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('gainers', data)
@@ -160,10 +163,10 @@ class MarketMoversTests(TestCase):
             with patch('core.views._clients.finnhub_client') as mock_finnhub:
                 mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0}
                 mock_finnhub.company_profile2.side_effect = Exception("Profile error")
-                
+
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('gainers', data)
@@ -174,12 +177,15 @@ class MarketMoversTests(TestCase):
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch('core.views._clients.finnhub_client') as mock_finnhub:
                 # Mock valid quote data
-                mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                mock_finnhub.quote.return_value = {
+                    'c': 150.0, 'pc': 148.0, 'o': 149.0,
+                    'h': 151.0, 'l': 147.0, 'v': 1000000
+                }
                 mock_finnhub.company_profile2.return_value = {'name': 'Test Company'}
-                
+
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('gainers', data)
@@ -193,13 +199,12 @@ class MarketMoversTests(TestCase):
             with patch('core.views._clients.finnhub_client') as mock_finnhub:
                 # Mock to trigger the exception handler
                 mock_finnhub.quote.side_effect = Exception("Market data error")
-                
+
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('gainers', data)
                 self.assertIn('losers', data)
                 self.assertTrue(data.get('fallback', False))
-
