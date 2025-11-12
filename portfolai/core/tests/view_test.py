@@ -8,6 +8,7 @@ Tests for core application views and basic API functionality:
 - Hello API endpoint
 """
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
@@ -35,7 +36,6 @@ class BasicViewsTests(TestCase):
     def test_dashboard_view(self):
         """Test dashboard view renders correctly"""
         # Dashboard requires authentication, so create and login a user
-        from django.contrib.auth.models import User
         User.objects.create_user(username='testuser', password='testpass123')
         self.client.login(username='testuser', password='testpass123')
 

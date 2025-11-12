@@ -6,13 +6,14 @@ Chatbot endpoint for AI-powered user interactions with session-based memory,
 user context awareness, and real-time web search capabilities.
 """
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
 from datetime import datetime, timedelta
 import json
 import logging
 import re
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 from ._clients import openai_client, newsapi
 from ..models import Watchlist
 
@@ -99,13 +100,13 @@ def _get_user_context(request):
         try:
             # Explicitly filter by authenticated user to prevent cross-user data leakage
             user_id = request.user.id
-            watchlist_items = Watchlist.objects.filter(user_id=user_id)
+            watchlist_items = Watchlist.objects.filter(user_id=user_id)  # pylint: disable=no-member
             symbols = [item.symbol for item in watchlist_items]
 
             # Log for debugging
             logger.info(
-                f"Fetching watchlist for user {request.user.username} "
-                f"(ID: {user_id}): {len(symbols)} items"
+                "Fetching watchlist for user %s (ID: %s): %s items",
+                request.user.username, user_id, len(symbols)
             )
 
             if symbols:
@@ -114,7 +115,7 @@ def _get_user_context(request):
                 # Explicitly state empty to prevent AI from hallucinating
                 context_parts.append("User's watchlist: empty")
         except Exception as e:
-            logger.error(f"Error fetching watchlist for user {request.user.username}: {e}")
+            logger.error("Error fetching watchlist for user %s: %s", request.user.username, e)
             context_parts.append("User's watchlist: error fetching data")
 
     # Get recent searches from session
@@ -127,12 +128,12 @@ def _get_user_context(request):
     return ". ".join(context_parts) if context_parts else None
 
 
-def _needs_web_search(user_message, openai_client):
+def _needs_web_search(user_message, client):
     """
     Use AI to determine if the query requires real-time web search data.
     Returns True if the query needs current stock market data, news, or real-time information.
     """
-    if not openai_client:
+    if not client:
         return False
 
     # Quick check for explicit $SYMBOL format - always needs web search
@@ -143,7 +144,7 @@ def _needs_web_search(user_message, openai_client):
     try:
         classification_prompt = _build_classification_prompt(user_message)
 
-        response = openai_client.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": CLASSIFICATION_SYSTEM_MESSAGE},
@@ -157,7 +158,7 @@ def _needs_web_search(user_message, openai_client):
         return answer.startswith('yes')
 
     except Exception as e:
-        logger.warning(f"Error classifying query for web search: {e}")
+        logger.warning("Error classifying query for web search: %s", e)
         # Fallback: return False to avoid unnecessary API calls
         return False
 
@@ -212,7 +213,7 @@ def _get_openai_web_context(symbol):
         # responses.create() not available in this SDK version
         return ""
     except Exception as e:
-        logger.warning(f"OpenAI web search failed for {symbol}: {e}")
+        logger.warning("OpenAI web search failed for %s: %s", symbol, e)
         return ""
 
 
@@ -252,7 +253,7 @@ def _get_newsapi_context(symbol):
         return _format_news_articles(articles, symbol)
 
     except Exception as e:
-        logger.warning(f"Could not fetch news for {symbol}: {e}")
+        logger.warning("Could not fetch news for %s: %s", symbol, e)
         return ""
 
 
@@ -356,7 +357,7 @@ def chat_api(request):
         return JsonResponse({"response": reply}, status=200)
 
     except Exception as e:
-        logger.error(f"Chatbot error: {e}")
+        logger.error("Chatbot error: %s", e)
         return JsonResponse(
             {
                 "response": f"(Fallback after error) Could not reach AI: {str(e)}",

@@ -5,18 +5,17 @@ Analysis Views - AI-Powered Stock Analysis
 Advanced AI analysis endpoints with OpenAI integration.
 """
 
+from datetime import datetime, timedelta
+import logging
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.conf import settings
-from datetime import datetime, timedelta
-import logging
 from ._clients import finnhub_client, openai_client, newsapi
 
 logger = logging.getLogger(__name__)
 
-# ============================================================================
 # PROMPT CONSTANTS
-# ============================================================================
 
 FALLBACK_ANALYSIS = """
 **PortfolAI Analysis for {symbol}**
@@ -108,9 +107,7 @@ SYSTEM_PROMPT = (
 )
 
 
-# ============================================================================
-# HELPER FUNCTIONS
-# ============================================================================
+# HELPER FUNCTIONS TO PREVENT NESTING
 
 def _fetch_stock_data(symbol):
     """
@@ -296,7 +293,7 @@ def portfolai_analysis(request):
                 "timestamp": datetime.now().isoformat(),
                 "data_used": stock_data is not None
             })
-        except Exception as api_error:
+        except Exception as api_error:  # pylint: disable=broad-exception-caught
             # Log detailed error information for debugging
             error_type = type(api_error).__name__
             error_message = str(api_error)
@@ -305,14 +302,13 @@ def portfolai_analysis(request):
                 else 'anonymous'
             )
             logger.error(
-                f"OpenAI API error generating analysis for {symbol}: "
-                f"Type={error_type}, Message={error_message}, "
-                f"User={user_name}"
+                "OpenAI API error generating analysis for %s: Type=%s, Message=%s, User=%s",
+                symbol, error_type, error_message, user_name
             )
             # Re-raise to be caught by outer exception handler
             raise
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         # Log detailed error information for debugging
         error_type = type(e).__name__
         error_message = str(e)
@@ -321,9 +317,8 @@ def portfolai_analysis(request):
             else 'anonymous'
         )
         logger.error(
-            f"Error generating AI analysis for {symbol}: "
-            f"Type={error_type}, Message={error_message}, "
-            f"User={user_name}"
+            "Error generating AI analysis for %s: Type=%s, Message=%s, User=%s",
+            symbol, error_type, error_message, user_name
         )
         return Response({
             "error": (

@@ -7,11 +7,12 @@ API clients are only initialized if API keys are available, ensuring graceful
 degradation when APIs are not configured.
 """
 
+import logging
+
 import openai
 import finnhub
 from newsapi import NewsApiClient
 from django.conf import settings
-import logging
 from ..services import MarketDataService, FALLBACK_STOCKS, FALLBACK_NEWS  # noqa: F401
 
 logger = logging.getLogger(__name__)

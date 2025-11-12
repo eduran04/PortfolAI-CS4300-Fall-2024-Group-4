@@ -1,0 +1,27 @@
+[MASTER]
+# Ignore migration files (auto-generated)
+ignore=migrations
+
+[MESSAGES CONTROL]
+# Disable false positives for Django ORM (objects manager is added dynamically)
+# Ignore unused import and argument warnings (as requested by user)
+# Ignore migration file naming (expected for Django - auto-generated)
+# Allow some complexity for now (can be refactored later if needed)
+# Allow duplicate code for now (can be refactored later if needed)
+# Allow broad exception catching (necessary for API error handling - various API exceptions)
+# Allow import outside toplevel (sometimes necessary for tests to avoid circular imports)
+disable=no-member,unused-import,unused-argument,invalid-name,too-many-ancestors,too-few-public-methods,too-many-public-methods,too-many-branches,too-many-locals,too-many-return-statements,too-many-statements,redefined-outer-name,duplicate-code,broad-exception-caught,broad-exception-raised,import-outside-toplevel
+
+[FORMAT]
+max-line-length=100
+
+[DESIGN]
+max-args=10
+max-locals=20
+max-returns=8
+max-branches=20
+max-statements=60
+max-parents=10
+max-attributes=15
+min-public-methods=0
+

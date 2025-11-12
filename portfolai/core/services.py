@@ -13,11 +13,12 @@ All services include comprehensive error handling and fallback data
 for when external APIs are unavailable.
 """
 
+from datetime import datetime
+import logging
+
 import finnhub
 from newsapi import NewsApiClient
 from django.conf import settings
-from datetime import datetime
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +142,7 @@ class MarketDataService:
                     previous_close = quote.get('pc', 0)
                     change = current_price - previous_close
                     if previous_close != 0:
-                        change_percent = (change / previous_close * 100)
+                        change_percent = change / previous_close * 100
                     else:
                         change_percent = 0
 
@@ -152,8 +153,9 @@ class MarketDataService:
                         "change": round(change, 2),
                         "changePercent": round(change_percent, 2)
                     })
-                except Exception as e:
-                    logger.warning(f"Could not fetch data for {symbol}: {e}")
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    # Catch all exceptions to handle various API errors (network, rate limits, etc.)
+                    logger.warning("Could not fetch data for %s: %s", symbol, e)
                     continue  # Skip symbols that fail
 
             # If no data was collected, use fallback
@@ -172,8 +174,9 @@ class MarketDataService:
                 "losers": losers
             }
 
-        except Exception as e:
-            logger.error(f"Error fetching market data: {str(e)}")
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Catch all exceptions to handle various API errors (network, rate limits, etc.)
+            logger.error("Error fetching market data: %s", str(e))
             # Return fallback data on error
             return self._get_fallback_market_movers()
 
@@ -238,8 +241,9 @@ class NewsService:
                         sort_by='popularity',  # Use popularity as recommended in docs
                         page_size=10
                     )
-                except Exception as e:
-                    logger.warning(f"News API failed for {symbol}: {e}")
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    # Catch all exceptions to handle various API errors (network, rate limits, etc.)
+                    logger.warning("News API failed for %s: %s", symbol, e)
                     # Fallback to top headlines for business category
                     articles = self.newsapi.get_top_headlines(
                         category='business',
@@ -254,8 +258,9 @@ class NewsService:
                         language='en',
                         page_size=10
                     )
-                except Exception as e:
-                    logger.warning(f"News API top headlines failed: {e}")
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    # Catch all exceptions to handle various API errors (network, rate limits, etc.)
+                    logger.warning("News API top headlines failed: %s", e)
                     # Fallback to everything endpoint
                     articles = self.newsapi.get_everything(
                         q='stock market OR finance OR economy',
@@ -293,7 +298,8 @@ class NewsService:
                             time_str = f"{time_ago.seconds // 3600}h ago"
                         else:
                             time_str = f"{time_ago.seconds // 60}m ago"
-                    except Exception:
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        # Catch all exceptions when parsing time - fallback to "Recently"
                         time_str = "Recently"
                 else:
                     time_str = "Recently"
@@ -320,8 +326,9 @@ class NewsService:
                 "totalResults": articles.get('totalResults', 0)
             }
 
-        except Exception as e:
-            logger.error(f"Error fetching news: {str(e)}")
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Catch all exceptions to handle various API errors (network, rate limits, etc.)
+            logger.error("Error fetching news: %s", str(e))
             # Return fallback news on error
             return {
                 "articles": FALLBACK_NEWS,

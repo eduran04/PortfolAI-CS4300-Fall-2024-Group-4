@@ -67,6 +67,7 @@ class UserRegistrationForm(UserCreationForm):
     )
 
     class Meta:
+        """Meta options for UserRegistrationForm."""
         model = User
         fields = ('username', 'email', 'password1', 'password2')
 

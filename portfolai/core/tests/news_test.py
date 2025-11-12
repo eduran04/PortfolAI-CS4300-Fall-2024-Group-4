@@ -10,9 +10,11 @@ Tests for /api/news/ endpoint (Feature 3)
 - Article validation and filtering
 """
 
+from unittest.mock import patch
+
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
-from unittest.mock import patch
 from django.conf import settings
 
 
@@ -56,7 +58,6 @@ class NewsTests(TestCase):
 
     def test_get_news_fallback(self):
         """Test news with fallback data when API key is not available"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', None):
             with patch('core.views.news.newsapi', None):
@@ -70,7 +71,6 @@ class NewsTests(TestCase):
 
     def test_get_news_with_api_error(self):
         """Test news with API error handling"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
@@ -86,7 +86,6 @@ class NewsTests(TestCase):
 
     def test_get_news_articles_processing(self):
         """Test news articles processing and filtering"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
@@ -135,7 +134,6 @@ class NewsTests(TestCase):
 
     def test_get_news_time_formatting(self):
         """Test news time formatting logic"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
@@ -166,7 +164,6 @@ class NewsTests(TestCase):
 
     def test_get_news_invalid_time_format(self):
         """Test news with invalid time format"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
@@ -199,7 +196,6 @@ class NewsTests(TestCase):
 
     def test_get_news_no_articles_fallback(self):
         """Test news when no valid articles found"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
@@ -221,7 +217,6 @@ class NewsTests(TestCase):
 
     def test_get_news_with_newsapi_none(self):
         """Test news when newsapi is None"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi', None):
@@ -235,7 +230,6 @@ class NewsTests(TestCase):
 
     def test_get_news_with_headlines_exception(self):
         """Test news when headlines fetch throws exception"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
@@ -253,7 +247,6 @@ class NewsTests(TestCase):
 
     def test_get_news_with_invalid_article_data(self):
         """Test news with invalid article data"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
@@ -295,7 +288,6 @@ class NewsTests(TestCase):
 
     def test_get_news_with_symbol_specific_news(self):
         """Test news with symbol-specific news using get_everything"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
@@ -326,7 +318,6 @@ class NewsTests(TestCase):
 
     def test_get_news_with_symbol_news_fallback(self):
         """Test news with symbol when get_everything fails, falls back to headlines"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:
@@ -371,7 +362,6 @@ class NewsTests(TestCase):
 
     def test_get_news_with_invalid_response_structure(self):
         """Test news with invalid response structure"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'NEWS_API_KEY', 'test_key'):
             with patch('core.views.news.newsapi') as mock_newsapi:

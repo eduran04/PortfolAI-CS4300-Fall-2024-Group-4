@@ -10,9 +10,11 @@ Tests for /api/stock-data/ endpoint (Feature 1)
 - Data validation and response structure
 """
 
+from unittest.mock import patch
+
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
-from unittest.mock import patch
 from django.conf import settings
 
 
@@ -95,7 +97,6 @@ class StockDataTests(TestCase):
 
     def test_get_stock_data_fallback_data(self):
         """Test stock data with fallback data when API key is not available"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'FINNHUB_API_KEY', None):
             with patch('core.views.stock_data.finnhub_client', None):
@@ -136,7 +137,6 @@ class StockDataTests(TestCase):
 
     def test_get_stock_data_with_api_error(self):
         """Test stock data with API error handling"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch('core.views.stock_data.finnhub_client') as mock_finnhub:
@@ -152,7 +152,6 @@ class StockDataTests(TestCase):
 
     def test_get_stock_data_invalid_quote_scenarios(self):
         """Test stock data with various invalid quote scenarios"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         invalid_quotes = [
             None,
@@ -232,7 +231,6 @@ class StockDataTests(TestCase):
 
     def test_get_stock_data_with_quote_exception(self):
         """Test stock data when quote fetch throws exception"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch('core.views.stock_data.finnhub_client') as mock_finnhub:
@@ -248,7 +246,6 @@ class StockDataTests(TestCase):
 
     def test_get_stock_data_500_error_response(self):
         """Test stock data 500 error response path"""
-        from django.core.cache import cache
         cache.clear()  # Clear cache to ensure fresh request
         with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
             with patch('core.views.stock_data.finnhub_client') as mock_finnhub:

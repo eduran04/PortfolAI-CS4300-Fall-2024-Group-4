@@ -1,3 +1,6 @@
+"""
+Core models for the PortfolAI application.
+"""
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -18,8 +21,9 @@ class Watchlist(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Meta options for Watchlist model."""
         unique_together = ['user', 'symbol']
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.user.username} - {self.symbol}"
+        return f"{self.user.username} - {self.symbol}"  # pylint: disable=no-member

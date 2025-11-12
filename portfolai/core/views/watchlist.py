@@ -5,9 +5,10 @@ Watchlist Views - User Watchlist Management
 User-specific watchlist endpoints with authentication.
 """
 
+import logging
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-import logging
 from ..models import Watchlist
 
 logger = logging.getLogger(__name__)
@@ -25,14 +26,14 @@ def get_watchlist(request):
         return Response({"error": "Authentication required"}, status=401)
 
     try:
-        watchlist_items = Watchlist.objects.filter(user=request.user)
+        watchlist_items = Watchlist.objects.filter(user=request.user)  # pylint: disable=no-member
         symbols = [item.symbol for item in watchlist_items]
         return Response({
             "symbols": symbols,
             "count": len(symbols)
         })
     except Exception as e:
-        logger.error(f"Error fetching watchlist for user {request.user.username}: {str(e)}")
+        logger.error("Error fetching watchlist for user %s: %s", request.user.username, str(e))
         return Response({"error": f"Failed to fetch watchlist: {str(e)}"}, status=500)
 
 
@@ -55,14 +56,14 @@ def add_to_watchlist(request):
             return Response({"error": "Symbol is required"}, status=400)
 
         # Check if already in watchlist
-        if Watchlist.objects.filter(user=request.user, symbol=symbol).exists():
+        if Watchlist.objects.filter(user=request.user, symbol=symbol).exists():  # pylint: disable=no-member
             return Response({
                 "message": f"{symbol} is already in your watchlist",
                 "symbol": symbol
             }, status=200)
 
         # Add to watchlist
-        Watchlist.objects.create(user=request.user, symbol=symbol)
+        Watchlist.objects.create(user=request.user, symbol=symbol)  # pylint: disable=no-member
 
         return Response({
             "message": f"{symbol} added to watchlist",
@@ -75,9 +76,9 @@ def add_to_watchlist(request):
         error_message = str(e)
         symbol_attempted = request.data.get('symbol', 'unknown')
         logger.error(
-            f"Error adding {symbol_attempted} to watchlist for user {request.user.username}: "
-            f"Type={error_type}, Message={error_message}, "
-            f"UserID={request.user.id if request.user.is_authenticated else 'N/A'}"
+            "Error adding %s to watchlist for user %s: Type=%s, Message=%s, UserID=%s",
+            symbol_attempted, request.user.username, error_type, error_message,
+            request.user.id if request.user.is_authenticated else 'N/A'
         )
         return Response({"error": f"Failed to add to watchlist: {error_message}"}, status=500)
 
@@ -103,7 +104,7 @@ def remove_from_watchlist(request):
             return Response({"error": "Symbol is required"}, status=400)
 
         # Remove from watchlist
-        deleted_count, _ = Watchlist.objects.filter(user=request.user, symbol=symbol).delete()
+        deleted_count, _ = Watchlist.objects.filter(user=request.user, symbol=symbol).delete()  # pylint: disable=no-member
 
         if deleted_count == 0:
             return Response({
@@ -123,8 +124,8 @@ def remove_from_watchlist(request):
         )
         username = request.user.username
         logger.error(
-            f"Error removing {symbol_attempted} from watchlist "
-            f"for user {username}: {str(e)}"
+            "Error removing %s from watchlist for user %s: %s",
+            symbol_attempted, username, str(e)
         )
         return Response(
             {"error": f"Failed to remove from watchlist: {str(e)}"},

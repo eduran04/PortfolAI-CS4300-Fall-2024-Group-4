@@ -5,11 +5,12 @@ Stock Data Views - Real-Time Stock Data Retrieval
 Core stock data endpoints with comprehensive fallback systems.
 """
 
+import logging
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
-import logging
 from ._clients import finnhub_client, openai_client, FALLBACK_STOCKS
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def _build_fallback_response(symbol, stock_data, rate_limited=False):
 
 def _handle_rate_limit(symbol, cache_key):
     """Handle rate limit errors by trying cache or fallback."""
-    logger.warning(f'Rate limit hit for {symbol}, using cached or fallback data')
+    logger.warning('Rate limit hit for %s, using cached or fallback data', symbol)
     # Try to return cached data even if expired
     cached_data = cache.get(cache_key)
     if cached_data:
@@ -152,10 +153,10 @@ def get_stock_data(request):
     if not force_refresh:
         cached_data = cache.get(cache_key)
         if cached_data:
-            logger.info(f'Returning cached stock data for {symbol}')
+            logger.info('Returning cached stock data for %s', symbol)
             return Response(cached_data)
     else:
-        logger.info(f'Force refresh requested for {symbol}, bypassing cache')
+        logger.info('Force refresh requested for %s, bypassing cache', symbol)
 
     # Check if API key is available, if not use fallback data
     if not settings.FINNHUB_API_KEY or not finnhub_client:
@@ -198,7 +199,7 @@ def get_stock_data(request):
             company = finnhub_client.company_profile2(symbol=symbol)
             company_name = company.get('name', symbol)
         except Exception as e:
-            logger.warning(f"Could not fetch company profile for {symbol}: {e}")
+            logger.warning("Could not fetch company profile for %s: %s", symbol, e)
             company = {}
 
         # Calculate price change and percentage
@@ -229,7 +230,7 @@ def get_stock_data(request):
         return Response(response_data)
 
     except Exception as e:
-        logger.error(f"Error fetching data for {symbol}: {str(e)}")
+        logger.error("Error fetching data for %s: %s", symbol, str(e))
         # Try fallback data if available
         if symbol in FALLBACK_STOCKS:
             return _build_fallback_response(symbol, FALLBACK_STOCKS[symbol])

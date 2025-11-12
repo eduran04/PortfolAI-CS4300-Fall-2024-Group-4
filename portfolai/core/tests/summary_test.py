@@ -9,9 +9,10 @@ Tests for /api/stock/ endpoint - Advanced Feature
 - Full integration testing
 """
 
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
-from unittest.mock import patch
 from django.conf import settings
 
 

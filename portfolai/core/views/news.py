@@ -5,12 +5,13 @@ News Views - Financial News Feed
 News aggregation endpoints with symbol filtering.
 """
 
+from datetime import datetime, timedelta
+import logging
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
-from datetime import datetime, timedelta
-import logging
 from ._clients import newsapi, FALLBACK_NEWS
 
 logger = logging.getLogger(__name__)
@@ -23,15 +24,17 @@ def _check_api_error(articles, context=""):
 
     error_msg = articles.get('message', 'Unknown error')
     error_code = articles.get('code', 'unknown')
-    logger.warning(f"News API error {context}: {error_code} - {error_msg}")
+    logger.warning("News API error %s: %s - %s", context, error_code, error_msg)
 
     if 'rate' in error_msg.lower() or 'limit' in error_msg.lower() or error_code == 'rateLimited':
         logger.error(
-            f"News API rate limit reached {context}. "
-            "Consider upgrading plan or reducing requests."
+            "News API rate limit reached %s. Consider upgrading plan or reducing requests.",
+            context
         )
 
-    raise Exception(f"News API error: {error_msg}")
+    # Raise a specific exception for API errors
+    # This is intentionally broad to handle various API error scenarios
+    raise ValueError(f"News API error: {error_msg}")  # pylint: disable=broad-exception-raised
 
 
 def _get_date_range():
@@ -57,7 +60,7 @@ def _get_symbol_news(symbol):
         _check_api_error(articles, f"for {symbol}")
         return articles
     except Exception as e:
-        logger.warning(f"News API failed for {symbol}: {e}")
+        logger.warning("News API failed for %s: %s", symbol, e)
         return _get_fallback_headlines(page_size=3, context=f"for {symbol}")
 
 
@@ -72,7 +75,7 @@ def _get_fallback_headlines(page_size=10, context=""):
         _check_api_error(articles, context)
         return articles
     except Exception as fallback_error:
-        logger.error(f"News API fallback also failed {context}: {fallback_error}")
+        logger.error("News API fallback also failed %s: %s", context, fallback_error)
         raise fallback_error
 
 
@@ -87,7 +90,7 @@ def _get_general_news():
         _check_api_error(articles, "for general news")
         return articles
     except Exception as e:
-        logger.warning(f"News API top headlines failed: {e}")
+        logger.warning("News API top headlines failed: %s", e)
         return _get_fallback_everything()
 
 
@@ -107,7 +110,7 @@ def _get_fallback_everything():
         _check_api_error(articles, "for general news fallback")
         return articles
     except Exception as fallback_error:
-        logger.error(f"News API fallback also failed: {fallback_error}")
+        logger.error("News API fallback also failed: %s", fallback_error)
         raise fallback_error
 
 
@@ -176,10 +179,10 @@ def get_news(request):
     if not force_refresh:
         cached_data = cache.get(cache_key)
         if cached_data:
-            logger.info(f'Returning cached news data for {symbol or "general"}')
+            logger.info('Returning cached news data for %s', symbol or "general")
             return Response(cached_data)
     else:
-        logger.info(f'Force refresh requested for news {symbol or "general"}, bypassing cache')
+        logger.info('Force refresh requested for news %s, bypassing cache', symbol or "general")
 
     if not settings.NEWS_API_KEY or not newsapi:
         return Response(_create_fallback_response())
@@ -208,7 +211,7 @@ def get_news(request):
         return Response(response_data)
 
     except Exception as e:
-        logger.error(f"Error fetching news: {str(e)}")
+        logger.error("Error fetching news: %s", str(e))
         fallback_data = _create_fallback_response()
         cache.set(cache_key, fallback_data, 60)
         return Response(fallback_data)

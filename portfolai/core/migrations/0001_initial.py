@@ -1,10 +1,15 @@
-# Generated manually for Watchlist model
+"""
+Django migration for initial Watchlist model creation.
+
+Generated manually for Watchlist model.
+"""
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
+    """Initial migration creating the Watchlist model."""
 
     initial = True
 
@@ -16,10 +21,25 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Watchlist',
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                (
+                    'id',
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name='ID'
+                    )
+                ),
                 ('symbol', models.CharField(max_length=10)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='watchlist_items', to=settings.AUTH_USER_MODEL)),
+                (
+                    'user',
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name='watchlist_items',
+                        to=settings.AUTH_USER_MODEL
+                    )
+                ),
             ],
             options={
                 'ordering': ['-created_at'],
@@ -27,4 +47,3 @@ class Migration(migrations.Migration):
             },
         ),
     ]
-
