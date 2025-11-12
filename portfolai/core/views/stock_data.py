@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
 from ._clients import finnhub_client, openai_client, FALLBACK_STOCKS
+from ..api_helpers import is_rate_limit_error
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,105 @@ def _get_fallback_or_error(symbol):
     )
 
 
+def _update_recent_searches(request, symbol):
+    """Update recent searches in session for chatbot context."""
+    if 'recent_searches' not in request.session:
+        request.session['recent_searches'] = []
+
+    recent_searches = request.session['recent_searches']
+    # Remove symbol if it exists (to move it to the end as most recent)
+    if symbol in recent_searches:
+        recent_searches.remove(symbol)
+    # Add symbol to the end (most recent)
+    recent_searches.append(symbol)
+    # Keep only last 5 searches
+    if len(recent_searches) > 5:
+        recent_searches.pop(0)
+    request.session['recent_searches'] = recent_searches
+    request.session.modified = True
+
+
+def _get_cached_stock_data(cache_key, force_refresh):
+    """Get cached stock data if available and not forcing refresh."""
+    if not force_refresh:
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            logger.info('Returning cached stock data for %s', cache_key.split('_')[-1])
+            return Response(cached_data)
+    else:
+        logger.info('Force refresh requested for %s, bypassing cache', cache_key.split('_')[-1])
+    return None
+
+
+def _fetch_and_validate_quote(symbol, cache_key):
+    """
+    Fetch and validate stock quote from API.
+    Returns tuple (quote, None) on success, (None, Response) on error/fallback.
+    """
+    try:
+        quote = finnhub_client.quote(symbol)
+    except Exception as api_error:  # pylint: disable=broad-exception-caught
+        # Check for rate limit errors
+        if is_rate_limit_error(api_error):
+            fallback_response = _handle_rate_limit(symbol, cache_key)
+            if fallback_response:
+                return None, fallback_response
+        raise api_error
+
+    # Check if quote data is valid
+    if not quote or quote.get('c') is None:
+        if symbol in FALLBACK_STOCKS:
+            return None, _build_fallback_response(symbol, FALLBACK_STOCKS[symbol])
+        return None, Response(
+            {"error": f"No data found for symbol {symbol}"},
+            status=404
+        )
+
+    return quote, None
+
+
+def _fetch_company_profile(symbol):
+    """
+    Fetch company profile from API.
+    Returns tuple (company_dict, company_name).
+    """
+    company = {}
+    company_name = symbol  # Default to symbol
+    try:
+        company = finnhub_client.company_profile2(symbol=symbol)
+        company_name = company.get('name', symbol)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not fetch company profile for %s: %s", symbol, e)
+        company = {}
+
+    return company, company_name
+
+
+def _build_stock_response_data(symbol, quote, company, company_name):
+    """Build stock response data dictionary from quote and company info."""
+    # Calculate price change and percentage
+    current_price = quote.get('c', 0)
+    previous_close = quote.get('pc', 0)
+    change = current_price - previous_close
+    change_percent = (change / previous_close * 100) if previous_close != 0 else 0
+
+    return {
+        "symbol": symbol,
+        "name": company_name,
+        "price": round(current_price, 2),
+        "change": round(change, 2),
+        "changePercent": round(change_percent, 2),
+        "open": quote.get('o', 0),
+        "high": quote.get('h', 0),
+        "low": quote.get('l', 0),
+        "volume": quote.get('v', 0),
+        "marketCap": company.get('marketCapitalization', 0) if company else 0,
+        "peRatio": company.get('pe', 0) if company else 0,
+        "yearHigh": quote.get('h', 0),  # Using current high as year high for now
+        "yearLow": quote.get('l', 0),   # Using current low as year low for now
+    }
+
+
 @api_view(["GET"])
 def stock_summary(request):
     """
@@ -110,7 +210,7 @@ def stock_summary(request):
             "ai_summary": ai_summary
         })
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         return Response({"error": str(e)}, status=500)
 
 
@@ -131,105 +231,38 @@ def get_stock_data(request):
         symbol = "AAPL"
 
     # Track recent searches in session (for chatbot context)
-    if 'recent_searches' not in request.session:
-        request.session['recent_searches'] = []
-
-    recent_searches = request.session['recent_searches']
-    # Remove symbol if it exists (to move it to the end as most recent)
-    if symbol in recent_searches:
-        recent_searches.remove(symbol)
-    # Add symbol to the end (most recent)
-    recent_searches.append(symbol)
-    # Keep only last 5 searches
-    if len(recent_searches) > 5:
-        recent_searches.pop(0)
-    request.session['recent_searches'] = recent_searches
-    request.session.modified = True
+    _update_recent_searches(request, symbol)
 
     # Define cache_key early so it's available throughout the function
     cache_key = f'stock_data_{symbol}'
 
     # Check cache first (1 minute cache) - skip if force_refresh is True
-    if not force_refresh:
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            logger.info('Returning cached stock data for %s', symbol)
-            return Response(cached_data)
-    else:
-        logger.info('Force refresh requested for %s, bypassing cache', symbol)
+    cached_response = _get_cached_stock_data(cache_key, force_refresh)
+    if cached_response:
+        return cached_response
 
     # Check if API key is available, if not use fallback data
     if not settings.FINNHUB_API_KEY or not finnhub_client:
         return _get_fallback_or_error(symbol)
 
     try:
-        # Fetch stock quote from Finnhub
-        try:
-            quote = finnhub_client.quote(symbol)
-        except Exception as api_error:
-            error_str = str(api_error).lower()
-            # Check for rate limit errors
-            is_rate_limited = (
-                'rate limit' in error_str
-                or '429' in error_str
-                or 'too many requests' in error_str
-            )
-            if is_rate_limited:
-                fallback_response = _handle_rate_limit(symbol, cache_key)
-                if fallback_response:
-                    return fallback_response
-            raise api_error
+        # Fetch and validate quote
+        quote, error_response = _fetch_and_validate_quote(symbol, cache_key)
+        if error_response:
+            return error_response
 
-        # Check if quote data is valid
-        if not quote or quote.get('c') is None:
-            if symbol in FALLBACK_STOCKS:
-                return _build_fallback_response(symbol, FALLBACK_STOCKS[symbol])
-            return Response(
-                {"error": f"No data found for symbol {symbol}"},
-                status=404
-            )
+        # Fetch company profile
+        company, company_name = _fetch_company_profile(symbol)
 
-        # Try to get company profile, but don't fail if it's not available
-        # Only fetch if we don't have name from quote (reduces API calls)
-        company = {}
-        company_name = symbol  # Default to symbol
-        try:
-            # Only fetch company profile if we really need it (reduces API calls)
-            # For basic display, we can use symbol as name
-            company = finnhub_client.company_profile2(symbol=symbol)
-            company_name = company.get('name', symbol)
-        except Exception as e:
-            logger.warning("Could not fetch company profile for %s: %s", symbol, e)
-            company = {}
-
-        # Calculate price change and percentage
-        current_price = quote.get('c', 0)
-        previous_close = quote.get('pc', 0)
-        change = current_price - previous_close
-        change_percent = (change / previous_close * 100) if previous_close != 0 else 0
-
-        response_data = {
-            "symbol": symbol,
-            "name": company_name,
-            "price": round(current_price, 2),
-            "change": round(change, 2),
-            "changePercent": round(change_percent, 2),
-            "open": quote.get('o', 0),
-            "high": quote.get('h', 0),
-            "low": quote.get('l', 0),
-            "volume": quote.get('v', 0),
-            "marketCap": company.get('marketCapitalization', 0) if company else 0,
-            "peRatio": company.get('pe', 0) if company else 0,
-            "yearHigh": quote.get('h', 0),  # Using current high as year high for now
-            "yearLow": quote.get('l', 0),   # Using current low as year low for now
-        }
+        # Build response data
+        response_data = _build_stock_response_data(symbol, quote, company, company_name)
 
         # Cache the response for 1 minute
         cache.set(cache_key, response_data, 60)
 
         return Response(response_data)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Error fetching data for %s: %s", symbol, str(e))
         # Try fallback data if available
         if symbol in FALLBACK_STOCKS:

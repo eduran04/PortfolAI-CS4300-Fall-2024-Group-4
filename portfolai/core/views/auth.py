@@ -11,11 +11,12 @@ from django.views.generic import CreateView
 from ..forms import UserRegistrationForm
 
 
-class SignUpView(CreateView):
+class SignUpView(CreateView):  # pylint: disable=too-many-ancestors
     """
     User registration view.
     Creates a new user account with email (required and unique).
     Redirects to login page after successful registration.
+    Django framework pattern requires extending CreateView.
     """
     form_class = UserRegistrationForm
     template_name = 'registration/signup.html'

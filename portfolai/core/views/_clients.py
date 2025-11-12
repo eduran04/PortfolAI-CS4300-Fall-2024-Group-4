@@ -13,7 +13,11 @@ import openai
 import finnhub
 from newsapi import NewsApiClient
 from django.conf import settings
-from ..services import MarketDataService, FALLBACK_STOCKS, FALLBACK_NEWS  # noqa: F401
+from ..services import (  # noqa: F401  # pylint: disable=unused-import
+    MarketDataService,
+    FALLBACK_STOCKS,
+    FALLBACK_NEWS,
+)
 
 logger = logging.getLogger(__name__)
 

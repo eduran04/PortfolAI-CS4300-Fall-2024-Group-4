@@ -15,40 +15,5 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Dependency review
-        id: dependency-review
+      - name: Dependency Report
         uses: actions/dependency-review-action@v4
-
-      - name: Generate Dependency Review Report
-        if: always()
-        run: |
-          cat > dependency_review_report.json << EOF
-          {
-            "scan_status": "${{ steps.dependency-review.outcome }}",
-            "workflow_run_id": "${{ github.run_id }}",
-            "workflow_run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-            "pull_request_number": "${{ github.event.pull_request.number }}",
-            "pull_request_url": "${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}",
-            "repository": "${{ github.repository }}",
-            "branch": "${{ github.head_ref }}",
-            "commit_sha": "${{ github.event.pull_request.head.sha }}",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "scanner": "GitHub Dependency Review Action v4",
-            "package_ecosystem": "pip",
-            "report_type": "dependency_vulnerability_scan",
-            "summary": {
-              "status": "${{ steps.dependency-review.outcome }}",
-              "message": "Dependency vulnerability scan completed. Check workflow logs for detailed findings."
-            }
-          }
-          EOF
-          echo "✅ Dependency review report generated: dependency_review_report.json"
-
-      - name: Upload Dependency Review Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-review-report
-          path: dependency_review_report.json
-          retention-days: 30
-          if-no-files-found: error

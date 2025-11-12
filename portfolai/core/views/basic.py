@@ -30,7 +30,7 @@ def trading_dashboard(request):
 
 
 @api_view(["GET"])
-def hello_api(request):
+def hello_api(_request):
     """
     Basic API connectivity test - Feature: API Health Check
     Simple endpoint to verify API functionality

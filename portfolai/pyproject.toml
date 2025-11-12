@@ -1,5 +1,6 @@
 [tool.coverage.run]
 source = ["core"]
+source_pkgs = ["core"]
 omit = [
     "*/migrations/*",
     "*/tests.py",

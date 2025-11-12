@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @api_view(["GET"])
-def get_market_movers(request):
+def get_market_movers(_request):
     """
     Market Movers Dashboard - Feature 2: Top Gainers & Losers
     Endpoint: /api/market-movers/
@@ -41,6 +41,6 @@ def get_market_movers(request):
 
         return Response(market_movers_data)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Error in market movers view: %s", e)
         return Response({"error": "Unable to retrieve market movers"}, status=500)

@@ -141,7 +141,7 @@ def _fetch_stock_data(symbol):
                 "low": quote.get('l', 0),
                 "open": quote.get('o', 0)
             }
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Warning: Could not fetch stock data for analysis: {e}")
 
     return None
@@ -183,7 +183,7 @@ def _fetch_news_context(symbol):
                 f"\n\n**Recent News about {symbol}:**\n"
                 + "\n".join(recent_news)
             )
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Warning: Could not fetch news for analysis: {e}")
 
     return ""
@@ -219,10 +219,61 @@ def _fetch_company_context(symbol):
             context += f"- Market Cap: ${market_cap:,.0f}\n"
 
         return context
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Warning: Could not fetch company profile for analysis: {e}")
 
     return ""
+
+
+def _build_analysis_context(symbol, stock_data):
+    """
+    Build analysis context string from symbol and stock data.
+
+    Args:
+        symbol: Stock symbol
+        stock_data: Stock data dictionary or None
+
+    Returns:
+        str: Formatted context string
+    """
+    context = f"Analyze the stock {symbol}"
+    if stock_data:
+        context += (
+            f" with current price ${stock_data['price']:.2f}, "
+            f"change {stock_data['change']:.2f} "
+            f"({stock_data['changePercent']:.2f}%), "
+            f"volume {stock_data['volume']:,}, "
+            f"high ${stock_data['high']:.2f}, "
+            f"low ${stock_data['low']:.2f}, "
+            f"open ${stock_data['open']:.2f}"
+        )
+    return context
+
+
+def _generate_ai_analysis(_symbol, enhanced_prompt):
+    """
+    Generate AI analysis using OpenAI API.
+
+    Args:
+        _symbol: Stock symbol (unused, kept for API consistency)
+        enhanced_prompt: Complete prompt with all context
+
+    Returns:
+        str: AI-generated analysis text
+
+    Raises:
+        Exception: If OpenAI API call fails
+    """
+    response = openai_client.chat.completions.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": enhanced_prompt}
+        ],
+        max_tokens=1500,
+        temperature=0.7
+    )
+    return response.choices[0].message.content
 
 
 @api_view(["GET"])
@@ -258,18 +309,8 @@ def portfolai_analysis(request):
         # Get stock data for context
         stock_data = _fetch_stock_data(symbol)
 
-        # Prepare context for OpenAI
-        context = f"Analyze the stock {symbol}"
-        if stock_data:
-            context += (
-                f" with current price ${stock_data['price']:.2f}, "
-                f"change {stock_data['change']:.2f} "
-                f"({stock_data['changePercent']:.2f}%), "
-                f"volume {stock_data['volume']:,}, "
-                f"high ${stock_data['high']:.2f}, "
-                f"low ${stock_data['low']:.2f}, "
-                f"open ${stock_data['open']:.2f}"
-            )
+        # Build context for OpenAI
+        context = _build_analysis_context(symbol, stock_data)
 
         # Create the prompt for OpenAI with web search
         prompt = ANALYSIS_PROMPT.format(symbol=symbol, context=context)
@@ -281,18 +322,9 @@ def portfolai_analysis(request):
         # Enhanced prompt with real-time data
         enhanced_prompt = prompt + additional_context
 
-        # Use standard chat completions API
+        # Generate AI analysis
         try:
-            response = openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": enhanced_prompt}
-                ],
-                max_tokens=1500,
-                temperature=0.7
-            )
-            analysis = response.choices[0].message.content
+            analysis = _generate_ai_analysis(symbol, enhanced_prompt)
 
             return Response({
                 "symbol": symbol,
