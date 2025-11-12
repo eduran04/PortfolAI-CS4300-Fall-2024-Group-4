@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Run Tests
+    name: Run Tests and Security Checks
     runs-on: ubuntu-latest
 
     env:
@@ -18,7 +18,8 @@ jobs:
       ALLOWED_HOSTS: localhost,127.0.0.1,test
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,6 +31,7 @@ jobs:
           cd portfolai
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install bandit pylint flake8 safety
 
       - name: Run migrations
         run: |
@@ -42,20 +44,34 @@ jobs:
           cd portfolai
           python manage.py collectstatic --noinput
 
-      - name: Run Pylint
-        run: |
-          cd portfolai
-          python -m pylint core || true
-
       - name: Run Bandit Security Scan
         run: |
-          pip install bandit || true
           cd portfolai
-          bandit -r core/ -f txt || true
+          echo "=== Bandit Security Scan ==="
+          bandit -r core -c bandit.yaml -s MEDIUM
 
-      - name: Run tests with coverage
+      - name: Run PyLint Code Quality Check
         run: |
           cd portfolai
+          echo "=== PyLint Code Quality Check ==="
+          python -m pylint core
+
+      - name: Run Flake8 Style Check
+        run: |
+          cd portfolai
+          echo "=== Flake8 Style Check ==="
+          flake8 core
+
+      - name: Run Safety Dependency Vulnerability Check
+        run: |
+          cd portfolai
+          echo "=== Safety Dependency Vulnerability Check ==="
+          safety check
+
+      - name: Run Code Coverage Check
+        run: |
+          cd portfolai
+          echo "=== Code Coverage Check ==="
           pytest -v --cov=core --cov-report=term-missing --cov-fail-under=80 --timeout=30 --timeout-method=thread
 
   deploy:
