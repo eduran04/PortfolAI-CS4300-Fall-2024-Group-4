@@ -4,7 +4,7 @@ import json
 import os
 import re
 import sys
-from github import Github, GithubException
+from github import Auth, Github, GithubException
 from github.PullRequest import PullRequest
 
 
@@ -22,7 +22,7 @@ def initialize() -> tuple[Github, str, str]:
     if not pr_id:
         raise ValueError("GITHUB_PR_ID is not set")
     
-    g = Github(github_token)
+    g = Github(auth=Auth.Token(github_token))
     return g, repo_name, pr_id
 
 
