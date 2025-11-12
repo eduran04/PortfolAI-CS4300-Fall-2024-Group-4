@@ -1,0 +1,5 @@
+[bandit]
+# Skip B106 (hardcoded_password_funcarg) checks
+# Hardcoded passwords in test files are acceptable and not security risks
+skips = B106
+
