@@ -1,4 +1,6 @@
 [run]
+source = core
+source_pkgs = core
 omit = 
     */core/services.py
     */migrations/*

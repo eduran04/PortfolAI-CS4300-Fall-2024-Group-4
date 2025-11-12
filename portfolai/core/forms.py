@@ -7,10 +7,11 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 
-class UserRegistrationForm(UserCreationForm):
+class UserRegistrationForm(UserCreationForm):  # pylint: disable=too-many-ancestors
     """
     Custom user registration form that extends UserCreationForm
     with email field (required and unique).
+    Django framework pattern requires extending UserCreationForm.
     """
     email = forms.EmailField(
         required=True,
@@ -66,7 +67,7 @@ class UserRegistrationForm(UserCreationForm):
         label='Password confirmation'
     )
 
-    class Meta:
+    class Meta:  # pylint: disable=too-few-public-methods
         """Meta options for UserRegistrationForm."""
         model = User
         fields = ('username', 'email', 'password1', 'password2')

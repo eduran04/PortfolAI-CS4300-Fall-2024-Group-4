@@ -114,7 +114,7 @@ def _get_user_context(request):
             else:
                 # Explicitly state empty to prevent AI from hallucinating
                 context_parts.append("User's watchlist: empty")
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.error("Error fetching watchlist for user %s: %s", request.user.username, e)
             context_parts.append("User's watchlist: error fetching data")
 
@@ -157,7 +157,7 @@ def _needs_web_search(user_message, client):
         answer = response.choices[0].message.content.strip().lower()
         return answer.startswith('yes')
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.warning("Error classifying query for web search: %s", e)
         # Fallback: return False to avoid unnecessary API calls
         return False
@@ -212,7 +212,7 @@ def _get_openai_web_context(symbol):
     except AttributeError:
         # responses.create() not available in this SDK version
         return ""
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.warning("OpenAI web search failed for %s: %s", symbol, e)
         return ""
 
@@ -252,12 +252,12 @@ def _get_newsapi_context(symbol):
         articles = news_articles.get('articles') if news_articles else None
         return _format_news_articles(articles, symbol)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.warning("Could not fetch news for %s: %s", symbol, e)
         return ""
 
 
-def _get_web_search_context(symbols, user_message):
+def _get_web_search_context(symbols, _user_message):
     """
     Get web search context using both OpenAI's web search tool (if available) and NewsAPI.
     Returns combined context from both sources.
@@ -288,7 +288,7 @@ def chat_api(request):
     try:
         data = json.loads(request.body.decode("utf-8"))
         user_message = data.get("message", "").strip()
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         user_message = ""
 
     if not user_message:
@@ -356,7 +356,7 @@ def chat_api(request):
 
         return JsonResponse({"response": reply}, status=200)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Chatbot error: %s", e)
         return JsonResponse(
             {

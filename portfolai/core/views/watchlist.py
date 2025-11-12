@@ -32,7 +32,7 @@ def get_watchlist(request):
             "symbols": symbols,
             "count": len(symbols)
         })
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Error fetching watchlist for user %s: %s", request.user.username, str(e))
         return Response({"error": f"Failed to fetch watchlist: {str(e)}"}, status=500)
 
@@ -72,7 +72,7 @@ def add_to_watchlist(request):
             "symbol": symbol
         }, status=201)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         # Log detailed error information for debugging
         error_type = type(e).__name__
         error_message = str(e)
@@ -121,7 +121,7 @@ def remove_from_watchlist(request):
             "symbol": symbol
         }, status=200)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         symbol_attempted = (
             request.data.get('symbol')
             or request.GET.get('symbol', 'unknown')

@@ -14,6 +14,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 from core.models import Watchlist
+from .test_helpers import assert_watchlist_response_empty, assert_watchlist_response_with_items
 
 
 class WatchlistTests(TestCase):
@@ -32,11 +33,7 @@ class WatchlistTests(TestCase):
         """Test getting empty watchlist"""
         url = reverse('get_watchlist')
         response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data['count'], 0)
-        self.assertEqual(data['symbols'], [])
+        assert_watchlist_response_empty(response, self)
 
     def test_add_to_watchlist(self):
         """Test adding symbol to watchlist"""
@@ -65,12 +62,7 @@ class WatchlistTests(TestCase):
 
         url = reverse('get_watchlist')
         response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data['count'], 2)
-        self.assertIn('AAPL', data['symbols'])
-        self.assertIn('MSFT', data['symbols'])
+        assert_watchlist_response_with_items(response, self, 2, ['AAPL', 'MSFT'])
 
     def test_remove_from_watchlist(self):
         """Test removing symbol from watchlist"""

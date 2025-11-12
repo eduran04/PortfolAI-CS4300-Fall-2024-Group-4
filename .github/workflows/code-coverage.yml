@@ -58,7 +58,7 @@ jobs:
     - name: Run tests with coverage
       run: |
         cd portfolai
-        pytest -v --cov=core.views --cov=core.forms --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
+        pytest -v --cov=core --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
     
     - name: Post coverage comment to PR
       if: github.event_name == 'pull_request'

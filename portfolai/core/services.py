@@ -19,6 +19,7 @@ import logging
 import finnhub
 from newsapi import NewsApiClient
 from django.conf import settings
+from .api_helpers import is_rate_limit_error, process_news_articles
 
 logger = logging.getLogger(__name__)
 
@@ -76,12 +77,13 @@ FALLBACK_NEWS = [
 ]
 
 
-class MarketDataService:
+class MarketDataService:  # pylint: disable=too-few-public-methods
     """
     Service class for handling market data operations.
 
     Provides methods for retrieving market movers data with comprehensive
     error handling and fallback mechanisms.
+    Service class with single public method is acceptable design.
     """
 
     def __init__(self):
@@ -116,14 +118,8 @@ class MarketDataService:
                     try:
                         quote = self.finnhub_client.quote(symbol)
                     except Exception as api_error:
-                        error_str = str(api_error).lower()
                         # Check for rate limit errors - stop fetching if rate limited
-                        is_rate_limited = (
-                            'rate limit' in error_str
-                            or '429' in error_str
-                            or 'too many requests' in error_str
-                        )
-                        if is_rate_limited:
+                        if is_rate_limit_error(api_error):
                             logger.warning(
                                 'Rate limit hit while fetching market movers, '
                                 'using partial data'
@@ -195,12 +191,13 @@ class MarketDataService:
         }
 
 
-class NewsService:
+class NewsService:  # pylint: disable=too-few-public-methods
     """
     Service class for handling financial news operations.
 
     Provides methods for retrieving financial news with symbol filtering
     and comprehensive error handling.
+    Service class with single public method is acceptable design.
     """
 
     def __init__(self):
@@ -278,40 +275,7 @@ class NewsService:
                     "fallback": True
                 }
 
-            news_items = []
-            for article in articles.get('articles', []):
-                # Skip articles without required fields
-                if not article.get('title') or not article.get('url'):
-                    continue
-
-                # Format time
-                published_time = article.get('publishedAt', '')
-                if published_time:
-                    try:
-                        dt = datetime.fromisoformat(
-                            published_time.replace('Z', '+00:00')
-                        )
-                        time_ago = datetime.now(dt.tzinfo) - dt
-                        if time_ago.days > 0:
-                            time_str = f"{time_ago.days}d ago"
-                        elif time_ago.seconds > 3600:
-                            time_str = f"{time_ago.seconds // 3600}h ago"
-                        else:
-                            time_str = f"{time_ago.seconds // 60}m ago"
-                    except Exception:  # pylint: disable=broad-exception-caught
-                        # Catch all exceptions when parsing time - fallback to "Recently"
-                        time_str = "Recently"
-                else:
-                    time_str = "Recently"
-
-                news_items.append({
-                    "title": article.get('title', ''),
-                    "source": article.get('source', {}).get('name', 'Unknown Source'),
-                    "time": time_str,
-                    "url": article.get('url', '#'),
-                    "description": article.get('description', ''),
-                    "publishedAt": published_time
-                })
+            news_items = process_news_articles(articles)
 
             # If no valid articles found, use fallback
             if not news_items:

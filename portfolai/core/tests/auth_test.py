@@ -42,11 +42,13 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user
 from core.models import Watchlist
+from .test_helpers import assert_watchlist_response_empty, assert_watchlist_response_with_items
 
 
-class AuthenticationTests(TestCase):
+class AuthenticationTests(TestCase):  # pylint: disable=too-many-public-methods
     """
     Test suite for authentication functionality.
+    Comprehensive test coverage requires many test methods.
 
     Includes tests for:
     - User registration (valid/invalid data, duplicates)
@@ -461,11 +463,7 @@ class AuthenticationTests(TestCase):
 
         url = reverse('get_watchlist')
         response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data['count'], 0)
-        self.assertEqual(data['symbols'], [])
+        assert_watchlist_response_empty(response, self)
 
     def test_add_to_watchlist_when_authenticated(self) -> None:
         """Test POST /api/watchlist/add/ succeeds when authenticated."""
@@ -633,12 +631,9 @@ class AuthenticationTests(TestCase):
         url = reverse('get_watchlist')
         response = self.client.get(url)
 
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
         # API filters by authenticated user - should only see first user's items
-        self.assertEqual(data['count'], 2)
-        self.assertIn('AAPL', data['symbols'])
-        self.assertIn('MSFT', data['symbols'])
+        assert_watchlist_response_with_items(response, self, 2, ['AAPL', 'MSFT'])
+        data = response.json()
         self.assertNotIn('GOOGL', data['symbols'])
         self.assertNotIn('TSLA', data['symbols'])
 

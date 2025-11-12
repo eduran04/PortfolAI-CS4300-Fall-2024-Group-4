@@ -16,10 +16,14 @@ from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from django.conf import settings
+from .test_helpers import assert_fallback_response
 
 
-class StockDataTests(TestCase):
-    """Test suite for stock data endpoint functionality"""
+class StockDataTests(TestCase):  # pylint: disable=too-many-public-methods
+    """
+    Test suite for stock data endpoint functionality.
+    Comprehensive test coverage requires many test methods.
+    """
 
     def test_get_stock_data_no_symbol(self):
         """Test stock data endpoint without symbol parameter"""
@@ -168,11 +172,7 @@ class StockDataTests(TestCase):
 
                     url = reverse('get_stock_data')
                     response = self.client.get(url, {'symbol': 'AAPL'})
-
-                    self.assertEqual(response.status_code, 200)
-                    data = response.json()
-                    self.assertIn('symbol', data)
-                    self.assertTrue(data.get('fallback', False))
+                    assert_fallback_response(response, self, 'AAPL')
 
     def test_get_stock_data_company_profile_exception(self):
         """Test stock data when company profile fetch fails"""
@@ -223,11 +223,7 @@ class StockDataTests(TestCase):
             with patch('core.views.stock_data.finnhub_client', None):
                 url = reverse('get_stock_data')
                 response = self.client.get(url, {'symbol': 'AAPL'})
-
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-                self.assertTrue(data.get('fallback', False))
+                assert_fallback_response(response, self, 'AAPL')
 
     def test_get_stock_data_with_quote_exception(self):
         """Test stock data when quote fetch throws exception"""

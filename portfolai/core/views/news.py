@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
 from ._clients import newsapi, FALLBACK_NEWS
+from ..api_helpers import process_news_articles
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ def _get_symbol_news(symbol):
         )
         _check_api_error(articles, f"for {symbol}")
         return articles
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.warning("News API failed for %s: %s", symbol, e)
         return _get_fallback_headlines(page_size=3, context=f"for {symbol}")
 
@@ -74,7 +75,7 @@ def _get_fallback_headlines(page_size=10, context=""):
         )
         _check_api_error(articles, context)
         return articles
-    except Exception as fallback_error:
+    except Exception as fallback_error:  # pylint: disable=broad-exception-caught
         logger.error("News API fallback also failed %s: %s", context, fallback_error)
         raise fallback_error
 
@@ -89,7 +90,7 @@ def _get_general_news():
         )
         _check_api_error(articles, "for general news")
         return articles
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.warning("News API top headlines failed: %s", e)
         return _get_fallback_everything()
 
@@ -109,48 +110,11 @@ def _get_fallback_everything():
         )
         _check_api_error(articles, "for general news fallback")
         return articles
-    except Exception as fallback_error:
+    except Exception as fallback_error:  # pylint: disable=broad-exception-caught
         logger.error("News API fallback also failed: %s", fallback_error)
         raise fallback_error
 
 
-def _format_time_ago(published_time):
-    """Format published time as relative time string."""
-    if not published_time:
-        return "Recently"
-
-    try:
-        dt = datetime.fromisoformat(published_time.replace('Z', '+00:00'))
-        time_ago = datetime.now(dt.tzinfo) - dt
-
-        if time_ago.days > 0:
-            return f"{time_ago.days}d ago"
-        if time_ago.seconds > 3600:
-            return f"{time_ago.seconds // 3600}h ago"
-        return f"{time_ago.seconds // 60}m ago"
-    except Exception:
-        return "Recently"
-
-
-def _process_articles(articles):
-    """Process raw articles into formatted news items."""
-    news_items = []
-
-    for article in articles.get('articles', []):
-        if not article.get('title') or not article.get('url'):
-            continue
-
-        published_time = article.get('publishedAt', '')
-        news_items.append({
-            "title": article.get('title', ''),
-            "source": article.get('source', {}).get('name', 'Unknown Source'),
-            "time": _format_time_ago(published_time),
-            "url": article.get('url', '#'),
-            "description": article.get('description', ''),
-            "publishedAt": published_time
-        })
-
-    return news_items
 
 
 def _create_fallback_response():
@@ -197,7 +161,7 @@ def get_news(request):
             logger.warning("No articles found in NewsAPI response")
             return Response(_create_fallback_response())
 
-        news_items = _process_articles(articles)
+        news_items = process_news_articles(articles)
 
         if not news_items:
             return Response(_create_fallback_response())
@@ -210,7 +174,7 @@ def get_news(request):
         cache.set(cache_key, response_data, 600)
         return Response(response_data)
 
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Error fetching news: %s", str(e))
         fallback_data = _create_fallback_response()
         cache.set(cache_key, fallback_data, 60)

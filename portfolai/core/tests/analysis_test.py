@@ -15,6 +15,7 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.urls import reverse
 from django.conf import settings
+from .test_helpers import assert_fallback_response
 
 
 class AnalysisTests(TestCase):
@@ -317,11 +318,7 @@ class AnalysisTests(TestCase):
             with patch('core.views.analysis.openai_client', None):
                 url = reverse('portfolai_analysis')
                 response = self.client.get(url, {'symbol': 'AAPL'})
-
-                self.assertEqual(response.status_code, 200)
-                data = response.json()
-                self.assertIn('symbol', data)
-                self.assertTrue(data.get('fallback', False))
+                assert_fallback_response(response, self, 'AAPL')
 
     def test_portfolai_analysis_with_quote_exception(self):
         """Test PortfolAI analysis when quote fetch throws exception"""
@@ -329,11 +326,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', None):
             url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': 'AAPL'})
-
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertIn('symbol', data)
-            self.assertTrue(data.get('fallback', False))
+            assert_fallback_response(response, self, 'AAPL')
 
     def test_portfolai_analysis_with_news_exception(self):
         """Test PortfolAI analysis when news fetch throws exception"""
