@@ -235,7 +235,7 @@ def portfolai_analysis(request):
     symbol = request.GET.get("symbol", "").upper()
 
     if not symbol:
-        return Response({"error": "Symbol parameter is required"}, status=400)
+        return Response({"error": "Symbol parameter is required"}, status=400) # This should fail the pylint checks, because it is too long.
 
     # Check if API key is available
     if not settings.OPENAI_API_KEY or not openai_client:
