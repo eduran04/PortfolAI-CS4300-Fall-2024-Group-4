@@ -47,7 +47,16 @@ jobs:
           echo ""
           echo "=== Bandit Summary ==="
           if [ -f bandit.json ]; then
-            python -c "import json; data = json.load(open('bandit.json')); results = data.get('results', []); high = sum(1 for r in results if r.get('issue_severity') == 'HIGH'); med = sum(1 for r in results if r.get('issue_severity') == 'MEDIUM'); low = sum(1 for r in results if r.get('issue_severity') == 'LOW'); print(f'HIGH: {high}, MEDIUM: {med}, LOW: {low}, Total: {len(results)}')"
+            python << 'EOF'
+          import json
+          with open('bandit.json') as f:
+              data = json.load(f)
+          results = data.get('results', [])
+          high = sum(1 for r in results if r.get('issue_severity') == 'HIGH')
+          med = sum(1 for r in results if r.get('issue_severity') == 'MEDIUM')
+          low = sum(1 for r in results if r.get('issue_severity') == 'LOW')
+          print(f'HIGH: {high}, MEDIUM: {med}, LOW: {low}, Total: {len(results)}')
+          EOF
           fi
         continue-on-error: true
       
@@ -89,5 +98,12 @@ jobs:
         run: |
           cd portfolai
           if [ -f bandit.json ]; then
-            python -c "import json; data = json.load(open('bandit.json')); high_count = sum(1 for r in data.get('results', []) if r.get('issue_severity') == 'HIGH'); exit(1 if high_count > 0 else 0)"
+            python << 'EOF'
+          import json
+          with open('bandit.json') as f:
+              data = json.load(f)
+          results = data.get('results', [])
+          high_count = sum(1 for r in results if r.get('issue_severity') == 'HIGH')
+          exit(1 if high_count > 0 else 0)
+          EOF
           fi
