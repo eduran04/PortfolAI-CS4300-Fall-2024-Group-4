@@ -42,4 +42,4 @@ jobs:
       - name: Run Bandit (Static Code Analysis)
         run: |
           cd portfolai
-          bandit -r core -s MEDIUM --exit-zero
+          bandit -r core -s MEDIUM --exit-zero -c bandit.yaml
