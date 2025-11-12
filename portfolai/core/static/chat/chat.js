@@ -4,6 +4,7 @@ const send = document.getElementById("chat-send");
 const historyDiv = document.getElementById("chat-history");
 const chatHeader = document.getElementById("chat-header");
 const closeBtn = document.getElementById("chat-close");
+const clearBtn = document.getElementById("chat-clear");
 const chatIcon = document.getElementById("chat-icon");
 
 let isWaiting = false;
@@ -103,6 +104,25 @@ async function sendMessage() {
   }
 }
 
+// --- Clear Chat --- //
+async function clearChat() {
+  try {
+    const res = await fetch("/api/chat/clear/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      // Clear local chat history display
+      historyDiv.innerHTML = "";
+      appendMessage("bot", "Chat history cleared. How can I help you?");
+    }
+  } catch (err) {
+    console.error("Clear chat error:", err);
+  }
+}
+
 // --- Event Listeners --- //
 input.addEventListener("focus", showChatHistory);
 input.addEventListener("input", showChatHistory);
@@ -111,3 +131,4 @@ input.addEventListener("keypress", (e) => {
 });
 send.addEventListener("click", sendMessage);
 closeBtn.addEventListener("click", hideChatHistory);
+if (clearBtn) clearBtn.addEventListener("click", clearChat);

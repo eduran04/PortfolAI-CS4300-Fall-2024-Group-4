@@ -5,10 +5,11 @@ Market Movers Views - Market Analysis Dashboard
 Market analysis endpoints for trending stocks.
 """
 
+import logging
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.cache import cache
-import logging
 from ._clients import MarketDataService
 
 logger = logging.getLogger(__name__)
@@ -29,18 +30,17 @@ def get_market_movers(request):
     if cached_data:
         logger.info('Returning cached market movers data')
         return Response(cached_data)
-    
+
     try:
         # Use service layer to handle business logic
         market_data_service = MarketDataService()
         market_movers_data = market_data_service.get_market_movers()
-        
+
         # Cache the response for 2 minutes
         cache.set(cache_key, market_movers_data, 120)
-        
-        return Response(market_movers_data)
-        
-    except Exception as e:
-        logger.error(f"Error in market movers view: {e}")
-        return Response({"error": "Unable to retrieve market movers"}, status=500)
 
+        return Response(market_movers_data)
+
+    except Exception as e:
+        logger.error("Error in market movers view: %s", e)
+        return Response({"error": "Unable to retrieve market movers"}, status=500)

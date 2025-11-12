@@ -15,7 +15,12 @@ class UserRegistrationForm(UserCreationForm):
     email = forms.EmailField(
         required=True,
         widget=forms.EmailInput(attrs={
-            'class': 'mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100',
+            'class': (
+                'mt-1 focus:ring-indigo-500 focus:border-indigo-500 '
+                'block w-full shadow-sm sm:text-sm border-gray-300 '
+                'dark:border-gray-600 rounded-md p-3 bg-gray-50 '
+                'dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+            ),
             'autocomplete': 'email',
             'placeholder': 'Enter your email address'
         }),
@@ -23,7 +28,12 @@ class UserRegistrationForm(UserCreationForm):
     )
     username = forms.CharField(
         widget=forms.TextInput(attrs={
-            'class': 'mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100',
+            'class': (
+                'mt-1 focus:ring-indigo-500 focus:border-indigo-500 '
+                'block w-full shadow-sm sm:text-sm border-gray-300 '
+                'dark:border-gray-600 rounded-md p-3 bg-gray-50 '
+                'dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+            ),
             'autocomplete': 'username',
             'placeholder': 'Choose a username'
         }),
@@ -31,7 +41,12 @@ class UserRegistrationForm(UserCreationForm):
     )
     password1 = forms.CharField(
         widget=forms.PasswordInput(attrs={
-            'class': 'mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100',
+            'class': (
+                'mt-1 focus:ring-indigo-500 focus:border-indigo-500 '
+                'block w-full shadow-sm sm:text-sm border-gray-300 '
+                'dark:border-gray-600 rounded-md p-3 bg-gray-50 '
+                'dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+            ),
             'autocomplete': 'new-password',
             'placeholder': 'Enter a password'
         }),
@@ -39,7 +54,12 @@ class UserRegistrationForm(UserCreationForm):
     )
     password2 = forms.CharField(
         widget=forms.PasswordInput(attrs={
-            'class': 'mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100',
+            'class': (
+                'mt-1 focus:ring-indigo-500 focus:border-indigo-500 '
+                'block w-full shadow-sm sm:text-sm border-gray-300 '
+                'dark:border-gray-600 rounded-md p-3 bg-gray-50 '
+                'dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+            ),
             'autocomplete': 'new-password',
             'placeholder': 'Confirm your password'
         }),
@@ -47,6 +67,7 @@ class UserRegistrationForm(UserCreationForm):
     )
 
     class Meta:
+        """Meta options for UserRegistrationForm."""
         model = User
         fields = ('username', 'email', 'password1', 'password2')
 
@@ -68,4 +89,3 @@ class UserRegistrationForm(UserCreationForm):
         if commit:
             user.save()
         return user
-

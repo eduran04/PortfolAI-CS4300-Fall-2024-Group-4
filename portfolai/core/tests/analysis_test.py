@@ -10,9 +10,10 @@ Tests for /api/portfolai-analysis/ endpoint (Feature 4)
 - Analysis content validation
 """
 
+from unittest.mock import patch
+
 from django.test import TestCase
 from django.urls import reverse
-from unittest.mock import patch
 from django.conf import settings
 
 
@@ -23,7 +24,7 @@ class AnalysisTests(TestCase):
         """Test PortfolAI analysis without symbol"""
         url = reverse('portfolai_analysis')
         response = self.client.get(url)
-        
+
         self.assertEqual(response.status_code, 400)
         data = response.json()
         self.assertIn('error', data)
@@ -34,7 +35,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', None):
             url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': 'AAPL'})
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('symbol', data)
@@ -45,7 +46,7 @@ class AnalysisTests(TestCase):
         """Test PortfolAI analysis with empty symbol"""
         url = reverse('portfolai_analysis')
         response = self.client.get(url, {'symbol': ''})
-        
+
         self.assertEqual(response.status_code, 400)
         data = response.json()
         self.assertIn('error', data)
@@ -56,7 +57,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', None):
             url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': '   '})
-            
+
             # Whitespace actually works and returns 200 with fallback data
             self.assertEqual(response.status_code, 200)
             data = response.json()
@@ -68,7 +69,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', None):
             url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': 'aapl'})
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertEqual(data['symbol'], 'AAPL')
@@ -79,7 +80,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', None):
             url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': 'AAPL'})
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('symbol', data)
@@ -90,7 +91,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', None):
             url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': 'AAPL'})
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('symbol', data)
@@ -103,7 +104,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', None):
             url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': 'AAPL'})
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('symbol', data)
@@ -114,7 +115,7 @@ class AnalysisTests(TestCase):
         """Test PortfolAI analysis with invalid symbol characters"""
         url = reverse('portfolai_analysis')
         response = self.client.get(url, {'symbol': '!@#$%'})
-        
+
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertIn('symbol', data)
@@ -126,7 +127,7 @@ class AnalysisTests(TestCase):
             with patch('core.views.analysis.finnhub_client') as mock_finnhub:
                 with patch('core.views.analysis.openai_client') as mock_openai:
                     mock_finnhub.quote.side_effect = Exception("Stock data error")
-                    
+
                     # Mock OpenAI response
                     mock_response = type('obj', (object,), {
                         'choices': [type('obj', (object,), {
@@ -136,10 +137,10 @@ class AnalysisTests(TestCase):
                         })]
                     })
                     mock_openai.chat.completions.create.return_value = mock_response
-                    
+
                     url = reverse('portfolai_analysis')
                     response = self.client.get(url, {'symbol': 'AAPL'})
-                    
+
                     self.assertEqual(response.status_code, 200)
                     data = response.json()
                     self.assertIn('symbol', data)
@@ -148,11 +149,14 @@ class AnalysisTests(TestCase):
         """Test PortfolAI analysis when news fetch fails"""
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.analysis.finnhub_client') as mock_finnhub:
-                mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                mock_finnhub.quote.return_value = {
+                    'c': 150.0, 'pc': 148.0, 'o': 149.0,
+                    'h': 151.0, 'l': 147.0, 'v': 1000000
+                }
                 with patch('core.views.analysis.newsapi') as mock_newsapi:
                     with patch('core.views.analysis.openai_client') as mock_openai:
                         mock_newsapi.get_everything.side_effect = Exception("News error")
-                        
+
                         # Mock OpenAI response
                         mock_response = type('obj', (object,), {
                             'choices': [type('obj', (object,), {
@@ -162,10 +166,10 @@ class AnalysisTests(TestCase):
                             })]
                         })
                         mock_openai.chat.completions.create.return_value = mock_response
-                        
+
                         url = reverse('portfolai_analysis')
                         response = self.client.get(url, {'symbol': 'AAPL'})
-                        
+
                         self.assertEqual(response.status_code, 200)
                         data = response.json()
                         self.assertIn('symbol', data)
@@ -175,9 +179,12 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.analysis.finnhub_client') as mock_finnhub:
                 with patch('core.views.analysis.openai_client') as mock_openai:
-                    mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                    mock_finnhub.quote.return_value = {
+                        'c': 150.0, 'pc': 148.0, 'o': 149.0,
+                        'h': 151.0, 'l': 147.0, 'v': 1000000
+                    }
                     mock_finnhub.company_profile2.side_effect = Exception("Company profile error")
-                    
+
                     # Mock OpenAI response
                     mock_response = type('obj', (object,), {
                         'choices': [type('obj', (object,), {
@@ -187,10 +194,10 @@ class AnalysisTests(TestCase):
                         })]
                     })
                     mock_openai.chat.completions.create.return_value = mock_response
-                    
+
                     url = reverse('portfolai_analysis')
                     response = self.client.get(url, {'symbol': 'AAPL'})
-                    
+
                     self.assertEqual(response.status_code, 200)
                     data = response.json()
                     self.assertIn('symbol', data)
@@ -200,11 +207,17 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.analysis.openai_client') as mock_openai:
                 mock_openai.responses.create.side_effect = Exception("Web search API error")
-                mock_openai.chat.completions.create.return_value.choices = [type('obj', (object,), {'message': type('obj', (object,), {'content': 'Test analysis'})})]
-                
+                mock_openai.chat.completions.create.return_value.choices = [
+                    type('obj', (object,), {
+                        'message': type('obj', (object,), {
+                            'content': 'Test analysis'
+                        })
+                    })
+                ]
+
                 url = reverse('portfolai_analysis')
                 response = self.client.get(url, {'symbol': 'AAPL'})
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('symbol', data)
@@ -215,10 +228,10 @@ class AnalysisTests(TestCase):
             with patch('core.views.analysis.openai_client') as mock_openai:
                 mock_openai.responses.create.side_effect = Exception("General error")
                 mock_openai.chat.completions.create.side_effect = Exception("General error")
-                
+
                 url = reverse('portfolai_analysis')
                 response = self.client.get(url, {'symbol': 'AAPL'})
-                
+
                 self.assertEqual(response.status_code, 500)
                 data = response.json()
                 self.assertIn('error', data)
@@ -230,16 +243,19 @@ class AnalysisTests(TestCase):
                 with patch('core.views.newsapi') as mock_newsapi:
                     with patch('core.views.analysis.openai_client') as mock_openai:
                         # Mock finnhub to return valid quote data
-                        mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                        mock_finnhub.quote.return_value = {
+                            'c': 150.0, 'pc': 148.0, 'o': 149.0,
+                            'h': 151.0, 'l': 147.0, 'v': 1000000
+                        }
                         mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.'}
-                        
+
                         # Mock newsapi to return valid news
                         mock_newsapi.get_everything.return_value = {
                             'articles': [
                                 {'title': 'Test News', 'publishedAt': '2024-01-01T10:00:00Z'}
                             ]
                         }
-                        
+
                         # Mock successful chat completions response
                         mock_chat_response = type('obj', (object,), {
                             'choices': [type('obj', (object,), {
@@ -249,14 +265,17 @@ class AnalysisTests(TestCase):
                             })]
                         })
                         mock_openai.chat.completions.create.return_value = mock_chat_response
-                        
+
                         url = reverse('portfolai_analysis')
                         response = self.client.get(url, {'symbol': 'AAPL'})
-                        
+
                         self.assertEqual(response.status_code, 200)
                         data = response.json()
                         self.assertIn('analysis', data)
-                        self.assertEqual(data['analysis'], 'Detailed AI analysis with web search data')
+                        self.assertEqual(
+                            data['analysis'],
+                            'Detailed AI analysis with web search data'
+                        )
 
     def test_portfolai_analysis_chat_api_fallback(self):
         """Test PortfolAI analysis falling back to standard chat API"""
@@ -265,12 +284,15 @@ class AnalysisTests(TestCase):
                 with patch('core.views.newsapi') as mock_newsapi:
                     with patch('core.views.analysis.openai_client') as mock_openai:
                         # Mock finnhub to return valid quote data
-                        mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+                        mock_finnhub.quote.return_value = {
+                            'c': 150.0, 'pc': 148.0, 'o': 149.0,
+                            'h': 151.0, 'l': 147.0, 'v': 1000000
+                        }
                         mock_finnhub.company_profile2.return_value = {'name': 'Apple Inc.'}
-                        
+
                         # Mock newsapi to fail (simulating fallback scenario)
                         mock_newsapi.get_everything.side_effect = Exception("News API failed")
-                        
+
                         # Mock successful chat API response
                         mock_chat_response = type('obj', (object,), {
                             'choices': [type('obj', (object,), {
@@ -280,10 +302,10 @@ class AnalysisTests(TestCase):
                             })]
                         })
                         mock_openai.chat.completions.create.return_value = mock_chat_response
-                        
+
                         url = reverse('portfolai_analysis')
                         response = self.client.get(url, {'symbol': 'AAPL'})
-                        
+
                         self.assertEqual(response.status_code, 200)
                         data = response.json()
                         self.assertIn('analysis', data)
@@ -295,7 +317,7 @@ class AnalysisTests(TestCase):
             with patch('core.views.analysis.openai_client', None):
                 url = reverse('portfolai_analysis')
                 response = self.client.get(url, {'symbol': 'AAPL'})
-                
+
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn('symbol', data)
@@ -307,7 +329,7 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', None):
             url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': 'AAPL'})
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('symbol', data)
@@ -322,7 +344,7 @@ class AnalysisTests(TestCase):
                         mock_finnhub.quote.return_value = {'c': 150.0, 'pc': 148.0}
                         mock_finnhub.company_profile2.return_value = {'name': 'Test Company'}
                         mock_newsapi.get_everything.side_effect = Exception("News error")
-                        
+
                         # Mock OpenAI response
                         mock_response = type('obj', (object,), {
                             'choices': [type('obj', (object,), {
@@ -332,10 +354,10 @@ class AnalysisTests(TestCase):
                             })]
                         })
                         mock_openai.chat.completions.create.return_value = mock_response
-                        
+
                         url = reverse('portfolai_analysis')
                         response = self.client.get(url, {'symbol': 'AAPL'})
-                        
+
                         self.assertEqual(response.status_code, 200)
                         data = response.json()
                         self.assertIn('symbol', data)
@@ -346,10 +368,9 @@ class AnalysisTests(TestCase):
         with patch.object(settings, 'OPENAI_API_KEY', None):
             url = reverse('portfolai_analysis')
             response = self.client.get(url, {'symbol': 'AAPL'})
-            
+
             self.assertEqual(response.status_code, 200)
             data = response.json()
             self.assertIn('symbol', data)
             self.assertIn('analysis', data)
             self.assertTrue(data.get('fallback', False))
-
