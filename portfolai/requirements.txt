@@ -1,5 +1,5 @@
 # Core Django
-Django==5.2.7
+Django==5.2.8
 
 # Django REST Framework (for API endpoints)
 djangorestframework==3.15.2
@@ -26,4 +26,8 @@ pytest-cov==4.1.0
 pytest-timeout==2.3.1
 coverage==7.3.2
 
+# Security dependencies
 bandit
+safety 
+pylint 
+flake8
