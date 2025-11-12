@@ -35,7 +35,7 @@ from .news import get_news
 from .analysis import portfolai_analysis
 
 # Chat views
-from .chat import chat_api
+from .chat import chat_api, clear_chat
 
 # Watchlist views
 from .watchlist import get_watchlist, add_to_watchlist, remove_from_watchlist
@@ -66,6 +66,7 @@ __all__ = [
     'portfolai_analysis',
     # Chat
     'chat_api',
+    'clear_chat',
     # Watchlist
     'get_watchlist',
     'add_to_watchlist',

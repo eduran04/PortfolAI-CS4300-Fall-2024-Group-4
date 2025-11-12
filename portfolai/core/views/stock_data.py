@@ -77,6 +77,22 @@ def get_stock_data(request):
     if not symbol:
         symbol = "AAPL"
     
+    # Track recent searches in session (for chatbot context)
+    if 'recent_searches' not in request.session:
+        request.session['recent_searches'] = []
+    
+    recent_searches = request.session['recent_searches']
+    # Remove symbol if it exists (to move it to the end as most recent)
+    if symbol in recent_searches:
+        recent_searches.remove(symbol)
+    # Add symbol to the end (most recent)
+    recent_searches.append(symbol)
+    # Keep only last 5 searches
+    if len(recent_searches) > 5:
+        recent_searches.pop(0)
+    request.session['recent_searches'] = recent_searches
+    request.session.modified = True
+    
     # Define cache_key early so it's available throughout the function
     cache_key = f'stock_data_{symbol}'
     

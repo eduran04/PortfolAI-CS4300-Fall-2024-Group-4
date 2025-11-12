@@ -295,3 +295,38 @@ class StockDataTests(TestCase):
                 self.assertIn('symbol', data)
                 self.assertTrue(data.get('fallback', False))
 
+    def test_get_stock_data_tracks_recent_searches(self):
+        """Test that stock data endpoint tracks recent searches in session"""
+        with patch('core.views.stock_data.finnhub_client', None):
+            url = reverse('get_stock_data')
+            
+            # First search
+            response1 = self.client.get(url, {'symbol': 'AAPL'})
+            self.assertEqual(response1.status_code, 200)
+            self.assertIn('recent_searches', self.client.session)
+            self.assertEqual(self.client.session['recent_searches'], ['AAPL'])
+            
+            # Second search
+            response2 = self.client.get(url, {'symbol': 'MSFT'})
+            self.assertEqual(response2.status_code, 200)
+            self.assertEqual(self.client.session['recent_searches'], ['AAPL', 'MSFT'])
+            
+            # Third search (same symbol - should move to end)
+            response3 = self.client.get(url, {'symbol': 'AAPL'})
+            self.assertEqual(response3.status_code, 200)
+            self.assertEqual(self.client.session['recent_searches'], ['MSFT', 'AAPL'])
+
+    def test_get_stock_data_recent_searches_limit(self):
+        """Test that recent searches are limited to 5 items"""
+        with patch('core.views.stock_data.finnhub_client', None):
+            url = reverse('get_stock_data')
+            symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA']
+            
+            for symbol in symbols:
+                self.client.get(url, {'symbol': symbol})
+            
+            # Should only have last 5
+            recent_searches = self.client.session['recent_searches']
+            self.assertEqual(len(recent_searches), 5)
+            self.assertEqual(recent_searches, ['MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA'])
+
