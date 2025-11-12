@@ -9,10 +9,15 @@ on:
 jobs:
   security:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: read
+      contents: read
+      actions: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -26,20 +31,54 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+      
       - name: Install dependencies
         run: |
           cd portfolai
           pip install -r requirements.txt
-          pip install safety bandit pylint flake8
-      - name: Run PyLint
-        run: |
-          cd portfolai
-          python -m pylint core --output-format=text || true
-      - name: Run Flake8
-        run: |
-          cd portfolai
-          flake8 core --format=default || true
+          pip install safety bandit pylint flake8 PyGithub
+      
       - name: Run Bandit (Static Code Analysis)
+        id: bandit
         run: |
           cd portfolai
-          bandit -r core -s MEDIUM --exit-zero -c bandit.yaml
+          bandit -r core -f json -o bandit.json -c bandit.yaml -s MEDIUM || true
+        continue-on-error: true
+      
+      - name: Run PyLint
+        id: pylint
+        run: |
+          cd portfolai
+          python -m pylint core --output-format=text > pylint.txt || true
+        continue-on-error: true
+      
+      - name: Run Flake8
+        id: flake8
+        run: |
+          cd portfolai
+          flake8 core --format=default > flake8.txt || true
+        continue-on-error: true
+      
+      - name: Run Safety (Dependency Check)
+        id: safety
+        run: |
+          cd portfolai
+          safety check --json > safety.json 2>&1 || safety check > safety.txt 2>&1 || true
+        continue-on-error: true
+      
+      - name: Post security report to PR
+        if: github.event_name == 'pull_request'
+        run: |
+          cd portfolai
+          python ../security_report.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_PR_ID: ${{ github.event.pull_request.number }}
+      
+      - name: Check for high severity issues
+        run: |
+          cd portfolai
+          if [ -f bandit.json ]; then
+            python -c "import json; data = json.load(open('bandit.json')); high_count = sum(1 for r in data.get('results', []) if r.get('issue_severity') == 'HIGH'); exit(1 if high_count > 0 else 0)"
+          fi
