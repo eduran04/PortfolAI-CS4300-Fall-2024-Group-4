@@ -110,28 +110,33 @@ class ChatTests(TestCase):
         url = reverse('chatbot')
         with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
             with patch('core.views.chat.openai_client') as mock_openai:
-                mock_openai.chat.completions.create.side_effect = [
-                    type('obj', (object,), {
-                        'choices': [type('obj', (object,), {
-                            'message': type('obj', (object,), {'content': 'Hi there!'})
-                        })]
-                    }),
-                    type('obj', (object,), {
-                        'choices': [type('obj', (object,), {
-                            'message': type('obj', (object,), {'content': 'You just said hi earlier.'})
-                        })]
-                    })
-                ]
+                # Mock _needs_web_search to skip classification calls
+                with patch('core.views.chat._needs_web_search', return_value=False):
+                    # Only need to mock chat completion calls (no classification)
+                    mock_openai.chat.completions.create.side_effect = [
+                        # First message - chat response
+                        type('obj', (object,), {
+                            'choices': [type('obj', (object,), {
+                                'message': type('obj', (object,), {'content': 'Hi there!'})
+                            })]
+                        }),
+                        # Second message - chat response with context
+                        type('obj', (object,), {
+                            'choices': [type('obj', (object,), {
+                                'message': type('obj', (object,), {'content': 'You just said hi earlier.'})
+                            })]
+                        })
+                    ]
 
-                # Send two messages to test conversational continuity
-                response1 = self.client.post(url, {'message': 'Hi'}, content_type='application/json')
-                response2 = self.client.post(url, {'message': 'What did I say earlier?'}, content_type='application/json')
+                    # Send two messages to test conversational continuity
+                    response1 = self.client.post(url, {'message': 'Hi'}, content_type='application/json')
+                    response2 = self.client.post(url, {'message': 'What did I say earlier?'}, content_type='application/json')
 
-                self.assertEqual(response1.status_code, 200)
-                self.assertEqual(response2.status_code, 200)
-                data2 = response2.json()
-                self.assertIn('response', data2)
-                self.assertIn('earlier', data2['response'])
+                    self.assertEqual(response1.status_code, 200)
+                    self.assertEqual(response2.status_code, 200)
+                    data2 = response2.json()
+                    self.assertIn('response', data2)
+                    self.assertIn('earlier', data2['response'])
 
     def test_chatbot_session_memory(self):
         """Test that chatbot maintains conversation history in session"""

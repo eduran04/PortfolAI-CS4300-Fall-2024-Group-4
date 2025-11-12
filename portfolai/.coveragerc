@@ -8,6 +8,8 @@ omit =
     */test_*.py
     */__pycache__/*
     */node_modules/*
+warn = 
+    module-not-measured = false
 
 [report]
 exclude_lines =
