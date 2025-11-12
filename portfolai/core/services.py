@@ -68,8 +68,8 @@ FALLBACK_NEWS = [
         'description': 'Central bank signals potential stability in interest rate policy.'
     },
     {
-        'title': 'AI Stocks Continue to Lead Market Gains',
-        'source': 'TechCrunch',
+        'title': 'AGI Lead to End of the World as we know it',
+        'source': 'Onion',
         'time': '1h ago',
         'url': '#',
         'description': 'Artificial intelligence companies show continued strong performance.'
@@ -114,67 +114,111 @@ class MarketDataService:  # pylint: disable=too-few-public-methods
             market_data = []
 
             for symbol in major_symbols:
-                try:
-                    try:
-                        quote = self.finnhub_client.quote(symbol)
-                    except Exception as api_error:
-                        # Check for rate limit errors - stop fetching if rate limited
-                        if is_rate_limit_error(api_error):
-                            logger.warning(
-                                'Rate limit hit while fetching market movers, '
-                                'using partial data'
-                            )
-                            # Break out of loop if rate limited
-                            break
-                        raise api_error
+                quote = self._fetch_quote_for_symbol(symbol)
+                if quote is None:
+                    # Rate limit hit, stop fetching
+                    break
 
-                    # Check if quote data is valid
-                    if not quote or quote.get('c') is None:
-                        continue
-
-                    # Skip company profile to reduce API calls - use symbol as name
-                    # This reduces API calls by 50% for market movers
-                    current_price = quote.get('c', 0)
-                    previous_close = quote.get('pc', 0)
-                    change = current_price - previous_close
-                    if previous_close != 0:
-                        change_percent = change / previous_close * 100
-                    else:
-                        change_percent = 0
-
-                    market_data.append({
-                        "symbol": symbol,
-                        "name": symbol,  # Use symbol as name to avoid extra API call
-                        "price": round(current_price, 2),
-                        "change": round(change, 2),
-                        "changePercent": round(change_percent, 2)
-                    })
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    # Catch all exceptions to handle various API errors (network, rate limits, etc.)
-                    logger.warning("Could not fetch data for %s: %s", symbol, e)
-                    continue  # Skip symbols that fail
+                processed_data = self._process_quote_data(symbol, quote)
+                if processed_data:
+                    market_data.append(processed_data)
 
             # If no data was collected, use fallback
             if not market_data:
                 return self._get_fallback_market_movers()
 
-            # Sort by change percentage
-            market_data.sort(key=lambda x: x['changePercent'], reverse=True)
-
-            # Get top 5 gainers and losers
-            gainers = market_data[:5]
-            losers = market_data[-5:][::-1]  # Reverse to get worst performers first
-
-            return {
-                "gainers": gainers,
-                "losers": losers
-            }
+            return self._build_market_movers_response(market_data)
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             # Catch all exceptions to handle various API errors (network, rate limits, etc.)
             logger.error("Error fetching market data: %s", str(e))
             # Return fallback data on error
             return self._get_fallback_market_movers()
+
+    def _fetch_quote_for_symbol(self, symbol):
+        """
+        Fetch quote data for a single symbol with rate limit detection.
+
+        Args:
+            symbol (str): Stock symbol to fetch quote for
+
+        Returns:
+            dict or None: Quote data if successful, None if rate limited
+        """
+        try:
+            quote = self.finnhub_client.quote(symbol)
+            return quote
+        except Exception as api_error:  # pylint: disable=broad-exception-caught
+            # Check for rate limit errors - stop fetching if rate limited
+            if is_rate_limit_error(api_error):
+                logger.warning(
+                    'Rate limit hit while fetching market movers, '
+                    'using partial data'
+                )
+                return None
+            # Re-raise other exceptions to be caught by outer handler
+            raise api_error
+
+    def _process_quote_data(self, symbol, quote):
+        """
+        Process quote data into market data dictionary format.
+
+        Args:
+            symbol (str): Stock symbol
+            quote (dict): Quote data from API
+
+        Returns:
+            dict or None: Processed market data if valid, None otherwise
+        """
+        # Check if quote data is valid
+        if not quote or quote.get('c') is None:
+            return None
+
+        try:
+            # Skip company profile to reduce API calls - use symbol as name
+            # This reduces API calls by 50% for market movers
+            current_price = quote.get('c', 0)
+            previous_close = quote.get('pc', 0)
+            change = current_price - previous_close
+
+            if previous_close != 0:
+                change_percent = change / previous_close * 100
+            else:
+                change_percent = 0
+
+            return {
+                "symbol": symbol,
+                "name": symbol,  # Use symbol as name to avoid extra API call
+                "price": round(current_price, 2),
+                "change": round(change, 2),
+                "changePercent": round(change_percent, 2)
+            }
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Catch all exceptions to handle various processing errors
+            logger.warning("Could not process data for %s: %s", symbol, e)
+            return None
+
+    def _build_market_movers_response(self, market_data):
+        """
+        Sort and format market data into gainers and losers response.
+
+        Args:
+            market_data (list): List of market data dictionaries
+
+        Returns:
+            dict: Market movers data with gainers and losers lists
+        """
+        # Sort by change percentage
+        market_data.sort(key=lambda x: x['changePercent'], reverse=True)
+
+        # Get top 5 gainers and losers
+        gainers = market_data[:5]
+        losers = market_data[-5:][::-1]  # Reverse to get worst performers first
+
+        return {
+            "gainers": gainers,
+            "losers": losers
+        }
 
     def _get_fallback_market_movers(self):
         """Get fallback market movers data when API is unavailable."""
@@ -219,83 +263,161 @@ class NewsService:  # pylint: disable=too-few-public-methods
         """
         # Check if API key is available, if not use fallback data
         if not settings.NEWS_API_KEY or not self.newsapi:
-            return {
-                "articles": FALLBACK_NEWS,
-                "totalResults": len(FALLBACK_NEWS),
-                "fallback": True
-            }
+            return self._get_fallback_news_response()
 
         try:
             if symbol:
-                # Get company-specific news using everything endpoint
-                try:
-                    # Use today's date for better results
-                    from_date = datetime.now().strftime('%Y-%m-%d')
-                    articles = self.newsapi.get_everything(
-                        q=f"{symbol} stock",
-                        from_param=from_date,
-                        language='en',
-                        sort_by='popularity',  # Use popularity as recommended in docs
-                        page_size=10
-                    )
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    # Catch all exceptions to handle various API errors (network, rate limits, etc.)
-                    logger.warning("News API failed for %s: %s", symbol, e)
-                    # Fallback to top headlines for business category
-                    articles = self.newsapi.get_top_headlines(
-                        category='business',
-                        language='en',
-                        page_size=10
-                    )
+                articles = self._fetch_symbol_news(symbol)
             else:
-                # Get general financial market news using top headlines
-                try:
-                    articles = self.newsapi.get_top_headlines(
-                        category='business',
-                        language='en',
-                        page_size=10
-                    )
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    # Catch all exceptions to handle various API errors (network, rate limits, etc.)
-                    logger.warning("News API top headlines failed: %s", e)
-                    # Fallback to everything endpoint
-                    articles = self.newsapi.get_everything(
-                        q='stock market OR finance OR economy',
-                        language='en',
-                        sort_by='popularity',
-                        page_size=10
-                    )
+                articles = self._fetch_general_news()
 
-            # Check if we got valid articles
-            if not articles or 'articles' not in articles:
-                logger.warning("No articles found in NewsAPI response")
-                return {
-                    "articles": FALLBACK_NEWS,
-                    "totalResults": len(FALLBACK_NEWS),
-                    "fallback": True
-                }
-
-            news_items = process_news_articles(articles)
-
-            # If no valid articles found, use fallback
-            if not news_items:
-                return {
-                    "articles": FALLBACK_NEWS,
-                    "totalResults": len(FALLBACK_NEWS),
-                    "fallback": True
-                }
-
-            return {
-                "articles": news_items,
-                "totalResults": articles.get('totalResults', 0)
-            }
+            return self._build_news_response(articles)
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             # Catch all exceptions to handle various API errors (network, rate limits, etc.)
             logger.error("Error fetching news: %s", str(e))
             # Return fallback news on error
-            return {
-                "articles": FALLBACK_NEWS,
-                "totalResults": len(FALLBACK_NEWS),
-                "fallback": True
-            }
+            return self._get_fallback_news_response()
+
+    def _fetch_symbol_news(self, symbol):
+        """
+        Fetch symbol-specific news with fallback to general news.
+
+        Args:
+            symbol (str): Stock symbol to fetch news for
+
+        Returns:
+            dict: Articles response from API
+        """
+        def primary_call():
+            return self._call_get_everything(
+                q=f"{symbol} stock",
+                from_param=datetime.now().strftime('%Y-%m-%d')
+            )
+
+        def fallback_call():
+            return self._call_get_top_headlines(category='business')
+
+        error_message = f"News API failed for {symbol}"
+
+        return self._fetch_news_with_fallback(primary_call, fallback_call, error_message)
+
+    def _fetch_general_news(self):
+        """
+        Fetch general financial market news with fallback.
+
+        Returns:
+            dict: Articles response from API
+        """
+        def primary_call():
+            return self._call_get_top_headlines(category='business')
+
+        def fallback_call():
+            return self._call_get_everything(
+                q='stock market OR finance OR economy'
+            )
+
+        error_message = "News API top headlines failed"
+
+        return self._fetch_news_with_fallback(primary_call, fallback_call, error_message)
+
+    def _fetch_news_with_fallback(self, primary_call, fallback_call, error_message):
+        """
+        Execute primary API call with fallback on failure.
+
+        Args:
+            primary_call (callable): Primary API call to execute
+            fallback_call (callable): Fallback API call if primary fails
+            error_message (str): Error message for logging
+
+        Returns:
+            dict: Articles response from API
+        """
+        try:
+            return primary_call()
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # Catch all exceptions to handle various API errors (network, rate limits, etc.)
+            logger.warning("%s: %s", error_message, e)
+            return fallback_call()
+
+    def _call_get_everything(self, q, **kwargs):
+        """
+        Call NewsAPI get_everything endpoint with standard parameters.
+
+        Args:
+            q (str): Query string
+            **kwargs: Additional parameters:
+                from_param (str, optional): Date filter
+                language (str, optional): Language code (default: 'en')
+                sort_by (str, optional): Sort order (default: 'popularity')
+                page_size (int, optional): Number of results (default: 10)
+
+        Returns:
+            dict: Articles response from API
+        """
+        params = {
+            'q': q,
+            'language': kwargs.get('language', 'en'),
+            'sort_by': kwargs.get('sort_by', 'popularity'),
+            'page_size': kwargs.get('page_size', 10)
+        }
+        if 'from_param' in kwargs:
+            params['from_param'] = kwargs['from_param']
+        return self.newsapi.get_everything(**params)
+
+    def _call_get_top_headlines(self, category='business', language='en', page_size=10):
+        """
+        Call NewsAPI get_top_headlines endpoint with standard parameters.
+
+        Args:
+            category (str): News category
+            language (str): Language code
+            page_size (int): Number of results
+
+        Returns:
+            dict: Articles response from API
+        """
+        return self.newsapi.get_top_headlines(
+            category=category,
+            language=language,
+            page_size=page_size
+        )
+
+    def _build_news_response(self, articles):
+        """
+        Build and validate news response from API articles.
+
+        Args:
+            articles (dict): Raw articles response from API
+
+        Returns:
+            dict: Formatted news response with articles and metadata
+        """
+        # Check if we got valid articles
+        if not articles or 'articles' not in articles:
+            logger.warning("No articles found in NewsAPI response")
+            return self._get_fallback_news_response()
+
+        news_items = process_news_articles(articles)
+
+        # If no valid articles found, use fallback
+        if not news_items:
+            return self._get_fallback_news_response()
+
+        return {
+            "articles": news_items,
+            "totalResults": articles.get('totalResults', 0)
+        }
+
+    def _get_fallback_news_response(self):
+        """
+        Get fallback news response when API is unavailable.
+
+        Returns:
+            dict: Fallback news data with articles and metadata
+        """
+        return {
+            "articles": FALLBACK_NEWS,
+            "totalResults": len(FALLBACK_NEWS),
+            "fallback": True
+        }
