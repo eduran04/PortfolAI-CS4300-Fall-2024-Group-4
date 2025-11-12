@@ -10,8 +10,10 @@ import logging
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework import status
 from django.conf import settings
 from ._clients import finnhub_client, openai_client, newsapi
+from ..serializers import SymbolInputSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -232,10 +234,15 @@ def portfolai_analysis(request):
     Features: Web search integration, real-time data analysis, educational insights
     Example: /api/portfolai-analysis/?symbol=AAPL
     """
-    symbol = request.GET.get("symbol", "").upper()
+    # Validate and sanitize input using serializer
+    serializer = SymbolInputSerializer(data=request.GET)
+    if not serializer.is_valid():
+        return Response(
+            {"error": "Invalid input", "details": serializer.errors},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    if not symbol:
-        return Response({"error": "Symbol parameter is required"}, status=400) # This should fail the pylint checks, because it is too long.
+    symbol = serializer.validated_data['symbol']
 
     # Check if API key is available
     if not settings.OPENAI_API_KEY or not openai_client:

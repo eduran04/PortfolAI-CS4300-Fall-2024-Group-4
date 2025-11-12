@@ -5,8 +5,17 @@ Provides proper validation and sanitization for user inputs
 to prevent malicious payloads and ensure data integrity.
 """
 import re
+from typing import Any
 
 from rest_framework import serializers
+
+# Pre-compiled regex patterns for performance
+SYMBOL_PATTERN = re.compile(r'^[A-Z0-9.]+$')
+SQL_KEYWORD_PATTERN = re.compile(
+    r'\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b',
+    re.IGNORECASE
+)
+INJECTION_CHAR_PATTERN = re.compile(r'[<>"\';\\]')
 
 
 class SymbolInputSerializer(serializers.Serializer):
@@ -23,7 +32,7 @@ class SymbolInputSerializer(serializers.Serializer):
         help_text="Stock symbol (1-10 alphanumeric characters)"
     )
 
-    def validate_symbol(self, value):
+    def validate_symbol(self, value: str) -> str:
         """
         Validate and sanitize the symbol input.
 
@@ -36,43 +45,40 @@ class SymbolInputSerializer(serializers.Serializer):
         Raises:
             serializers.ValidationError: If symbol format is invalid
         """
-        if not value:
-            raise serializers.ValidationError("Symbol cannot be empty")
-
-        # Strip whitespace and convert to uppercase
+        # Strip whitespace and convert to uppercase first
         symbol = value.strip().upper()
+
+        # Check for empty string after stripping
+        if not symbol:
+            raise serializers.ValidationError("Symbol cannot be empty")
 
         # Validate symbol contains only alphanumeric characters and dots
         # (some exchanges use dots, e.g., BRK.A, BRK.B)
-        if not re.match(r'^[A-Z0-9.]+$', symbol):
+        if not SYMBOL_PATTERN.match(symbol):
             raise serializers.ValidationError(
                 "Symbol must contain only letters, numbers, and dots"
             )
 
         # Additional security: prevent potential injection patterns
         # Reject symbols that look suspicious (e.g., containing SQL keywords)
-        suspicious_patterns = [
-            r'\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE)\b',
-            r'[<>"\';\\]',  # Prevent HTML/script injection characters
-        ]
-        for pattern in suspicious_patterns:
-            if re.search(pattern, symbol, re.IGNORECASE):
-                raise serializers.ValidationError(
-                    "Symbol contains invalid characters"
-                )
-
-        # Validate reasonable length (most stock symbols are 1-5 chars,
-        # but some can be longer, so we allow up to 10)
-        if len(symbol) > 10:
+        if SQL_KEYWORD_PATTERN.search(symbol):
             raise serializers.ValidationError(
-                "Symbol must be 10 characters or less"
+                "Symbol contains invalid characters"
+            )
+
+        if INJECTION_CHAR_PATTERN.search(symbol):
+            raise serializers.ValidationError(
+                "Symbol contains invalid characters"
             )
 
         return symbol
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict[str, Any]) -> None:
         """
         Not implemented - this serializer is for validation only.
+
+        Args:
+            validated_data: Validated input data
 
         Raises:
             NotImplementedError: This serializer is for validation only
@@ -81,9 +87,13 @@ class SymbolInputSerializer(serializers.Serializer):
             "This serializer is for input validation only, not for creating objects"
         )
 
-    def update(self, instance, validated_data):
+    def update(self, instance: Any, validated_data: dict[str, Any]) -> None:
         """
         Not implemented - this serializer is for validation only.
+
+        Args:
+            instance: Object instance to update
+            validated_data: Validated input data
 
         Raises:
             NotImplementedError: This serializer is for validation only

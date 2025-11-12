@@ -306,31 +306,12 @@ def format_security_report(bandit_data: dict, pylint_data: dict,
     return "\n".join(report)
 
 
-def find_existing_comment(pr: PullRequest) -> object:
-    """Find existing security report comment."""
-    try:
-        comments = pr.get_issue_comments()
-    except Exception:
-        return None
-    
-    for comment in list(comments)[-20:]:
-        if comment.body.startswith("## Security Report"):
-            return comment
-    
-    return None
-
-
 def post_security_report(pr: PullRequest, report: str) -> None:
-    """Post or update security report comment to pull request."""
+    """Post new security report comment to pull request."""
     try:
-        existing_comment = find_existing_comment(pr)
-        
-        if existing_comment:
-            existing_comment.edit(report)
-            print("Updated existing security report comment")
-        else:
-            pr.create_issue_comment(report)
-            print("Posted new security report comment")
+        # Always create a new comment instead of updating existing ones
+        pr.create_issue_comment(report)
+        print("Posted new security report comment")
     except GithubException as e:
         raise ValueError(f"Failed to post security report: {e}")
 
