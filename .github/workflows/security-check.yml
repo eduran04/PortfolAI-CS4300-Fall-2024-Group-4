@@ -42,28 +42,37 @@ jobs:
         id: bandit
         run: |
           cd portfolai
+          echo "=== Bandit Security Scan ==="
           bandit -r core -f json -o bandit.json -c bandit.yaml -s MEDIUM || true
+          echo ""
+          echo "=== Bandit Summary ==="
+          if [ -f bandit.json ]; then
+            python -c "import json; data = json.load(open('bandit.json')); results = data.get('results', []); high = sum(1 for r in results if r.get('issue_severity') == 'HIGH'); med = sum(1 for r in results if r.get('issue_severity') == 'MEDIUM'); low = sum(1 for r in results if r.get('issue_severity') == 'LOW'); print(f'HIGH: {high}, MEDIUM: {med}, LOW: {low}, Total: {len(results)}')"
+          fi
         continue-on-error: true
       
       - name: Run PyLint
         id: pylint
         run: |
           cd portfolai
-          python -m pylint core --output-format=text > pylint.txt || true
+          echo "=== PyLint Code Quality Check ==="
+          python -m pylint core --output-format=text | tee pylint.txt || true
         continue-on-error: true
       
       - name: Run Flake8
         id: flake8
         run: |
           cd portfolai
-          flake8 core --format=default > flake8.txt || true
+          echo "=== Flake8 Style Check ==="
+          flake8 core --format=default | tee flake8.txt || true
         continue-on-error: true
       
       - name: Run Safety (Dependency Check)
         id: safety
         run: |
           cd portfolai
-          safety check --json > safety.json 2>&1 || safety check > safety.txt 2>&1 || true
+          echo "=== Safety Dependency Vulnerability Check ==="
+          safety check --json > safety.json 2>&1 || safety check | tee safety.txt 2>&1 || true
         continue-on-error: true
       
       - name: Post security report to PR

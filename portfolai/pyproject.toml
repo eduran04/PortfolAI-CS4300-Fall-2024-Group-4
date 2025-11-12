@@ -9,6 +9,7 @@ omit = [
     "*/apps.py",
     "*/admin.py",
 ]
+warn = false
 
 [tool.coverage.report]
 exclude_lines = [

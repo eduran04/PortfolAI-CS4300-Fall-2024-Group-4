@@ -52,16 +52,15 @@ class AnalysisTests(TestCase):
         self.assertIn('error', data)
 
     def test_portfolai_analysis_whitespace_symbol(self):
-        """Test PortfolAI analysis with whitespace symbol - actually works with fallback"""
-        # Mock API client to prevent real API calls and ensure fast test execution
-        with patch.object(settings, 'OPENAI_API_KEY', None):
-            url = reverse('portfolai_analysis')
-            response = self.client.get(url, {'symbol': '   '})
+        """Test PortfolAI analysis with whitespace symbol - should be rejected"""
+        url = reverse('portfolai_analysis')
+        response = self.client.get(url, {'symbol': '   '})
 
-            # Whitespace actually works and returns 200 with fallback data
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertIn('symbol', data)
+        # Whitespace-only symbols should be rejected with 400
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+        self.assertIn('details', data)
 
     def test_portfolai_analysis_lowercase_symbol(self):
         """Test PortfolAI analysis with lowercase symbol"""
@@ -112,14 +111,15 @@ class AnalysisTests(TestCase):
             self.assertTrue(data.get('fallback', False))
 
     def test_portfolai_analysis_with_invalid_symbol(self):
-        """Test PortfolAI analysis with invalid symbol characters"""
+        """Test PortfolAI analysis with invalid symbol characters - should be rejected"""
         url = reverse('portfolai_analysis')
         response = self.client.get(url, {'symbol': '!@#$%'})
 
-        self.assertEqual(response.status_code, 200)
+        # Invalid characters should be rejected with 400
+        self.assertEqual(response.status_code, 400)
         data = response.json()
-        self.assertIn('symbol', data)
-        self.assertIn('analysis', data)
+        self.assertIn('error', data)
+        self.assertIn('details', data)
 
     def test_portfolai_analysis_stock_data_fetch_exception(self):
         """Test PortfolAI analysis when stock data fetch fails"""

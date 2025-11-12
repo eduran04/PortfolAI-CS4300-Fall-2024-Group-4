@@ -14,7 +14,7 @@ echo "Applying database migrations..."
 python manage.py migrate --noinput
 echo "Migrations applied successfully!"
 
-# Collect static files
+# Collect static files (clear existing first to avoid duplicate warnings)
 echo "Collecting static files..."
-python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput --clear
 echo "Build completed successfully!"
