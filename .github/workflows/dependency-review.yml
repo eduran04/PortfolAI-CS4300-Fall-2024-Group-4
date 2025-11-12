@@ -7,7 +7,6 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  security-events: read
 
 jobs:
   dependency-review:
@@ -17,28 +16,39 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Dependency review
+        id: dependency-review
         uses: actions/dependency-review-action@v4
 
-      - name: Generate Dependabot Report
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+      - name: Generate Dependency Review Report
+        if: always()
         run: |
-          if gh api -H "Accept: application/vnd.github+json" \
-            /repos/${{ github.repository }}/dependabot/alerts > dependabot_report.json 2>&1; then
-            echo "Dependabot report saved as dependabot_report.json"
-          else
-            echo " Unable to access Dependabot alerts API (may require repository admin permissions)"
-            echo "Creating empty report file"
-            echo "[]" > dependabot_report.json
-          fi
+          cat > dependency_review_report.json << EOF
+          {
+            "scan_status": "${{ steps.dependency-review.outcome }}",
+            "workflow_run_id": "${{ github.run_id }}",
+            "workflow_run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "pull_request_number": "${{ github.event.pull_request.number }}",
+            "pull_request_url": "${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}",
+            "repository": "${{ github.repository }}",
+            "branch": "${{ github.head_ref }}",
+            "commit_sha": "${{ github.event.pull_request.head.sha }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "scanner": "GitHub Dependency Review Action v4",
+            "package_ecosystem": "pip",
+            "report_type": "dependency_vulnerability_scan",
+            "summary": {
+              "status": "${{ steps.dependency-review.outcome }}",
+              "message": "Dependency vulnerability scan completed. Check workflow logs for detailed findings."
+            }
+          }
+          EOF
+          echo "✅ Dependency review report generated: dependency_review_report.json"
 
-      - name: Upload Dependabot Report
+      - name: Upload Dependency Review Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dependabot-report
-          path: dependabot_report.json
+          name: dependency-review-report
+          path: dependency_review_report.json
           retention-days: 30
-          if-no-files-found: ignore
-
+          if-no-files-found: error
