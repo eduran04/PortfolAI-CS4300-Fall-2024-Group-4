@@ -22,15 +22,23 @@ jobs:
       - name: Generate Dependabot Report
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
         run: |
-          gh api -H "Accept: application/vnd.github+json" \
-            /repos/${{ github.repository }}/dependabot/alerts > dependabot_report.json
-          echo "Dependabot report saved as dependabot_report.json"
+          if gh api -H "Accept: application/vnd.github+json" \
+            /repos/${{ github.repository }}/dependabot/alerts > dependabot_report.json 2>&1; then
+            echo "Dependabot report saved as dependabot_report.json"
+          else
+            echo " Unable to access Dependabot alerts API (may require repository admin permissions)"
+            echo "Creating empty report file"
+            echo "[]" > dependabot_report.json
+          fi
 
       - name: Upload Dependabot Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependabot-report
           path: dependabot_report.json
           retention-days: 30
+          if-no-files-found: ignore
 
