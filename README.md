@@ -4,7 +4,7 @@ Django-based web application for stock analysis and portfolio management with re
 
 [![CI Pipeline](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/code-coverage.yml/badge.svg)](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/code-coverage.yml)
 [![AI Code Review](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ai-code-review.yml/badge.svg)](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ai-code-review.yml)
-[![Deployed on Render](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?logo=render)](https://www.portfolai.org/)
+[![Deployed on Render (Custom Domain)](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?logo=render)](https://www.portfolai.org/)
 
 **Repository:** https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4  
 **Live Demo:** https://www.portfolai.org/
