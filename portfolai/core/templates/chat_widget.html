@@ -2,11 +2,15 @@
 <link rel="stylesheet" href="{% static 'chat/chat_style.css' %}">
 
 <div id="chat-widget" class="chat-widget">
+
   <!-- Collapsible Header -->
   <div id="chat-header" class="hidden">
     <span class="chat-title">PortfolAI Assistant</span>
-    <button id="chat-clear" aria-label="Clear chat">Clear</button>
-    <button id="chat-close" aria-label="Close chat">✕</button>
+
+    <div class="chat-header-buttons">
+      <button id="chat-clear" aria-label="Clear chat">Clear</button>
+      <button id="chat-close" aria-label="Close chat">✕</button>
+    </div>
   </div>
 
   <!-- Chat History -->

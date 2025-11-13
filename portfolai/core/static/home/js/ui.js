@@ -256,70 +256,79 @@ async function populateNewsFeed(symbol = null) {
     console.warn('News feed element not found');
     return;
   }
-  
+
   const searchInput = document.getElementById('stock-search');
   const currentSymbol = symbol || (searchInput ? searchInput.value.toUpperCase().trim() : '');
-  
-  // If symbol is explicitly provided, always force refresh
-  // If symbol is null/empty, use cache (for general news on page load)
+
   const shouldForceRefresh = symbol !== null && symbol !== undefined && symbol !== '';
-  
+
   try {
     console.log('Fetching news for symbol:', currentSymbol, 'forceRefresh:', shouldForceRefresh);
-    // Force refresh when a symbol is explicitly provided to get latest stock-specific news
+
     const data = await fetchNews(currentSymbol || null, shouldForceRefresh);
     console.log('News data received:', data);
+
     const articles = data.articles || [];
-    
-    // Limit to 3 articles when a symbol is provided
+
     const displayArticles = currentSymbol ? articles.slice(0, 3) : articles;
-    
-    // Show fallback notice if using fallback data
+
     let fallbackNotice = '';
     if (data.fallback) {
-      fallbackNotice = '<div class="bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded mb-4">⚠️ Using demo news - API not configured or unavailable</div>';
+      fallbackNotice = `
+        <div class="bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded mb-4">
+          ⚠️ Using demo news - API not configured or unavailable
+        </div>
+      `;
     }
-    
-    // Update section title based on whether we're showing stock-specific news
+
     const newsFeed = getNewsFeedDiv();
     if (newsFeed) {
       const newsSection = newsFeed.closest('section');
       if (newsSection) {
         const titleElement = newsSection.querySelector('h2');
         if (titleElement) {
-          if (currentSymbol) {
-            titleElement.textContent = `Latest News for ${currentSymbol}`;
-          } else {
-            titleElement.textContent = 'Latest News';
-          }
+          titleElement.textContent = currentSymbol
+            ? `Latest News for ${currentSymbol}`
+            : 'Latest News';
         }
       }
     }
 
-    newsFeedDiv.innerHTML = fallbackNotice + (displayArticles.length
-      ? displayArticles
-          .map(
-            (news) => `
-            <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow hover:shadow-md transition-shadow duration-200">
-            <a href="${news.url}" target="_blank" rel="noopener noreferrer" class="block hover:text-indigo-600 dark:hover:text-indigo-400">
+    newsFeedDiv.innerHTML =
+      fallbackNotice +
+      (displayArticles.length
+        ? displayArticles
+            .map(
+              (news) => `
+            <div class="news-card bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow transition-all duration-200 cursor-pointer">
+              <a href="${news.url}" target="_blank" rel="noopener noreferrer" class="block hover:text-indigo-600 dark:hover:text-indigo-400">
                 <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">${news.title}</h4>
-                ${news.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">${news.description.substring(0, 100)}${news.description.length > 100 ? '...' : ''}</p>` : ''}
-            </a>
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                ${
+                  news.description
+                    ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                         ${news.description.substring(0, 100)}${
+                        news.description.length > 100 ? '...' : ''
+                      }
+                       </p>`
+                    : ''
+                }
+              </a>
+              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
                 <span>${news.source}</span>
                 <span>${news.time}</span>
+              </div>
             </div>
-        </div>
-              `
-          )
-          .join('')
-      : '<p class="text-sm text-gray-500 dark:text-gray-400">No news available at the moment.</p>');
-
+          `
+            )
+            .join('')
+        : '<p class="text-sm text-gray-500 dark:text-gray-400">No news available at the moment.</p>');
   } catch (error) {
     console.error('Error fetching news:', error);
-    newsFeedDiv.innerHTML = '<p class="text-sm text-red-500 dark:text-red-400">Error loading news. Please try again later.</p>';
+    newsFeedDiv.innerHTML =
+      '<p class="text-sm text-red-500 dark:text-red-400">Error loading news. Please try again later.</p>';
   }
 }
+
 
 /**
  * Initialize smooth scrolling for navigation links

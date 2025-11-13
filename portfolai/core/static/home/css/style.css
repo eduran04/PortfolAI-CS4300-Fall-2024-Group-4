@@ -378,4 +378,43 @@ nav form button {
   border-radius: 0.5rem;
 }
 
+.bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-300:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+/* Base News Card Styling */
+.news-card {
+  background: #1f2937;                      /* dark gray (Tailwind gray-800) */
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: 
+      background 0.25s ease,
+      box-shadow 0.25s ease,
+      transform 0.25s ease;
+}
+
+/* Hover Effect — Dark Mode */
+.news-card:hover {
+  background: #273142;                      /* slightly lighter dark gray */
+  transform: translateY(-2px);              /* subtle lift */
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);  /* deeper shadow */
+}
+
+/* Light Mode Support */
+.light .news-card {
+  background: #ffffff;
+}
+
+.light .news-card:hover {
+  background: #f3f4f6;                      /* light gray */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+/* Smooth corner + padding alignment with existing UI */
+.news-card h3,
+.news-card p,
+.news-card span {
+  margin-bottom: 0.4rem;
+}
+
 /* End of Analysis Modal Styling */
