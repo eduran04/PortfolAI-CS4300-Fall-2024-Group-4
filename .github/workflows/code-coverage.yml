@@ -3,6 +3,10 @@ name: Django Test Coverage Metrics
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches:
+      - main
+      - develop
   pull_request_target:
     branches:
       - main
@@ -27,7 +31,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
+        ref: ${{ github.event.pull_request.head.sha || github.head_ref || github.ref }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -63,7 +67,7 @@ jobs:
         pytest -v core/tests/ --cov=core --cov-config=.coveragerc --cov-report=term --cov-report=xml:coverage.xml --cov-fail-under=80 --timeout=30 --timeout-method=thread
     
     - name: Post coverage comment to PR
-      if: github.event_name == 'pull_request_target'
+      if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
       uses: MishaKav/pytest-coverage-comment@v1
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}

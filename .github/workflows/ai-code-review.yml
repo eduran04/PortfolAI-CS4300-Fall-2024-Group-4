@@ -5,6 +5,8 @@ permissions:
   pull-requests: write
 
 on:
+  pull_request:
+    types: [opened, reopened, synchronize]
   pull_request_target:
     types: [opened, reopened, synchronize]
   workflow_dispatch:
@@ -21,7 +23,7 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.head_ref || github.ref }}
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -33,7 +35,7 @@ jobs:
           pip install openai PyGithub
 
       - name: Run Custom Code Review
-        if: github.event_name == 'pull_request_target'
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
         run: |
           python review.py
         env:

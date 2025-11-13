@@ -1,6 +1,10 @@
 name: Python Security Checks
 
 on:
+  pull_request:
+    branches:
+      - main
+      - develop
   pull_request_target:
     branches:
       - main
@@ -19,7 +23,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.head_ref || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -87,7 +91,7 @@ jobs:
         continue-on-error: true
       
       - name: Post security report to PR
-        if: github.event_name == 'pull_request_target'
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
         run: |
           cd portfolai
           python ../security_report.py
