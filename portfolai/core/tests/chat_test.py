@@ -197,55 +197,6 @@ class ChatTests(TestCase):
                 # Should have system prompt + previous messages + new message
                 self.assertGreater(len(messages), 3)
 
-    def test_chatbot_learning_intent_adds_instruction(self):
-        """Ensure learning intent queries append structured guidance to the system prompt."""
-        url = reverse('chatbot')
-        with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.chat.openai_client') as mock_openai, \
-                    patch('core.views.chat._needs_web_search', return_value=False):
-                mock_response = type('obj', (object,), {
-                    'choices': [type('obj', (object,), {
-                        'message': type('obj', (object,), {'content': 'Here is how to learn.'})
-                    })]
-                })
-                mock_openai.chat.completions.create.return_value = mock_response
-
-                response = self.client.post(
-                    url,
-                    {'message': 'Teach me how to analyze earnings beats'},
-                    content_type='application/json'
-                )
-
-                self.assertEqual(response.status_code, 200)
-                call_args = mock_openai.chat.completions.create.call_args
-                system_message = call_args[1]['messages'][0]['content']
-                self.assertIn('LEARNING ASSIST MODE', system_message)
-                self.assertIn('Why it matters', system_message)
-
-    def test_chatbot_regular_intent_skips_learning_instructions(self):
-        """Regular queries should not include learning-specific instructions."""
-        url = reverse('chatbot')
-        with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
-            with patch('core.views.chat.openai_client') as mock_openai, \
-                    patch('core.views.chat._needs_web_search', return_value=False):
-                mock_response = type('obj', (object,), {
-                    'choices': [type('obj', (object,), {
-                        'message': type('obj', (object,), {'content': 'Just a response'})
-                    })]
-                })
-                mock_openai.chat.completions.create.return_value = mock_response
-
-                response = self.client.post(
-                    url,
-                    {'message': 'What is the outlook for AAPL?'},
-                    content_type='application/json'
-                )
-
-                self.assertEqual(response.status_code, 200)
-                call_args = mock_openai.chat.completions.create.call_args
-                system_message = call_args[1]['messages'][0]['content']
-                self.assertNotIn('LEARNING ASSIST MODE', system_message)
-
     def test_clear_chat_endpoint(self):
         """Test clear chat endpoint clears session history"""
         url = reverse('chatbot')

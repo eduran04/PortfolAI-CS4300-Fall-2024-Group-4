@@ -19,6 +19,7 @@ from ..models import Watchlist
 
 logger = logging.getLogger(__name__)
 
+
 # PROMPT CONSTANTS
 
 CLASSIFICATION_PROMPT = """You are a classifier for a stock market chatbot.
@@ -69,31 +70,24 @@ IMPORTANT RULES FOR USING CONTEXT:
 - If the context says 'empty' or 'none', that is the accurate answer -
   do not guess or assume"""
 
-LEARNING_INTENT_INSTRUCTIONS = """
-LEARNING ASSIST MODE:
-- Provide a clear, ordered list of steps the user can follow.
-- Begin with a short section titled "Why it matters" that explains the concept's importance.
-- Define any specialised financial terms the first time you introduce them.
-- Highlight at least one related stock, trend, or scenario that reinforces the lesson.
-"""
 
 # PROMPT BUILDERS
 
-def _build_system_prompt(user_context=None, extra_instructions=None):
-    """Build complete system prompt with optional user context and extra guidance."""
+def _build_classification_prompt(user_message):
+    """Build classification prompt with user message."""
     return CLASSIFICATION_PROMPT.format(user_message=user_message)
 
-def _build_system_prompt(user_context=None, extra_instructions=None):
-    """Build complete system prompt with optional user context and extra guidance."""
+
+def _build_system_prompt(user_context=None):
+    """Build complete system prompt with optional user context."""
     prompt = SYSTEM_PROMPT_BASE + SCOPE_PROMPT
 
     if user_context:
         prompt += USER_CONTEXT_HEADER.format(user_context=user_context)
         prompt += USER_CONTEXT_RULES
 
-    if extra_instructions:
-        prompt += "\n\n" + extra_instructions.strip()
     return prompt
+
 
 # HELPER FUNCTIONS TO PREVENT NESTING
 
@@ -133,6 +127,7 @@ def _get_user_context(request):
 
     return ". ".join(context_parts) if context_parts else None
 
+
 def _needs_web_search(user_message, client):
     """
     Use AI to determine if the query requires real-time web search data.
@@ -167,23 +162,6 @@ def _needs_web_search(user_message, client):
         # Fallback: return False to avoid unnecessary API calls
         return False
 
-
-def _detect_learning_intent(user_message):
-    """Simple heuristic to detect when the user is asking for learning assistance."""
-    if not user_message:
-        return False
-
-    lowered = user_message.lower()
-
-    keyword_patterns = [
-        r"\bteach me\b",
-        r"\bshow me how\b",
-        r"\bhelp me learn\b",
-        r"\bhow do i (analyse|analyze)\b",
-        r"\bguide me through\b",
-        r"\bexplain .*step by step",
-    ]
-    return any(re.search(pattern, lowered) for pattern in keyword_patterns)
 
 def _get_symbol_for_context(request, user_message):
     """
@@ -256,6 +234,7 @@ def _format_news_articles(articles, symbol):
 
     return f"\n\n**Recent News about {symbol}:**\n" + "\n".join(recent_news)
 
+
 def _get_newsapi_context(symbol):
     """Get NewsAPI context for a symbol."""
     if not newsapi:
@@ -277,6 +256,7 @@ def _get_newsapi_context(symbol):
         logger.warning("Could not fetch news for %s: %s", symbol, e)
         return ""
 
+
 def _get_web_search_context(symbols, _user_message):
     """
     Get web search context using both OpenAI's web search tool (if available) and NewsAPI.
@@ -293,6 +273,7 @@ def _get_web_search_context(symbols, _user_message):
     newsapi_context = _get_newsapi_context(symbol)
 
     return openai_web_context + newsapi_context
+
 
 @csrf_exempt
 def chat_api(request):
@@ -331,11 +312,9 @@ def chat_api(request):
         chat_history = chat_history[-20:]
         request.session['chat_history'] = chat_history
 
-    # Build system prompt with scope restrictions, user context, and optional learning guidance
+    # Build system prompt with scope restrictions and user context
     user_context = _get_user_context(request)
-    learning_intent = _detect_learning_intent(user_message)
-    extra_instructions = LEARNING_INTENT_INSTRUCTIONS if learning_intent else None
-    system_prompt = _build_system_prompt(user_context, extra_instructions)
+    system_prompt = _build_system_prompt(user_context)
 
     # Only fetch web search context if AI determines the query needs real-time data
     web_search_context = ""
@@ -386,6 +365,7 @@ def chat_api(request):
             },
             status=200,
         )
+
 
 @csrf_exempt
 def clear_chat(request):
