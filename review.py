@@ -83,12 +83,16 @@ For each suggestion, please provide:
 - Security implications if applicable
 - Impact on test coverage if applicable
 
-Focus on actionable feedback that will help improve code quality, maintainability, and adherence to industry standards.
-Prioritize suggestions that address security vulnerabilities, performance issues, maintainability concerns, or test coverage gaps.
+Focus on actionable feedback that will help improve code quality, maintainability,
+and adherence to industry standards.
+Prioritize suggestions that address security vulnerabilities, performance issues,
+maintainability concerns, or test coverage gaps.
 
 **Scoring:**
-At the end of your review, provide an overall code quality score out of 10, considering all the aspects mentioned above.
-Also note if the code is likely to pass the automated CI/CD checks (coverage, security scans, linting)."""
+At the end of your review, provide an overall code quality score out of 10, 
+considering all the aspects mentioned above.
+Also note if the code is likely to pass the automated CI/CD
+checks (coverage, security scans, linting)."""
 
 
 def initialize() -> tuple[OpenAI, Github, str, str]:
