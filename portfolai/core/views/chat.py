@@ -19,7 +19,6 @@ from ..models import Watchlist
 
 logger = logging.getLogger(__name__)
 
-
 # PROMPT CONSTANTS
 
 CLASSIFICATION_PROMPT = """You are a classifier for a stock market chatbot.
@@ -78,13 +77,11 @@ LEARNING ASSIST MODE:
 - Highlight at least one related stock, trend, or scenario that reinforces the lesson.
 """
 
-
 # PROMPT BUILDERS
 
-def _build_classification_prompt(user_message):
-    """Build classification prompt with user message."""
+def _build_system_prompt(user_context=None, extra_instructions=None):
+    """Build complete system prompt with optional user context and extra guidance."""
     return CLASSIFICATION_PROMPT.format(user_message=user_message)
-
 
 def _build_system_prompt(user_context=None, extra_instructions=None):
     """Build complete system prompt with optional user context and extra guidance."""
@@ -96,9 +93,7 @@ def _build_system_prompt(user_context=None, extra_instructions=None):
 
     if extra_instructions:
         prompt += "\n\n" + extra_instructions.strip()
-
     return prompt
-
 
 # HELPER FUNCTIONS TO PREVENT NESTING
 
@@ -137,7 +132,6 @@ def _get_user_context(request):
         context_parts.append("Recent searches: none")
 
     return ". ".join(context_parts) if context_parts else None
-
 
 def _needs_web_search(user_message, client):
     """
@@ -189,10 +183,7 @@ def _detect_learning_intent(user_message):
         r"\bguide me through\b",
         r"\bexplain .*step by step",
     ]
-
     return any(re.search(pattern, lowered) for pattern in keyword_patterns)
-
-
 
 def _get_symbol_for_context(request, user_message):
     """
@@ -265,7 +256,6 @@ def _format_news_articles(articles, symbol):
 
     return f"\n\n**Recent News about {symbol}:**\n" + "\n".join(recent_news)
 
-
 def _get_newsapi_context(symbol):
     """Get NewsAPI context for a symbol."""
     if not newsapi:
@@ -287,7 +277,6 @@ def _get_newsapi_context(symbol):
         logger.warning("Could not fetch news for %s: %s", symbol, e)
         return ""
 
-
 def _get_web_search_context(symbols, _user_message):
     """
     Get web search context using both OpenAI's web search tool (if available) and NewsAPI.
@@ -304,7 +293,6 @@ def _get_web_search_context(symbols, _user_message):
     newsapi_context = _get_newsapi_context(symbol)
 
     return openai_web_context + newsapi_context
-
 
 @csrf_exempt
 def chat_api(request):
@@ -343,8 +331,7 @@ def chat_api(request):
         chat_history = chat_history[-20:]
         request.session['chat_history'] = chat_history
 
-    # Build system prompt with scope restrictions, user context,
-    # and optional learning guidance
+    # Build system prompt with scope restrictions, user context, and optional learning guidance
     user_context = _get_user_context(request)
     learning_intent = _detect_learning_intent(user_message)
     extra_instructions = LEARNING_INTENT_INSTRUCTIONS if learning_intent else None
@@ -399,7 +386,6 @@ def chat_api(request):
             },
             status=200,
         )
-
 
 @csrf_exempt
 def clear_chat(request):

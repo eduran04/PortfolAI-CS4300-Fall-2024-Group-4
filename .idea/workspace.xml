@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0a73d2d9-0cb7-472b-b419-2692ccca71af" name="Changes" comment="Added reflection">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="0a73d2d9-0cb7-472b-b419-2692ccca71af" name="Changes" comment="Tried to add some learning assistance instructions to chatbot. Tried to also add some extra unit tests as well.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/portfolai/core/tests/chat_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/portfolai/core/tests/chat_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/portfolai/core/views/chat.py" beforeDir="false" afterPath="$PROJECT_DIR$/portfolai/core/views/chat.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/portfolai/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/portfolai/db.sqlite3" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -167,7 +164,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759874001288</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="Tried to add some learning assistance instructions to chatbot. Tried to also add some extra unit tests as well.">
+      <option name="closed" value="true" />
+      <created>1763179735025</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1763179735025</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -192,6 +197,7 @@
     <MESSAGE value="Added sme crucial upgrades" />
     <MESSAGE value="Added some crucial upgrades" />
     <MESSAGE value="Added reflection" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added reflection" />
+    <MESSAGE value="Tried to add some learning assistance instructions to chatbot. Tried to also add some extra unit tests as well." />
+    <option name="LAST_COMMIT_MESSAGE" value="Tried to add some learning assistance instructions to chatbot. Tried to also add some extra unit tests as well." />
   </component>
 </project>
