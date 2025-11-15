@@ -70,6 +70,14 @@ IMPORTANT RULES FOR USING CONTEXT:
 - If the context says 'empty' or 'none', that is the accurate answer -
   do not guess or assume"""
 
+LEARNING_INTENT_INSTRUCTIONS = """
+LEARNING ASSIST MODE:
+- Provide a clear, ordered list of steps the user can follow.
+- Begin with a short section titled "Why it matters" that explains the concept's importance.
+- Define any specialised financial terms the first time you introduce them.
+- Highlight at least one related stock, trend, or scenario that reinforces the lesson.
+"""
+
 
 # PROMPT BUILDERS
 
@@ -78,13 +86,16 @@ def _build_classification_prompt(user_message):
     return CLASSIFICATION_PROMPT.format(user_message=user_message)
 
 
-def _build_system_prompt(user_context=None):
-    """Build complete system prompt with optional user context."""
+def _build_system_prompt(user_context=None, extra_instructions=None):
+    """Build complete system prompt with optional user context and extra guidance."""
     prompt = SYSTEM_PROMPT_BASE + SCOPE_PROMPT
 
     if user_context:
         prompt += USER_CONTEXT_HEADER.format(user_context=user_context)
         prompt += USER_CONTEXT_RULES
+
+    if extra_instructions:
+        prompt += "\n\n" + extra_instructions.strip()
 
     return prompt
 
@@ -161,6 +172,26 @@ def _needs_web_search(user_message, client):
         logger.warning("Error classifying query for web search: %s", e)
         # Fallback: return False to avoid unnecessary API calls
         return False
+
+
+def _detect_learning_intent(user_message):
+    """Simple heuristic to detect when the user is asking for learning assistance."""
+    if not user_message:
+        return False
+
+    lowered = user_message.lower()
+
+    keyword_patterns = [
+        r"\bteach me\b",
+        r"\bshow me how\b",
+        r"\bhelp me learn\b",
+        r"\bhow do i (analyse|analyze)\b",
+        r"\bguide me through\b",
+        r"\bexplain .*step by step",
+    ]
+
+    return any(re.search(pattern, lowered) for pattern in keyword_patterns)
+
 
 
 def _get_symbol_for_context(request, user_message):
@@ -312,9 +343,12 @@ def chat_api(request):
         chat_history = chat_history[-20:]
         request.session['chat_history'] = chat_history
 
-    # Build system prompt with scope restrictions and user context
+    # Build system prompt with scope restrictions, user context,
+    # and optional learning guidance
     user_context = _get_user_context(request)
-    system_prompt = _build_system_prompt(user_context)
+    learning_intent = _detect_learning_intent(user_message)
+    extra_instructions = LEARNING_INTENT_INSTRUCTIONS if learning_intent else None
+    system_prompt = _build_system_prompt(user_context, extra_instructions)
 
     # Only fetch web search context if AI determines the query needs real-time data
     web_search_context = ""

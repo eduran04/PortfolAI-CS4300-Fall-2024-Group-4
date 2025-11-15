@@ -5,10 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0a73d2d9-0cb7-472b-b419-2692ccca71af" name="Changes" comment="Added reflection">
-      <change beforePath="$PROJECT_DIR$/.idea/PortfolAI-CS4300-Fall-2024-Group-4.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/PortfolAI-CS4300-Fall-2024-Group-4.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_7_25,_3_29 PM_[Changes]/shelved.patch" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_10_7_25__3_29PM__Changes_.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/portfolai/core/tests/chat_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/portfolai/core/tests/chat_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/portfolai/core/views/chat.py" beforeDir="false" afterPath="$PROJECT_DIR$/portfolai/core/views/chat.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/portfolai/db.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/portfolai/db.sqlite3" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -17,7 +18,6 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -27,7 +27,7 @@
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4&quot;,
+    &quot;url&quot;: &quot;https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4.git&quot;,
     &quot;accountId&quot;: &quot;85245940-30cd-4429-aed4-9276f056e749&quot;
   }
 }</component>
@@ -43,6 +43,7 @@
   &quot;keyToString&quot;: {
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;
   }
@@ -50,7 +51,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-d2614ccfe7c8-e2d783800521-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-251.28774.16" />
+        <option value="bundled-python-sdk-f69e5c277ee4-cbfc7b97e6b2-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-252.27397.106" />
       </set>
     </attachedChunks>
   </component>
