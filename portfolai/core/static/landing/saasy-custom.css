@@ -177,18 +177,28 @@ header > .collapsible-header {
 .carousel-container {
     overflow: hidden;
     width: 100%;
-    max-width: 800px;
+    max-width: 1000px;
     white-space: nowrap;
 }
 
 .carousel {
     display: flex;
-    animation: scroll 20s linear infinite;
+    animation: scroll 25s linear infinite;
 }
 
 .carousel-img {
     flex-shrink: 0;
-    margin-right: 1rem;
+    height: 35px;
+    width: auto;
+    margin-right: 2.5rem;
+    opacity: 0.9;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    filter: brightness(1.2);
+}
+
+.carousel-img:hover {
+    opacity: 1;
+    transform: scale(1.1);
 }
 
 @keyframes scroll {

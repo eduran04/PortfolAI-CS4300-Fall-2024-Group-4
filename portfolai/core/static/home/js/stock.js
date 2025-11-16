@@ -33,16 +33,48 @@ const NYSE_SYMBOLS = [
   'OKLO'                                           // Energy/Utilities
 ];
 
+/** @type {string[]} List of NASDAQ-listed ETFs */
+const NASDAQ_ETFS = [
+  'QQQ',  // Invesco QQQ Trust - NASDAQ 100 ETF
+  'TQQQ', 'SQQQ',  // QQQ leveraged ETFs
+  'ARKK', 'ARKQ', 'ARKG', 'ARKW', 'ARKF'  // ARK ETFs (trade on various exchanges, but commonly searched)
+];
+
 /** @type {string[]} List of NYSE Arca (AMEX) listed ETFs */
 const NYSE_ARCA_ETFS = [
-  'VOO', 'SPY', 'QQQ', 'VTI', 'IVV', 'IWM',      // Broad market ETFs
-  'VEA', 'VWO', 'EFA', 'EEM',                     // International ETFs
-  'BND', 'TLT', 'AGG',                            // Bond ETFs
-  'GLD', 'SLV', 'USO',                            // Commodity ETFs
-  'ARKK', 'ARKQ', 'ARKG',                         // ARK ETFs
-  'XLF', 'XLE', 'XLK', 'XLV', 'XLI', 'XLP',      // Sector ETFs
-  'XLY', 'XLB', 'XLU', 'XME', 'XPH', 'XRT'       // More sector ETFs
+  'VOO', 'SPY', 'VTI', 'IVV', 'IWM',      // Broad market ETFs
+  'VEA', 'VWO', 'EFA', 'EEM',             // International ETFs
+  'BND', 'TLT', 'AGG',                    // Bond ETFs
+  'GLD', 'SLV', 'USO',                    // Commodity ETFs
+  'XLF', 'XLE', 'XLK', 'XLV', 'XLI', 'XLP',  // Sector ETFs
+  'XLY', 'XLB', 'XLU', 'XME', 'XPH', 'XRT'   // More sector ETFs
 ];
+
+/** @type {string[]} List of popular stocks for the sidebar stock list */
+const POPULAR_STOCKS = [
+  'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA',
+  'TSLA', 'META', 'NFLX', 'DIS', 'JPM',
+  'VOO', 'SPY', 'QQQ', 'VTI', 'ARKK'
+];
+
+/** @type {Object} Stock metadata with company names */
+const STOCK_METADATA = {
+  'AAPL': { name: 'Apple Inc.' },
+  'MSFT': { name: 'Microsoft Corporation' },
+  'GOOGL': { name: 'Alphabet Inc. (Class A)' },
+  'AMZN': { name: 'Amazon.com, Inc.' },
+  'NVDA': { name: 'NVIDIA Corporation' },
+  'TSLA': { name: 'Tesla, Inc.' },
+  'META': { name: 'Meta Platforms, Inc.' },
+  'NFLX': { name: 'Netflix, Inc.' },
+  'DIS': { name: 'The Walt Disney Company' },
+  'JPM': { name: 'JPMorgan Chase & Co.' },
+  'VOO': { name: 'Vanguard S&P 500 ETF' },
+  'SPY': { name: 'SPDR S&P 500 ETF Trust' },
+  'QQQ': { name: 'Invesco QQQ Trust' },
+  'VTI': { name: 'Vanguard Total Stock Market ETF' },
+  'ARKK': { name: 'ARK Innovation ETF' }
+};
 
 // ============================================================================
 // DOM Element References
@@ -54,7 +86,8 @@ function getSearchInput() {
 }
 
 function getSearchButton() {
-  return document.getElementById('search-button');
+  // Search button removed - search now works on Enter key
+  return null;
 }
 
 function getStockDetailsDiv() {
@@ -128,6 +161,11 @@ async function performSearch() {
     const stockData = await fetchStockData(searchTerm, true); // Force refresh for search
     console.log('Stock data received:', stockData);
 
+    // Check if stock data is valid
+    if (!stockData || stockData.error) {
+      throw new Error('Stock not found or invalid');
+    }
+
     // Display stock details in the sidebar
     displayStockDetails(stockData, searchTerm);
     
@@ -191,7 +229,7 @@ async function performSearch() {
     console.error('Error fetching stock data:', error);
     if (searchErrorDiv) {
       searchErrorDiv.classList.remove('hidden');
-      searchErrorDiv.textContent = `Error: ${error.message}`;
+      searchErrorDiv.textContent = 'Sorry, we could not retrieve the info. Try again.';
     }
     
     // Reset UI on error - ensure loader is hidden
@@ -255,6 +293,7 @@ function displayStockDetails(stock, symbol = 'N/A') {
     companyNameHeader.textContent = 'Company Overview';
     stockDetailsDiv.innerHTML = `<p class="text-sm text-gray-600 dark:text-gray-400">Search for a stock to see details.</p>`;
   }
+  
 }
 
 // ============================================================================
@@ -281,7 +320,12 @@ function detectExchange(symbol) {
   
   const upperSymbol = symbol.toUpperCase();
   
-  // Check NYSE Arca ETFs first (many ETFs trade on NYSE Arca, represented as AMEX in TradingView)
+  // Check NASDAQ ETFs first (QQQ and other NASDAQ-listed ETFs)
+  if (NASDAQ_ETFS.includes(upperSymbol)) {
+    return 'NASDAQ';
+  }
+  
+  // Check NYSE Arca ETFs (many ETFs trade on NYSE Arca, represented as AMEX in TradingView)
   if (NYSE_ARCA_ETFS.includes(upperSymbol)) {
     return 'AMEX';
   }
@@ -581,31 +625,197 @@ function updateWidgetTheme() {
 }
 
 /**
+ * Debounce function to limit API calls
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Wait time in milliseconds
+ * @returns {Function} Debounced function
+ */
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Fetch stock symbols from API for autocomplete
+ * @param {string} query - Search query
+ * @returns {Promise<Array>} Array of matching stocks
+ */
+async function fetchStockSymbols(query) {
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(`/api/stock-symbols/?query=${encodeURIComponent(query)}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch stock symbols');
+    }
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    console.error('Error fetching stock symbols:', error);
+    return [];
+  }
+}
+
+/**
+ * Render autocomplete dropdown with search results
+ * @param {Array} results - Array of stock results from API
+ */
+function renderAutocompleteDropdown(results) {
+  const dropdown = document.getElementById('autocomplete-dropdown');
+  if (!dropdown) {
+    return;
+  }
+
+  dropdown.innerHTML = '';
+
+  if (results.length === 0) {
+    const emptyItem = document.createElement('div');
+    emptyItem.className = 'autocomplete-item empty';
+    emptyItem.textContent = 'No stocks found';
+    dropdown.appendChild(emptyItem);
+    dropdown.classList.remove('hidden');
+    return;
+  }
+
+  results.forEach((stock) => {
+    const item = document.createElement('div');
+    item.className = 'autocomplete-item';
+    
+    const symbolDiv = document.createElement('div');
+    symbolDiv.className = 'symbol';
+    symbolDiv.textContent = stock.symbol;
+    
+    const descriptionDiv = document.createElement('div');
+    descriptionDiv.className = 'description';
+    descriptionDiv.textContent = stock.description;
+    
+    const hintDiv = document.createElement('div');
+    hintDiv.className = 'click-hint';
+    hintDiv.textContent = 'Click to Search';
+    
+    item.appendChild(symbolDiv);
+    item.appendChild(descriptionDiv);
+    item.appendChild(hintDiv);
+    
+    // Click handler to search for this stock
+    item.addEventListener('click', () => {
+      const searchInput = getSearchInput();
+      if (searchInput) {
+        searchInput.value = stock.symbol;
+        hideAutocompleteDropdown();
+        performSearch();
+      }
+    });
+    
+    dropdown.appendChild(item);
+  });
+
+  dropdown.classList.remove('hidden');
+}
+
+/**
+ * Hide autocomplete dropdown
+ */
+function hideAutocompleteDropdown() {
+  const dropdown = document.getElementById('autocomplete-dropdown');
+  if (dropdown) {
+    dropdown.classList.add('hidden');
+  }
+}
+
+/**
  * Initialize stock search functionality
  * 
  * Sets up event listeners for:
- * - Search button click
  * - Enter key press in search input
+ * - Search input changes to trigger autocomplete
  * - Theme changes (to update chart theme)
+ * - Click outside to close dropdown
+ * - Escape key to close dropdown
  * 
  * @function initializeStockSearch
  */
 function initializeStockSearch() {
-  const searchButton = getSearchButton();
   const searchInput = getSearchInput();
   
-  if (!searchButton || !searchInput) {
-    console.error('Search elements not found during initialization');
+  if (!searchInput) {
+    console.error('Search input not found during initialization');
     return;
   }
   
-  // Search button click handler
-  searchButton.addEventListener('click', performSearch);
+  // Debounced search function (300ms delay)
+  const debouncedSearch = debounce(async (query) => {
+    if (query.trim().length === 0) {
+      hideAutocompleteDropdown();
+      return;
+    }
+    
+    const results = await fetchStockSymbols(query);
+    renderAutocompleteDropdown(results);
+  }, 300);
+  
+  // Input handler for autocomplete
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    if (query.length > 0) {
+      debouncedSearch(query);
+    } else {
+      hideAutocompleteDropdown();
+    }
+  });
   
   // Enter key handler for search input
   searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
+      // Always close dropdown first when Enter is pressed
+      const dropdown = document.getElementById('autocomplete-dropdown');
+      
+      // Check if dropdown is visible and has results
+      if (dropdown && !dropdown.classList.contains('hidden')) {
+        const firstItem = dropdown.querySelector('.autocomplete-item:not(.empty)');
+        if (firstItem) {
+          // Get the symbol from the first result
+          const symbolElement = firstItem.querySelector('.symbol');
+          if (symbolElement) {
+            searchInput.value = symbolElement.textContent.trim();
+          }
+        }
+      }
+      
+      // Close dropdown immediately
+      hideAutocompleteDropdown();
+      
+      // Then perform search
       performSearch();
+    } else if (e.key === 'Escape') {
+      hideAutocompleteDropdown();
+    }
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('autocomplete-dropdown');
+    const searchContainer = searchInput.closest('.relative');
+    
+    if (dropdown && searchContainer && !searchContainer.contains(e.target)) {
+      hideAutocompleteDropdown();
+    }
+  });
+  
+  // Focus handler - show dropdown if there's text
+  searchInput.addEventListener('focus', () => {
+    const query = searchInput.value.trim();
+    if (query.length > 0) {
+      debouncedSearch(query);
     }
   });
   

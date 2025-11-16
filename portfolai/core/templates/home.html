@@ -78,14 +78,10 @@
             <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-300">
                 <div class="mb-6">
                     <label for="stock-search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search Stock or ETF (e.g., AAPL, MSFT, VOO, SPY)</label>
-                    <div class="flex">
-                        <input type="text" name="stock-search" id="stock-search" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-l-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Enter stock or ETF symbol (e.g., AAPL, VOO)...">
-                        <button id="search-button" class="inline-flex items-center px-4 py-2 border border-l-0 border-indigo-600 dark:border-indigo-400 rounded-r-md bg-indigo-600 dark:bg-indigo-500 text-white hover:bg-indigo-700 dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800 transition-colors duration-300" aria-label="Search for stock or ETF">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-                            </svg>
-                            <span class="ml-2">Search</span>
-                        </button>
+                    <div class="relative">
+                        <input type="text" name="stock-search" id="stock-search" class="search-input focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md p-3 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Search stocks (e.g., AAPL, MSFT, VOO)">
+                        <!-- Autocomplete Dropdown -->
+                        <div id="autocomplete-dropdown" class="autocomplete-dropdown hidden absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto"></div>
                     </div>
                     <div id="search-error" class="text-red-500 text-sm mt-1 hidden">Stock not found. Please try another symbol.</div>
                 </div>

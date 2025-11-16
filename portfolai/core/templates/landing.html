@@ -36,7 +36,7 @@
                 <a class="header-links" href="#key-benefits">Key Benefits</a>
                 <a class="header-links" href="#features">Features</a>
                 <a class="header-links" href="#solutions">Solutions</a>
-                <a class="header-links" href="#news">News</a>
+                <a class="header-links" href="#faq">FAQ</a>
             </div>
             <div class="tw-mx-4 tw-flex tw-place-items-center tw-gap-[20px] tw-text-base max-md:tw-w-full max-md:tw-flex-col max-md:tw-place-content-center">
                 {% if user.is_authenticated %}
@@ -141,22 +141,22 @@
                 <div
                     class="carousel lg:w-place-content-center tw-mt-6 tw-flex tw-w-full tw-gap-5 max-md:tw-gap-2"
                 >
-                    <!-- Stock tracking capabilities -->
-                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-indigo-600 tw-rounded">
-                        <span class="tw-text-white tw-text-sm tw-font-medium">Real-Time Data</span>
-                    </div>
-                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-purple-600 tw-rounded">
-                        <span class="tw-text-white tw-text-sm tw-font-medium">AI Analysis</span>
-                    </div>
-                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-blue-600 tw-rounded">
-                        <span class="tw-text-white tw-text-sm tw-font-medium">Market Trends</span>
-                    </div>
-                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-green-600 tw-rounded">
-                        <span class="tw-text-white tw-text-sm tw-font-medium">Portfolio Insights</span>
-                    </div>
-                    <div class="carousel-img tw-h-[30px] tw-w-[150px] tw-flex tw-items-center tw-justify-center tw-bg-red-600 tw-rounded">
-                        <span class="tw-text-white tw-text-sm tw-font-medium">Risk Assessment</span>
-                    </div>
+                    <!-- Brand logos -->
+                    <img src="{% static 'landing/assets/images/brand-logos/google.svg' %}" alt="Google" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/microsoft.svg' %}" alt="Microsoft" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/adobe.svg' %}" alt="Adobe" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/amazon.svg' %}" alt="Amazon" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/tesla.svg' %}" alt="Tesla" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/vanguard.svg' %}" alt="Vanguard" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/reddit.svg' %}" alt="Reddit" class="carousel-img" />
+                    <!-- Duplicate for smooth infinite scrolling -->
+                    <img src="{% static 'landing/assets/images/brand-logos/google.svg' %}" alt="Google" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/microsoft.svg' %}" alt="Microsoft" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/adobe.svg' %}" alt="Adobe" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/amazon.svg' %}" alt="Amazon" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/tesla.svg' %}" alt="Tesla" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/vanguard.svg' %}" alt="Vanguard" class="carousel-img" />
+                    <img src="{% static 'landing/assets/images/brand-logos/reddit.svg' %}" alt="Reddit" class="carousel-img" />
                 </div>
             </div>
         </section>
@@ -435,7 +435,7 @@
         </section>
 
         <section
-            class="tw-relative tw-flex tw-min-h-[80vh] tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-6"
+            class="tw-relative tw-flex tw-min-h-[60vh] tw-w-full tw-max-w-[100vw] tw-flex-col tw-place-content-center tw-place-items-center tw-overflow-hidden tw-p-6"
         >
             <div
                 class="reveal-up tw-flex tw-min-h-[60vh] tw-place-content-center tw-place-items-center tw-gap-[10%] max-lg:tw-flex-col max-lg:tw-gap-10"
@@ -487,6 +487,7 @@
 
 
         <section
+            id="faq"
             class="tw-flex tw-w-full tw-flex-col tw-place-content-center tw-place-items-center tw-gap-[10%] tw-p-[5%] tw-px-[10%]"
         >
             <h3
@@ -554,105 +555,6 @@
                 </div>
             </div>
         </div>
-
-
-
-        <section
-            id="news"
-            class="tw-mt-5 tw-flex tw-min-h-[80vh] tw-w-full tw-flex-col tw-place-content-center tw-place-items-center tw-p-[2%] max-lg:tw-p-3"
-        >
-            <h3
-                class="reveal-up tw-text-center tw-text-4xl tw-font-medium max-md:tw-text-2xl"
-            >
-                Latest Market Insights
-            </h3>
-            <!-- articles -->
-            <div
-                class="reveal-up tw-mt-10 tw-flex tw-flex-wrap tw-place-content-center tw-gap-10 max-lg:tw-flex-col"
-            >
-                <a
-                    href=""
-                    class="tw-flex tw-h-[400px] tw-w-[400px] tw-flex-col tw-gap-4 tw-overflow-clip tw-rounded-lg tw-p-4 max-lg:tw-w-[300px]"
-                >
-                    <div
-                        class="tw-h-[250px] tw-w-full tw-overflow-hidden tw-rounded-md"
-                    >
-                        <img
-                            src="{% static 'landing/assets/images/home/forest.jpg' %}"
-                            alt="article image"
-                            class="tw-h-full tw-w-full tw-object-cover tw-transition-transform tw-duration-[0.3s] hover:tw-scale-[1.04]"
-                            srcset=""
-                        />
-                    </div>
-                    <h3
-                        class="tw-mt-2 tw-text-2xl tw-font-semibold max-md:tw-text-xl"
-                    >
-                        AI Stock Analysis Guide
-                    </h3>
-                    <p class="tw-text-gray-400">
-                        Learn how to use AI-powered tools to analyze stocks and make better investment decisions.
-                    </p>
-                    <span>
-                        <span>Learn more</span>
-                        <i class="bi bi-arrow-right"></i>
-                    </span>
-                </a>
-                <a
-                    href=""
-                    class="tw-flex tw-h-[400px] tw-w-[400px] tw-flex-col tw-gap-4 tw-overflow-clip tw-rounded-lg tw-p-4 max-lg:tw-w-[300px]"
-                >
-                    <div
-                        class="tw-h-[250px] tw-w-full tw-overflow-hidden tw-rounded-md"
-                    >
-                        <img
-                            src="{% static 'landing/assets/images/home/mountain.jpg' %}"
-                            alt="article image"
-                            class="tw-h-full tw-w-full tw-object-cover tw-transition-transform tw-duration-[0.3s] hover:tw-scale-[1.04]"
-                            srcset=""
-                        />
-                    </div>
-                    <h3
-                        class="tw-mt-2 tw-text-2xl tw-font-semibold max-md:tw-text-xl"
-                    >
-                        Market Trends 2024
-                    </h3>
-                    <p class="tw-text-gray-400">
-                        Discover the latest market trends and how AI is revolutionizing analysis.
-                    </p>
-                    <span>
-                        <span>Learn more</span>
-                        <i class="bi bi-arrow-right"></i>
-                    </span>
-                </a>
-                <a
-                    href=""
-                    class="tw-flex tw-h-[400px] tw-w-[400px] tw-flex-col tw-gap-4 tw-overflow-clip tw-rounded-lg tw-p-4 max-lg:tw-w-[300px]"
-                >
-                    <div
-                        class="tw-h-[250px] tw-w-full tw-overflow-hidden tw-rounded-md"
-                    >
-                        <img
-                            src="{% static 'landing/assets/images/home/photography.jpg' %}"
-                            alt="article image"
-                            class="tw-h-full tw-w-full tw-object-cover tw-transition-transform tw-duration-[0.3s] hover:tw-scale-[1.04]"
-                            srcset=""
-                        />
-                    </div>
-                    <h3
-                        class="tw-mt-2 tw-text-2xl tw-font-semibold max-md:tw-text-xl"
-                    >
-                        Portfolio Optimization
-                    </h3>
-                    <p class="tw-text-gray-400">
-                        Master the art of portfolio optimization with AI-driven insights and risk management.
-                    </p>
-                    <span>
-                        <span>Learn more</span>
-                        <i class="bi bi-arrow-right"></i>
-                    </span>
-                </a>
-        </div>
-    </section>
 
         <footer
             class="tw-mt-auto tw-flex tw-w-full tw-place-content-around tw-gap-3 tw-p-[5%] tw-px-[10%] tw-text-white max-md:tw-flex-col"
