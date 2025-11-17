@@ -7,7 +7,7 @@
   width: 600px;
   max-width: 90%;
   max-height: calc(100vh - 100px); /* Prevent chat from covering navbar */
-  z-index: 1000; /* Lower than navbar to prevent interference */
+  z-index: 1000; 
   display: flex;
   flex-direction: column;
   align-items: center;

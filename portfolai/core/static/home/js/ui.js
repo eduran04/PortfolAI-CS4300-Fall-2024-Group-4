@@ -246,7 +246,7 @@ async function populateMarketMovers() {
 }
 
 /**
- * Populate news feed with articles
+ * Populate news feed with article(s)
  * @param {string} symbol - Optional stock symbol to filter news
  */
 async function populateNewsFeed(symbol = null) {

@@ -31,6 +31,7 @@ from core.views import (
     chat_api,
     clear_chat,
 )
+from core.views import learn
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -53,4 +54,8 @@ urlpatterns = [
     path("api/watchlist/", get_watchlist, name="get_watchlist"),
     path("api/watchlist/add/", add_to_watchlist, name="add_to_watchlist"),
     path("api/watchlist/remove/", remove_from_watchlist, name="remove_from_watchlist"),
+    #learning resources endpoints
+    path("api/learn/topics/", learn.learn_topics, name="learn_topics"),
+    path("api/learn/topic/<slug:slug>/", learn.learn_topic_detail, name="learn_topic_detail"),
+    path("api/learn/explain/", learn.learn_ai_explanation, name="learn_ai_explanation"),
 ]
