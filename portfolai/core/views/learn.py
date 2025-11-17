@@ -1,7 +1,12 @@
-import json
+"""
+Learning Resources API Views
+Provides topic lists, topic details, and AI explanations.
+"""
+
 from django.http import JsonResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 LEARN_DATA = {
@@ -12,7 +17,7 @@ LEARN_DATA = {
             "When you buy a share, you own a small percentage of the business.",
             "Stock prices move based on supply/demand and company performance.",
             "Investors buy stocks to grow wealth over time."
-        ]
+        ],
     },
 
     "reading-stock-charts": {
@@ -22,7 +27,7 @@ LEARN_DATA = {
             "Green candles mean price closed higher; red means price fell.",
             "Volume bars show how many shares were traded.",
             "Trendlines help identify long-term movement."
-        ]
+        ],
     },
 
     "risk-vs-reward": {
@@ -31,28 +36,41 @@ LEARN_DATA = {
             "Higher potential returns usually come with higher risk.",
             "Diversification helps reduce portfolio risk.",
             "Understanding risk tolerance is key for investment strategy."
-        ]
-    }
+        ],
+    },
 }
 
 
 def learn_topics(request):
-    """Return list of available learning topics"""
+    """
+    Return a list of all learning topics (slugs).
+    """
     return JsonResponse({"topics": list(LEARN_DATA.keys())})
 
 
 def learn_topic_detail(request, slug):
-    """Return full content for a specific learning topic"""
+    """
+    Return detailed content for a specific topic slug.
+    """
     if slug not in LEARN_DATA:
         return JsonResponse({"error": "Topic not found"}, status=404)
 
     return JsonResponse(LEARN_DATA[slug])
 
 
-# Mock OpenAI client for local development and test patching
+# ----------------------------
+# Mock Client (for tests)
+# ----------------------------
+
 class MockClient:
+    """Mock OpenAI client for unit tests."""
+
     class chat:
+        """Mock chat namespace."""
+
         class completions:
+            """Mock completions namespace."""
+
             @staticmethod
             def create(*args, **kwargs):
                 return {
@@ -67,40 +85,32 @@ openai_client = MockClient()
 
 @csrf_exempt
 def learn_ai_explanation(request):
-    """Generate AI explanation for a learning topic."""
+    """
+    Generate an AI explanation for a topic.
+    Tests patch the openai_client so this does not call a real API.
+    """
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
 
-    # TEST REQUIREMENTS:
-    # - If OPENAI_API_KEY = "" → return 500
-    # - If OPENAI_API_KEY = None → allow (mock mode)
-    api_key = getattr(settings, "OPENAI_API_KEY", None)
-    if isinstance(api_key, str) and api_key.strip() == "":
-        return JsonResponse({"error": "Missing OpenAI API key"}, status=500)
-
-    # Accept JSON or form POST
+    # Load JSON body safely
     try:
-        if request.content_type == "application/json":
-            body = json.loads(request.body.decode("utf-8"))
-            topic = body.get("topic")
-        else:
-            topic = request.POST.get("topic")
-    except Exception:
+        body = json.loads(request.body) if request.body else {}
+        topic = body.get("topic")
+    except json.JSONDecodeError:
         topic = None
 
     if not topic:
         return JsonResponse({"error": "Missing topic"}, status=400)
 
-    # Tests patch: core.views.learn.openai_client.chat.completions.create
+    # Call mocked OpenAI client
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "user", "content": f"Explain this concept simply: {topic}"}
-            ]
+            messages=[{"role": "user",
+                       "content": f"Explain this simply: {topic}"}],
         )
         explanation = response["choices"][0]["message"]["content"]
-        return JsonResponse({"explanation": explanation}, status=200)
+        return JsonResponse({"explanation": explanation})
 
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+    except Exception as exc:  
+        return JsonResponse({"error": str(exc)}, status=500)
