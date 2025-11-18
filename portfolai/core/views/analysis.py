@@ -70,11 +70,13 @@ ANALYSIS_PROMPT = """
         4. Industry trends and competitive landscape
         5. Recent price movements and technical indicators
         6. Regulatory or legal developments affecting the company
+        7. Insider sentiment and trading activity (MSPR indicators if available)
+        8. Analyst recommendation trends (buy/hold/sell ratings if available)
 
         Provide a structured analysis with:
         - Technical Analysis (current price trends, support/resistance levels)
         - Fundamental Analysis (recent financials, earnings, growth prospects)
-        - Market Sentiment (news sentiment, analyst ratings, market buzz)
+        - Market Sentiment (news sentiment, analyst ratings, insider activity, market buzz)
         - Risk Assessment (key risks and opportunities)
         - Investment Recommendation (Buy/Hold/Sell with detailed reasoning)
         - Key Factors to Watch (upcoming events, catalysts)
@@ -225,6 +227,131 @@ def _fetch_company_context(symbol):
     return ""
 
 
+def _fetch_insider_sentiment(symbol):
+    """
+    Fetch insider sentiment data for the given symbol.
+
+    Args:
+        symbol: Stock symbol to fetch insider sentiment for
+
+    Returns:
+        str: Formatted insider sentiment context string or empty string if unavailable
+    """
+    if not finnhub_client:
+        return ""
+
+    try:
+        # Calculate date range (6 months ago to today)
+        to_date = datetime.now().strftime('%Y-%m-%d')
+        from_date = (datetime.now() - timedelta(days=180)).strftime('%Y-%m-%d')
+
+        insider_data = finnhub_client.stock_insider_sentiment(
+            symbol=symbol,
+            _from=from_date,
+            to=to_date
+        )
+
+        if not insider_data or not insider_data.get('data'):
+            return ""
+
+        context = "\n\n**Insider Sentiment (MSPR - Monthly Share Purchase Ratio):**\n"
+
+        # Get recent months (limit to 3 most recent)
+        if len(insider_data['data']) > 3:
+            recent_data = insider_data['data'][-3:]
+        else:
+            recent_data = insider_data['data']
+
+        if not recent_data:
+            return ""
+
+        for entry in recent_data:
+            month = entry.get('month', 0)
+            year = entry.get('year', 0)
+            mspr = entry.get('mspr', 0)
+            change = entry.get('change', 0)
+
+            sentiment = "positive" if mspr > 0 else "negative" if mspr < 0 else "neutral"
+            action = "net buying" if change > 0 else "net selling" if change < 0 else "no change"
+
+            context += (
+                f"- {year}-{month:02d}: MSPR {mspr:.2f} ({sentiment}), "
+                f"Change: {change:,} shares ({action})\n"
+            )
+
+        context += (
+            "\n*MSPR ranges from -100 (most negative) to 100 (most positive), "
+            "signaling potential price changes in 30-90 days*"
+        )
+
+        return context
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Warning: Could not fetch insider sentiment for analysis: {e}")
+
+    return ""
+
+
+def _fetch_recommendation_trends(symbol):
+    """
+    Fetch analyst recommendation trends for the given symbol.
+
+    Args:
+        symbol: Stock symbol to fetch recommendations for
+
+    Returns:
+        str: Formatted recommendation trends context string or empty string if unavailable
+    """
+    if not finnhub_client:
+        return ""
+
+    try:
+        recommendations = finnhub_client.recommendation_trends(symbol=symbol)
+
+        if not recommendations or len(recommendations) == 0:
+            return ""
+
+        context = "\n\n**Analyst Recommendation Trends:**\n"
+
+        # Get most recent recommendation (first in the list)
+        latest = recommendations[0]
+
+        period = latest.get('period', 'N/A')
+        strong_buy = latest.get('strongBuy', 0)
+        buy = latest.get('buy', 0)
+        hold = latest.get('hold', 0)
+        sell = latest.get('sell', 0)
+        strong_sell = latest.get('strongSell', 0)
+
+        total = strong_buy + buy + hold + sell + strong_sell
+
+        if total == 0:
+            return ""
+
+        context += f"- Period: {period}\n"
+        context += f"- Strong Buy: {strong_buy}\n"
+        context += f"- Buy: {buy}\n"
+        context += f"- Hold: {hold}\n"
+        context += f"- Sell: {sell}\n"
+        context += f"- Strong Sell: {strong_sell}\n"
+        context += f"- Total Analysts: {total}\n"
+
+        # Calculate sentiment percentages
+        bullish = ((strong_buy + buy) / total * 100) if total > 0 else 0
+        bearish = ((sell + strong_sell) / total * 100) if total > 0 else 0
+        neutral_pct = (hold / total * 100) if total > 0 else 0
+
+        context += (
+            f"\n*Overall: {bullish:.1f}% bullish, "
+            f"{neutral_pct:.1f}% neutral, {bearish:.1f}% bearish*"
+        )
+
+        return context
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Warning: Could not fetch recommendation trends for analysis: {e}")
+
+    return ""
+
+
 def _build_analysis_context(symbol, stock_data):
     """
     Build analysis context string from symbol and stock data.
@@ -318,6 +445,8 @@ def portfolai_analysis(request):
         # Get additional real-time data to enhance the analysis
         additional_context = _fetch_news_context(symbol)
         additional_context += _fetch_company_context(symbol)
+        additional_context += _fetch_insider_sentiment(symbol)
+        additional_context += _fetch_recommendation_trends(symbol)
 
         # Enhanced prompt with real-time data
         enhanced_prompt = prompt + additional_context

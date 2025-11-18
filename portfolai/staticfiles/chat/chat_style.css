@@ -6,63 +6,277 @@
   transform: translateX(-50%);
   width: 600px;
   max-width: 90%;
-  z-index: 9999;
+  max-height: calc(100vh - 100px); /* Prevent chat from covering navbar */
+  z-index: 1000; 
   display: flex;
   flex-direction: column;
   align-items: center;
   font-family: "Inter", sans-serif;
+  pointer-events: auto;
+  transition: left 0.5s ease, right 0.5s ease, bottom 0.4s ease, width 0.4s ease, transform 0.5s ease;
+}
+
+/* --- Position Classes --- */
+#chat-widget.position-left {
+  left: 40px;
+  right: auto;
+}
+
+/* --- Minimized State --- */
+#chat-widget.minimized {
+  width: auto;
+  bottom: 20px;
+}
+
+#chat-widget.minimized #chat-header,
+#chat-widget.minimized #chat-history {
+  display: none !important;
+}
+
+#chat-widget.minimized #chat-bar {
+  width: auto;
+  padding: 8px;
+  border-radius: 50%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+#chat-widget.minimized #chat-input,
+#chat-widget.minimized #chat-send {
+  display: none;
+}
+
+#chat-widget.minimized .chat-icon {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* --- Expanded State (Center) --- */
+#chat-widget.expanded {
+  left: 50%;
+  right: auto;
+  bottom: 20px;
+  transform: translateX(-50%);
+  width: 600px;
+}
+
+/* --- Visibility --- */
+#chat-widget .hidden {
+  display: none !important;
+}
+#chat-widget .show {
+  display: flex !important;
+}
+
+/* --- Chat Header --- */
+#chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #7289da, #5865f2);
+  color: rgb(255, 255, 255);
+  border-radius: 16px 16px 0 0;
+  padding: 10px 14px;
+  width: 100%;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#chat-header.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chat-title {
+  font-size: 15px;
+}
+
+/* --- NEW: Header Right-side Buttons Wrapper --- */
+.chat-header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* --- Updated Clear Button --- */
+#chat-clear {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 4px 10px;
+  font-size: 13px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+#chat-clear:hover {
+  background: rgba(255, 255, 255, 0.35);
+  opacity: 0.9;
+}
+
+/* --- Updated Close Button --- */
+#chat-close {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px 6px;
+  transition: opacity 0.2s ease;
+  opacity: 0.9;
+}
+
+#chat-close:hover {
+  opacity: 1;
 }
 
 /* --- Chat History --- */
 #chat-history {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 0 0 16px 16px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-height: 360px;
-  overflow-y: auto;
   padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  justify-content: flex-start;
+  gap: 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
   scroll-behavior: smooth;
-  transition: all 0.3s ease;
+  transition: opacity 0.4s ease;
+  max-width: 100vw;
 }
 
-/* --- Message Bubble Base --- */
+#chat-history .message {
+  margin-bottom: 8px;
+}
+
+/* --- Scrollbar Styling --- */
+#chat-history::-webkit-scrollbar {
+  width: 8px;
+}
+#chat-history::-webkit-scrollbar-thumb {
+  background: #c7c9cf;
+  border-radius: 4px;
+}
+#chat-history::-webkit-scrollbar-thumb:hover {
+  background: #a8abb4;
+}
+
+/* --- Messages --- */
 .message {
-  max-width: 80%;
-  padding: 12px 16px;
+  width: fit-content;
+  max-width: 75%;
+  padding: 10px 14px;
   border-radius: 18px;
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.4;
   word-wrap: break-word;
-  animation: slideUpFade 0.4s ease forwards;
+  white-space: pre-wrap;
   opacity: 0;
-  transform: translateY(10px);
-  position: relative;
+  transform: translateY(6px);
+  animation: slideUpFade 0.4s ease forwards;
 }
 
-/* --- User Message (Right Side) --- */
 .message.user {
   align-self: flex-end;
   background: linear-gradient(135deg, #7289da, #5865f2);
-  color: #fff;
+  color: white;
   border-bottom-right-radius: 6px;
-  text-align: right;
   margin-left: auto;
-  box-shadow: 0 2px 10px rgba(88, 101, 242, 0.3);
 }
 
-/* --- Bot Message (Left Side) --- */
 .message.bot {
   align-self: flex-start;
   background: #f3f4f6;
   color: #111827;
   border-bottom-left-radius: 6px;
-  text-align: left;
   margin-right: auto;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  white-space: normal;
+}
+
+/* --- Bot Message Formatting --- */
+.message.bot p {
+  margin: 0 0 8px 0;
+}
+
+.message.bot p:last-child {
+  margin-bottom: 0;
+}
+
+.message.bot strong {
+  font-weight: 600;
+  color: #5865f2;
+}
+
+/* Headers within bot messages */
+.message.bot h4.chat-header {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  margin: 12px 0 8px 0;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* Inline values like $1.85, iPhone 17 series, etc. */
+.message.bot .chat-value {
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Ordered lists */
+.message.bot ol.chat-list {
+  margin: 8px 0;
+  padding-left: 20px;
+  list-style-position: outside;
+}
+
+.message.bot ol.chat-list li {
+  margin: 6px 0;
+  padding-left: 4px;
+  line-height: 1.5;
+}
+
+/* Unordered lists (bullet points) */
+.message.bot ul.chat-list {
+  margin: 8px 0;
+  padding-left: 20px;
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
+.message.bot ul.chat-list li {
+  margin: 6px 0;
+  padding-left: 4px;
+  line-height: 1.5;
+}
+
+.message.bot ol.chat-list li strong,
+.message.bot ul.chat-list li strong {
+  display: inline;
+  margin-right: 4px;
+}
+
+/* Nested lists (indented sub-items) */
+.message.bot ul.chat-nested {
+  margin: 4px 0 4px 16px;
+  padding-left: 16px;
+  list-style-type: circle;
+}
+
+.message.bot ul.chat-nested li {
+  margin: 3px 0;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 /* --- Typing Animation --- */
@@ -126,8 +340,14 @@
 
 /* --- Chat Icon --- */
 .chat-icon {
-  width: 26px;
-  height: 26px;
+  width: 35px;
+  height: 35px;
+  transition: transform 0.3s ease;
+}
+
+.chat-icon.active {
+  animation: pulse 1.8s infinite ease-in-out;
+  transform: scale(1.05);
 }
 
 /* --- Animations --- */
@@ -147,9 +367,13 @@
   40% { opacity: 1; transform: translateY(-2px); }
 }
 
-/* --- Scrollbar --- */
-#chat-history::-webkit-scrollbar { width: 6px; }
-#chat-history::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.1);
+    filter: brightness(1.2);
+  }
 }

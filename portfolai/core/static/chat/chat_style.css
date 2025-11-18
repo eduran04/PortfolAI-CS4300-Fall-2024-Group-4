@@ -13,6 +13,50 @@
   align-items: center;
   font-family: "Inter", sans-serif;
   pointer-events: auto;
+  transition: left 0.5s ease, right 0.5s ease, bottom 0.4s ease, width 0.4s ease, transform 0.5s ease;
+}
+
+/* --- Position Classes --- */
+#chat-widget.position-left {
+  left: 40px;
+  right: auto;
+}
+
+/* --- Minimized State --- */
+#chat-widget.minimized {
+  width: auto;
+  bottom: 20px;
+}
+
+#chat-widget.minimized #chat-header,
+#chat-widget.minimized #chat-history {
+  display: none !important;
+}
+
+#chat-widget.minimized #chat-bar {
+  width: auto;
+  padding: 8px;
+  border-radius: 50%;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+#chat-widget.minimized #chat-input,
+#chat-widget.minimized #chat-send {
+  display: none;
+}
+
+#chat-widget.minimized .chat-icon {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* --- Expanded State (Center) --- */
+#chat-widget.expanded {
+  left: 50%;
+  right: auto;
+  bottom: 20px;
+  transform: translateX(-50%);
+  width: 600px;
 }
 
 /* --- Visibility --- */
@@ -152,6 +196,87 @@
   color: #111827;
   border-bottom-left-radius: 6px;
   margin-right: auto;
+  white-space: normal;
+}
+
+/* --- Bot Message Formatting --- */
+.message.bot p {
+  margin: 0 0 8px 0;
+}
+
+.message.bot p:last-child {
+  margin-bottom: 0;
+}
+
+.message.bot strong {
+  font-weight: 600;
+  color: #5865f2;
+}
+
+/* Headers within bot messages */
+.message.bot h4.chat-header {
+  font-size: 15px;
+  font-weight: 600;
+  color: #374151;
+  margin: 12px 0 8px 0;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+/* Inline values like $1.85, iPhone 17 series, etc. */
+.message.bot .chat-value {
+  background: #e0e7ff;
+  color: #4338ca;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Ordered lists */
+.message.bot ol.chat-list {
+  margin: 8px 0;
+  padding-left: 20px;
+  list-style-position: outside;
+}
+
+.message.bot ol.chat-list li {
+  margin: 6px 0;
+  padding-left: 4px;
+  line-height: 1.5;
+}
+
+/* Unordered lists (bullet points) */
+.message.bot ul.chat-list {
+  margin: 8px 0;
+  padding-left: 20px;
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
+.message.bot ul.chat-list li {
+  margin: 6px 0;
+  padding-left: 4px;
+  line-height: 1.5;
+}
+
+.message.bot ol.chat-list li strong,
+.message.bot ul.chat-list li strong {
+  display: inline;
+  margin-right: 4px;
+}
+
+/* Nested lists (indented sub-items) */
+.message.bot ul.chat-nested {
+  margin: 4px 0 4px 16px;
+  padding-left: 16px;
+  list-style-type: circle;
+}
+
+.message.bot ul.chat-nested li {
+  margin: 3px 0;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 /* --- Typing Animation --- */
