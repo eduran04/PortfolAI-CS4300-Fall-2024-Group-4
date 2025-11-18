@@ -20,30 +20,29 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12.3'
-
-      - name: Set up cache for pip
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: 'pip'
       
       - name: Install dependencies
         run: |
           cd portfolai
           pip install -r requirements.txt
-          pip install safety bandit pylint flake8 PyGithub
+          pip install safety bandit pylint flake8 PyGithub pylint-django
       
       - name: Run Bandit (Static Code Analysis)
         id: bandit
         run: |
           cd portfolai
           echo "=== Bandit Security Scan ==="
-          bandit -r core -f json -o bandit.json -c bandit.yaml -s MEDIUM || true
+          # Exclude test files from Bandit (they won't be in production)
+          bandit -r core \
+            --exclude core/tests \
+            -f json -o bandit.json -c bandit.yaml -s MEDIUM || true
+          bandit -r core \
+            --exclude core/tests \
+            -c bandit.yaml -s MEDIUM -f screen | tee bandit-screen.txt || true
           echo ""
           echo "=== Bandit Summary ==="
           if [ -f bandit.json ]; then
@@ -59,30 +58,184 @@ jobs:
           EOF
           fi
         continue-on-error: true
+
+      - name: Upload Bandit JSON Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report-json
+          path: portfolai/bandit.json
+
+      - name: Upload Bandit Screen Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-report-txt
+          path: portfolai/bandit-screen.txt
+
+      - name: Comment Bandit Results on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = '';
+            try {
+              report = fs.readFileSync('portfolai/bandit-screen.txt', 'utf8');
+            } catch (e) {
+              report = 'Scan completed (check artifacts for details)';
+            }
+
+            // Extract summary
+            const highMatch = report.match(/Severity: High: (\d+)/);
+            const mediumMatch = report.match(/Severity: Medium: (\d+)/);
+            const lowMatch = report.match(/Severity: Low: (\d+)/);
+
+            const high = highMatch ? highMatch[1] : '0';
+            const medium = mediumMatch ? mediumMatch[1] : '0';
+            const low = lowMatch ? lowMatch[1] : '0';
+
+            const passed = (high === '0' && medium === '0');
+            const status = passed ? 'Passed' : 'Failed';
+
+            const comment = `## Bandit Security Scan (CWE Coverage)\n\n**Status: ${status}**\n\n**Issues Found:**\n- High: ${high}\n- Medium: ${medium}\n- Low: ${low}\n\n**CWE Categories Checked:** 50+ including SQL Injection, XSS, Command Injection, Insecure Deserialization, Hard-coded Credentials, Weak Crypto, and more.\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
       
       - name: Run PyLint
         id: pylint
         run: |
           cd portfolai
           echo "=== PyLint Code Quality Check ==="
-          python -m pylint core --output-format=text | tee pylint.txt || true
+          # Exclude test files from Pylint (they won't be in production)
+          pylint core/ \
+            --ignore=tests,test_*.py \
+            --ignore-patterns=.*_test\.py,test_.*\.py,.*\.feature \
+            --rcfile=.pylintrc \
+            --output-format=text | tee pylint.txt || true
         continue-on-error: true
+
+      - name: Upload PyLint Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pylint-report
+          path: portfolai/pylint.txt
+
+      - name: Comment PyLint Score on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = '';
+            try {
+              report = fs.readFileSync('portfolai/pylint.txt', 'utf8');
+            } catch (e) {
+              report = 'PyLint scan completed (check artifacts for details)';
+            }
+
+            const scoreMatch = report.match(/Your code has been rated at ([\d.]+)\/10/);
+            const score = scoreMatch ? scoreMatch[1] : 'N/A';
+
+            const comment = `## PyLint Code Quality Check\n\n**Score: ${score}/10**\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
       
       - name: Run Flake8
         id: flake8
         run: |
           cd portfolai
           echo "=== Flake8 Style Check ==="
-          flake8 core --format=default | tee flake8.txt || true
+          # Exclude test files from Flake8 (they won't be in production)
+          flake8 core/ --exclude=core/tests,core/migrations --format=default | tee flake8.txt || true
         continue-on-error: true
+
+      - name: Upload Flake8 Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flake8-report
+          path: portfolai/flake8.txt
+
+      - name: Comment Flake8 Results on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = '';
+            try {
+              report = fs.readFileSync('portfolai/flake8.txt', 'utf8');
+            } catch (e) {
+              report = 'No issues found';
+            }
+
+            const lines = report.split('\n').filter(line => line.trim().length > 0);
+            const issueCount = lines.length;
+            const status = issueCount === 0 ? 'Passed' : 'Issues Found';
+
+            const comment = `## Flake8 Style Check\n\n**Status: ${status}**\n\n**Issues Found: ${issueCount}**\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
       
       - name: Run Safety (Dependency Check)
         id: safety
         run: |
           cd portfolai
           echo "=== Safety Dependency Vulnerability Check ==="
-          safety check --json > safety.json 2>&1 || safety check | tee safety.txt 2>&1 || true
+          safety check --continue-on-error --save-json safety.json || true
+          safety check --continue-on-error | tee safety.txt || true
         continue-on-error: true
+
+      - name: Upload Safety Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-reports
+          path: |
+            portfolai/safety.json
+            portfolai/safety.txt
+
+      - name: Comment Safety Results on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = '';
+            try {
+              report = fs.readFileSync('portfolai/safety.txt', 'utf8');
+            } catch (e) {
+              report = 'No vulnerabilities found or scan errored (check artifacts)';
+            }
+
+            const hasVulns = report.includes('found') && !report.includes('No known security vulnerabilities found');
+            const status = hasVulns ? 'Vulnerabilities Found' : 'No CVEs Found';
+
+            const comment = `## Safety CVE Scan\n\n**Status: ${status}**\n\n**Checks:** Known CVE vulnerabilities in Python dependencies\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
       
       - name: Post security report to PR
         if: github.event_name == 'pull_request'
