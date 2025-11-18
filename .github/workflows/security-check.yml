@@ -28,27 +28,23 @@ jobs:
       - name: Install dependencies
         run: |
           cd portfolai
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install safety bandit pylint flake8 PyGithub pylint-django
+          pip install safety bandit pylint flake8 PyGithub
       
       - name: Run Bandit (Static Code Analysis)
         id: bandit
         run: |
           cd portfolai
           echo "=== Bandit Security Scan ==="
-          # Exclude test files from Bandit (they won't be in production)
-          bandit -r core \
-            --exclude core/tests \
-            -f json -o bandit.json -c bandit.yaml -s MEDIUM || true
-          bandit -r core \
-            --exclude core/tests \
-            -c bandit.yaml -s MEDIUM -f screen | tee bandit-screen.txt || true
+          bandit -r core -f json -o bandit-report.json -c bandit.yaml -s MEDIUM || true
+          bandit -r core -f screen -c bandit.yaml -s MEDIUM | tee bandit-screen.txt || true
           echo ""
           echo "=== Bandit Summary ==="
-          if [ -f bandit.json ]; then
+          if [ -f bandit-report.json ]; then
             python << 'EOF'
           import json
-          with open('bandit.json') as f:
+          with open('bandit-report.json') as f:
               data = json.load(f)
           results = data.get('results', [])
           high = sum(1 for r in results if r.get('issue_severity') == 'HIGH')
@@ -58,189 +54,128 @@ jobs:
           EOF
           fi
         continue-on-error: true
-
+      
       - name: Upload Bandit JSON Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bandit-report-json
-          path: portfolai/bandit.json
-
+          path: portfolai/bandit-report.json
+      
       - name: Upload Bandit Screen Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bandit-report-txt
           path: portfolai/bandit-screen.txt
-
-      - name: Comment Bandit Results on PR
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            let report = '';
-            try {
-              report = fs.readFileSync('portfolai/bandit-screen.txt', 'utf8');
-            } catch (e) {
-              report = 'Scan completed (check artifacts for details)';
-            }
-
-            // Extract summary
-            const highMatch = report.match(/Severity: High: (\d+)/);
-            const mediumMatch = report.match(/Severity: Medium: (\d+)/);
-            const lowMatch = report.match(/Severity: Low: (\d+)/);
-
-            const high = highMatch ? highMatch[1] : '0';
-            const medium = mediumMatch ? mediumMatch[1] : '0';
-            const low = lowMatch ? lowMatch[1] : '0';
-
-            const passed = (high === '0' && medium === '0');
-            const status = passed ? 'Passed' : 'Failed';
-
-            const comment = `## Bandit Security Scan (CWE Coverage)\n\n**Status: ${status}**\n\n**Issues Found:**\n- High: ${high}\n- Medium: ${medium}\n- Low: ${low}\n\n**CWE Categories Checked:** 50+ including SQL Injection, XSS, Command Injection, Insecure Deserialization, Hard-coded Credentials, Weak Crypto, and more.\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
       
       - name: Run PyLint
         id: pylint
         run: |
           cd portfolai
           echo "=== PyLint Code Quality Check ==="
-          # Exclude test files from Pylint (they won't be in production)
-          pylint core/ \
-            --ignore=tests,test_*.py \
-            --ignore-patterns=.*_test\.py,test_.*\.py,.*\.feature \
-            --rcfile=.pylintrc \
-            --output-format=text | tee pylint.txt || true
+          python -m pylint core --output-format=json --output=pylint-report.json || true
+          python -m pylint core --output-format=text | tee pylint.txt || true
         continue-on-error: true
-
-      - name: Upload PyLint Report
+      
+      - name: Upload PyLint JSON Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pylint-report
-          path: portfolai/pylint.txt
-
-      - name: Comment PyLint Score on PR
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
+          name: pylint-report-json
+          path: portfolai/pylint-report.json
+      
+      - name: Upload PyLint Text Report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          script: |
-            const fs = require('fs');
-            let report = '';
-            try {
-              report = fs.readFileSync('portfolai/pylint.txt', 'utf8');
-            } catch (e) {
-              report = 'PyLint scan completed (check artifacts for details)';
-            }
-
-            const scoreMatch = report.match(/Your code has been rated at ([\d.]+)\/10/);
-            const score = scoreMatch ? scoreMatch[1] : 'N/A';
-
-            const comment = `## PyLint Code Quality Check\n\n**Score: ${score}/10**\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+          name: pylint-report-txt
+          path: portfolai/pylint.txt
       
       - name: Run Flake8
         id: flake8
         run: |
           cd portfolai
           echo "=== Flake8 Style Check ==="
-          # Exclude test files from Flake8 (they won't be in production)
-          flake8 core/ --exclude=core/tests,core/migrations --format=default | tee flake8.txt || true
+          flake8 core --format=default | tee flake8.txt || true
+          # Convert Flake8 text output to JSON format
+          python << 'EOF'
+          import json
+          import re
+          issues = []
+          try:
+              with open('flake8.txt', 'r') as f:
+                  for line in f:
+                      line = line.strip()
+                      if not line or line.startswith('#'):
+                          continue
+                      # Parse flake8 output: file:line:col: code message
+                      match = re.match(r'^([^:]+):(\d+):(\d+):\s*(\w+)\s+(.+)$', line)
+                      if match:
+                          issues.append({
+                              'file': match.group(1),
+                              'line': int(match.group(2)),
+                              'column': int(match.group(3)),
+                              'code': match.group(4),
+                              'message': match.group(5)
+                          })
+          except Exception as e:
+              print(f"Error parsing flake8 output: {e}")
+          
+          report = {
+              'total_issues': len(issues),
+              'issues': issues
+          }
+          
+          with open('flake8-report.json', 'w') as f:
+              json.dump(report, f, indent=2)
+          EOF
         continue-on-error: true
-
-      - name: Upload Flake8 Report
+      
+      - name: Upload Flake8 JSON Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: flake8-report
-          path: portfolai/flake8.txt
-
-      - name: Comment Flake8 Results on PR
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
+          name: flake8-report-json
+          path: portfolai/flake8-report.json
+      
+      - name: Upload Flake8 Text Report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          script: |
-            const fs = require('fs');
-            let report = '';
-            try {
-              report = fs.readFileSync('portfolai/flake8.txt', 'utf8');
-            } catch (e) {
-              report = 'No issues found';
-            }
-
-            const lines = report.split('\n').filter(line => line.trim().length > 0);
-            const issueCount = lines.length;
-            const status = issueCount === 0 ? 'Passed' : 'Issues Found';
-
-            const comment = `## Flake8 Style Check\n\n**Status: ${status}**\n\n**Issues Found: ${issueCount}**\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+          name: flake8-report-txt
+          path: portfolai/flake8.txt
       
       - name: Run Safety (Dependency Check)
         id: safety
         run: |
           cd portfolai
           echo "=== Safety Dependency Vulnerability Check ==="
-          safety check --continue-on-error --save-json safety.json || true
-          safety check --continue-on-error | tee safety.txt || true
+          safety check --json > safety-report.json 2>&1 || true
+          safety check | tee safety-screen.txt 2>&1 || true
         continue-on-error: true
-
-      - name: Upload Safety Reports
+      
+      - name: Upload Safety JSON Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: safety-reports
-          path: |
-            portfolai/safety.json
-            portfolai/safety.txt
-
-      - name: Comment Safety Results on PR
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
+          name: safety-report-json
+          path: portfolai/safety-report.json
+      
+      - name: Upload Safety Screen Report
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          script: |
-            const fs = require('fs');
-            let report = '';
-            try {
-              report = fs.readFileSync('portfolai/safety.txt', 'utf8');
-            } catch (e) {
-              report = 'No vulnerabilities found or scan errored (check artifacts)';
-            }
-
-            const hasVulns = report.includes('found') && !report.includes('No known security vulnerabilities found');
-            const status = hasVulns ? 'Vulnerabilities Found' : 'No CVEs Found';
-
-            const comment = `## Safety CVE Scan\n\n**Status: ${status}**\n\n**Checks:** Known CVE vulnerabilities in Python dependencies\n\n<details>\n<summary>Full Report</summary>\n\n\`\`\`\n${report}\n\`\`\`\n\n</details>`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+          name: safety-report-txt
+          path: portfolai/safety-screen.txt
       
       - name: Post security report to PR
         if: github.event_name == 'pull_request'
         run: |
           cd portfolai
+          # Create symlinks for backward compatibility with security_report.py
+          [ -f bandit-report.json ] && ln -sf bandit-report.json bandit.json || touch bandit.json
+          [ -f safety-report.json ] && ln -sf safety-report.json safety.json || touch safety.json
           python ../security_report.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -250,10 +185,10 @@ jobs:
       - name: Check for high severity issues
         run: |
           cd portfolai
-          if [ -f bandit.json ]; then
+          if [ -f bandit-report.json ]; then
             python << 'EOF'
           import json
-          with open('bandit.json') as f:
+          with open('bandit-report.json') as f:
               data = json.load(f)
           results = data.get('results', [])
           high_count = sum(1 for r in results if r.get('issue_severity') == 'HIGH')
