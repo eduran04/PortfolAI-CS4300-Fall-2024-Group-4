@@ -3,7 +3,6 @@
  * Coordinates all modules and handles application startup
  */
 
-
 /**
  * Initialize the application when DOM is ready
  */

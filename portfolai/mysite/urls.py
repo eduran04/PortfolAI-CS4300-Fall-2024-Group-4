@@ -31,7 +31,6 @@ from core.views import (
     chat_api,
     clear_chat,
 )
-from core.views.stock_data import search_stock_symbols
 from core.views import learn
 
 urlpatterns = [
@@ -44,7 +43,6 @@ urlpatterns = [
     path("api/hello/", hello_api, name="hello_api"),
     path("api/stock/", stock_summary, name="stock_summary"),
     path("api/stock-data/", get_stock_data, name="get_stock_data"),
-    path("api/stock-symbols/", search_stock_symbols, name="search_stock_symbols"),
     path("api/market-movers/", get_market_movers, name="get_market_movers"),
     path("api/news/", get_news, name="get_news"),
     path("api/portfolai-analysis/", portfolai_analysis, name="portfolai_analysis"),
