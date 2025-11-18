@@ -6,7 +6,7 @@
    CSS Variables
    ========================================================================== */
 
-:root {
+   :root {
     --bg-color: #000;
     --bg-secondary: #080808;
     --text-white: #ffffff;
@@ -64,7 +64,7 @@ header > .collapsible-header {
     background-color: inherit;
     place-content: center;
     overflow: hidden;
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, opacity 0.3s ease;
 }
 
 .animated-collapse {
@@ -97,7 +97,7 @@ header > .collapsible-header {
 }
 
 .opacity-100 {
-    opacity: 1;
+    opacity: 1 !important;
 }
 
 /* ==========================================================================
@@ -177,18 +177,28 @@ header > .collapsible-header {
 .carousel-container {
     overflow: hidden;
     width: 100%;
-    max-width: 800px;
+    max-width: 1000px;
     white-space: nowrap;
 }
 
 .carousel {
     display: flex;
-    animation: scroll 20s linear infinite;
+    animation: scroll 25s linear infinite;
 }
 
 .carousel-img {
     flex-shrink: 0;
-    margin-right: 1rem;
+    height: 35px;
+    width: auto;
+    margin-right: 2.5rem;
+    opacity: 0.9;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    filter: brightness(1.2);
+}
+
+.carousel-img:hover {
+    opacity: 1;
+    transform: scale(1.1);
 }
 
 @keyframes scroll {
@@ -283,6 +293,7 @@ header > .collapsible-header {
         opacity: 0;
         overflow-y: auto;
         box-shadow: 3px 0px 3px 2px #9f9f9f;
+        transition: width 0.3s ease, opacity 0.3s ease;
     }
 
     .header-links {
