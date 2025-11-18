@@ -14,14 +14,23 @@ Tests for /api/chatbot/ endpoint (Feature 5)
 
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.urls import reverse
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.sessions.middleware import SessionMiddleware
 from core.models import Watchlist
+from core.views.chat import (
+    _needs_web_search,
+    _get_symbol_for_context,
+    _get_openai_web_context,
+    _format_news_articles,
+    _get_newsapi_context,
+    _get_web_search_context,
+)
 
 
-class ChatTests(TestCase):
+class ChatTests(TestCase):  # pylint: disable=too-many-public-methods
     """Test suite for chatbot endpoint functionality"""
 
     def test_chatbot_valid_message(self):
@@ -371,3 +380,207 @@ class ChatTests(TestCase):
                     self.assertGreaterEqual(
                         mock_openai.chat.completions.create.call_count, 1
                     )
+
+    def test_chatbot_wrong_http_method(self):
+        """Test chatbot endpoint only accepts POST method"""
+        url = reverse('chatbot')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 405)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_chatbot_invalid_json_body(self):
+        """Test chatbot handles invalid JSON body gracefully"""
+        url = reverse('chatbot')
+        # Send invalid JSON by using data parameter instead of json
+        response = self.client.post(
+            url, data='invalid json', content_type='application/json'
+        )
+        # Should handle gracefully - either 400 or 200 with fallback
+        self.assertIn(response.status_code, [200, 400])
+
+    def test_chatbot_watchlist_error_handling(self):
+        """Test chatbot handles watchlist fetch errors gracefully"""
+        user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.force_login(user)
+        url = reverse('chatbot')
+
+        with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
+            with patch('core.views.chat.openai_client') as mock_openai:
+                with patch('core.views.chat._needs_web_search', return_value=False):
+                    # Mock Watchlist.objects.filter to raise an exception
+                    with patch(
+                        'core.views.chat.Watchlist.objects.filter',
+                        side_effect=Exception("DB Error")
+                    ):
+                        mock_response = type('obj', (object,), {
+                            'choices': [type('obj', (object,), {
+                                'message': type('obj', (object,), {'content': 'Response'})
+                            })]
+                        })
+                        mock_openai.chat.completions.create.return_value = mock_response
+
+                        response = self.client.post(
+                            url, {'message': 'Hello'}, content_type='application/json'
+                        )
+                        self.assertEqual(response.status_code, 200)
+
+    def test_needs_web_search_no_client(self):
+        """Test _needs_web_search returns False when client is None"""
+        result = _needs_web_search("test message", None)
+        self.assertFalse(result)
+
+    def test_needs_web_search_dollar_symbol(self):
+        """Test _needs_web_search detects $SYMBOL format"""
+        with patch('core.views.chat.openai_client') as mock_client:
+            result = _needs_web_search("Tell me about $AAPL", mock_client)
+            self.assertTrue(result)
+
+    def test_get_symbol_for_context_dollar_symbol(self):
+        """Test _get_symbol_for_context extracts $SYMBOL from message"""
+        factory = RequestFactory()
+        request = factory.post('/')
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+
+        symbols = _get_symbol_for_context(request, "What about $MSFT?")
+        self.assertIn('MSFT', symbols)
+
+    def test_get_openai_web_context_no_client(self):
+        """Test _get_openai_web_context returns empty when client is None"""
+        with patch('core.views.chat.openai_client', None):
+            result = _get_openai_web_context('AAPL')
+            self.assertEqual(result, "")
+
+    def test_get_openai_web_context_no_responses_attr(self):
+        """Test _get_openai_web_context handles missing responses attribute"""
+        mock_client = type('obj', (object,), {})  # No 'responses' attribute
+        with patch('core.views.chat.openai_client', mock_client):
+            result = _get_openai_web_context('AAPL')
+            self.assertEqual(result, "")
+
+    def test_get_openai_web_context_no_output_text(self):
+        """Test _get_openai_web_context handles missing output_text"""
+        mock_response = type('obj', (object,), {})  # No output_text attribute
+        mock_responses = type('obj', (object,), {
+            'create': lambda **kwargs: mock_response
+        })
+        mock_client = type('obj', (object,), {'responses': mock_responses})
+        with patch('core.views.chat.openai_client', mock_client):
+            result = _get_openai_web_context('AAPL')
+            self.assertEqual(result, "")
+
+    def test_get_openai_web_context_attribute_error(self):
+        """Test _get_openai_web_context handles AttributeError"""
+        mock_responses = type('obj', (object,), {
+            'create': lambda **kwargs: (_ for _ in ()).throw(AttributeError("No attribute"))
+        })
+        mock_client = type('obj', (object,), {'responses': mock_responses})
+        with patch('core.views.chat.openai_client', mock_client):
+            result = _get_openai_web_context('AAPL')
+            self.assertEqual(result, "")
+
+    def test_get_openai_web_context_exception(self):
+        """Test _get_openai_web_context handles general exceptions"""
+        mock_responses = type('obj', (object,), {
+            'create': lambda **kwargs: (_ for _ in ()).throw(Exception("API Error"))
+        })
+        mock_client = type('obj', (object,), {'responses': mock_responses})
+        with patch('core.views.chat.openai_client', mock_client):
+            result = _get_openai_web_context('AAPL')
+            self.assertEqual(result, "")
+
+    def test_format_news_articles_empty(self):
+        """Test _format_news_articles handles empty articles list"""
+        result = _format_news_articles([], 'AAPL')
+        self.assertEqual(result, "")
+
+    def test_format_news_articles_missing_fields(self):
+        """Test _format_news_articles handles articles with missing title/publishedAt"""
+        articles = [
+            {'title': None, 'publishedAt': '2024-01-01'},
+            {'title': 'Test', 'publishedAt': None},
+            {}  # Empty dict
+        ]
+        result = _format_news_articles(articles, 'AAPL')
+        self.assertEqual(result, "")
+
+    def test_format_news_articles_valid(self):
+        """Test _format_news_articles formats valid articles correctly"""
+        articles = [
+            {'title': 'News 1', 'publishedAt': '2024-01-01T10:00:00Z'},
+            {'title': 'News 2', 'publishedAt': '2024-01-02T11:00:00Z'}
+        ]
+        result = _format_news_articles(articles, 'AAPL')
+        self.assertIn('News 1', result)
+        self.assertIn('News 2', result)
+        self.assertIn('AAPL', result)
+
+    def test_get_newsapi_context_no_newsapi(self):
+        """Test _get_newsapi_context returns empty when newsapi is None"""
+        with patch('core.views.chat.newsapi', None):
+            result = _get_newsapi_context('AAPL')
+            self.assertEqual(result, "")
+
+    def test_get_newsapi_context_exception(self):
+        """Test _get_newsapi_context handles exceptions gracefully"""
+        mock_newsapi = type('obj', (object,), {
+            'get_everything': lambda **kwargs: (_ for _ in ()).throw(Exception("API Error"))
+        })
+        with patch('core.views.chat.newsapi', mock_newsapi):
+            result = _get_newsapi_context('AAPL')
+            self.assertEqual(result, "")
+
+    def test_get_web_search_context_empty_symbols(self):
+        """Test _get_web_search_context returns empty for empty symbols list"""
+        result = _get_web_search_context([], "test message")
+        self.assertEqual(result, "")
+
+    def test_get_web_search_context_none_symbol(self):
+        """Test _get_web_search_context handles None symbol"""
+        result = _get_web_search_context([None], "test message")
+        self.assertEqual(result, "")
+
+    def test_chatbot_with_web_search_context(self):
+        """Test chatbot includes web search context when needed"""
+        url = reverse('chatbot')
+        session = self.client.session
+        session['recent_searches'] = ['AAPL']
+        session.save()
+
+        with patch.object(settings, 'OPENAI_API_KEY', 'test_key'):
+            with patch('core.views.chat.openai_client') as mock_openai:
+                # Mock classification to return yes
+                classification_response = type('obj', (object,), {
+                    'choices': [type('obj', (object,), {
+                        'message': type('obj', (object,), {'content': 'yes'})
+                    })]
+                })
+                chat_response = type('obj', (object,), {
+                    'choices': [type('obj', (object,), {
+                        'message': type('obj', (object,), {'content': 'Response with context'})
+                    })]
+                })
+                mock_openai.chat.completions.create.side_effect = [
+                    classification_response,
+                    chat_response
+                ]
+
+                # Mock web search context functions
+                with patch('core.views.chat._get_openai_web_context', return_value=""):
+                    with patch('core.views.chat.newsapi', None):
+                        response = self.client.post(
+                            url,
+                            {'message': 'What happened with AAPL today?'},
+                            content_type='application/json'
+                        )
+                        self.assertEqual(response.status_code, 200)
+                        # Verify chat completion was called with enhanced message
+                        call_args = mock_openai.chat.completions.create.call_args_list
+                        if len(call_args) > 1:
+                            messages = call_args[1][1]['messages']
+                            user_message = messages[-1]['content']
+                            # Should have original message
+                            # (web search context would be added if available)
+                            self.assertIn('AAPL', user_message)

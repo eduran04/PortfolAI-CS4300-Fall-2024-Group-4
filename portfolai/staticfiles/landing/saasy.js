@@ -7,6 +7,25 @@ let isHeaderCollapsed = window.innerWidth < RESPONSIVE_WIDTH
 const collapseBtn = document.getElementById("collapse-btn")
 const collapseHeaderItems = document.getElementById("collapsed-header-items")
 
+// Initialize menu state on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.innerWidth > RESPONSIVE_WIDTH) {
+            // Desktop: ensure menu is visible
+            collapseHeaderItems.style.width = ""
+            collapseHeaderItems.style.opacity = ""
+            collapseHeaderItems.classList.remove("opacity-0", "opacity-100")
+        }
+    })
+} else {
+    // DOM already loaded
+    if (window.innerWidth > RESPONSIVE_WIDTH) {
+        collapseHeaderItems.style.width = ""
+        collapseHeaderItems.style.opacity = ""
+        collapseHeaderItems.classList.remove("opacity-0", "opacity-100")
+    }
+}
+
 
 
 function onHeaderClickOutside(e) {
@@ -20,8 +39,12 @@ function onHeaderClickOutside(e) {
 
 function toggleHeader() {
     if (isHeaderCollapsed) {
-        // collapseHeaderItems.classList.remove("max-md:tw-opacity-0")
-        collapseHeaderItems.classList.add("opacity-100",)
+        // Remove opacity-0 class if it exists
+        collapseHeaderItems.classList.remove("opacity-0")
+        // Add opacity-100 class
+        collapseHeaderItems.classList.add("opacity-100")
+        // Set inline opacity style as fallback for better control
+        collapseHeaderItems.style.opacity = "1"
         collapseHeaderItems.style.width = "60vw"
         collapseBtn.classList.remove("bi-list")
         collapseBtn.classList.add("bi-x", "max-lg:tw-fixed")
@@ -31,6 +54,9 @@ function toggleHeader() {
 
     } else {
         collapseHeaderItems.classList.remove("opacity-100")
+        collapseHeaderItems.classList.add("opacity-0")
+        // Set inline opacity style
+        collapseHeaderItems.style.opacity = "0"
         collapseHeaderItems.style.width = "0vw"
         collapseBtn.classList.remove("bi-x", "max-lg:tw-fixed")
         collapseBtn.classList.add("bi-list")
@@ -42,10 +68,29 @@ function toggleHeader() {
 
 function responsive() {
     if (window.innerWidth > RESPONSIVE_WIDTH) {
+        // Desktop view: reset all mobile menu styles
         collapseHeaderItems.style.width = ""
-
+        collapseHeaderItems.style.opacity = ""
+        collapseHeaderItems.classList.remove("opacity-0", "opacity-100")
+        isHeaderCollapsed = false
+        // Remove click outside listener if it exists
+        window.removeEventListener("click", onHeaderClickOutside)
+        // Reset button icon
+        collapseBtn.classList.remove("bi-x", "max-lg:tw-fixed")
+        collapseBtn.classList.add("bi-list")
     } else {
+        // Mobile view: ensure menu is collapsed
+        if (!isHeaderCollapsed) {
+            // If menu was open, close it
+            collapseHeaderItems.classList.remove("opacity-100")
+            collapseHeaderItems.classList.add("opacity-0")
+            collapseHeaderItems.style.opacity = "0"
+            collapseHeaderItems.style.width = "0vw"
+            collapseBtn.classList.remove("bi-x", "max-lg:tw-fixed")
+            collapseBtn.classList.add("bi-list")
+        }
         isHeaderCollapsed = true
+        window.removeEventListener("click", onHeaderClickOutside)
     }
 }
 

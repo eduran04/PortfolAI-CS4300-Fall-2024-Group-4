@@ -140,13 +140,39 @@ def _fetch_company_profile(symbol):
     return company, company_name
 
 
-def _build_stock_response_data(symbol, quote, company, company_name):
-    """Build stock response data dictionary from quote and company info."""
+def _fetch_stock_metrics(symbol):
+    """
+    Fetch stock metrics including 52-week high/low, P/E ratio, etc.
+    Returns metrics dict or empty dict on error.
+    """
+    try:
+        metrics_response = finnhub_client.company_basic_financials(symbol, 'all')
+        return metrics_response.get('metric', {})
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.warning("Could not fetch metrics for %s: %s", symbol, e)
+        return {}
+
+
+def _build_stock_response_data(symbol, quote, company, company_name, metrics=None):
+    """Build stock response data dictionary from quote, company info, and metrics."""
     # Calculate price change and percentage
     current_price = quote.get('c', 0)
     previous_close = quote.get('pc', 0)
     change = current_price - previous_close
     change_percent = (change / previous_close * 100) if previous_close != 0 else 0
+
+    # Get metrics data if available
+    if metrics is None:
+        metrics = {}
+
+    # Use accurate 52-week high/low from metrics if available
+    year_high = metrics.get('52WeekHigh', quote.get('h', 0))
+    year_low = metrics.get('52WeekLow', quote.get('l', 0))
+
+    # Use P/E ratio from metrics if available, fallback to company profile
+    pe_ratio = metrics.get('peBasicExclExtraTTM')
+    if pe_ratio is None:
+        pe_ratio = company.get('pe', 0) if company else 0
 
     return {
         "symbol": symbol,
@@ -157,12 +183,113 @@ def _build_stock_response_data(symbol, quote, company, company_name):
         "open": quote.get('o', 0),
         "high": quote.get('h', 0),
         "low": quote.get('l', 0),
-        "volume": quote.get('v', 0),
+        "volume": int(quote.get('v', 0)),
         "marketCap": company.get('marketCapitalization', 0) if company else 0,
-        "peRatio": company.get('pe', 0) if company else 0,
-        "yearHigh": quote.get('h', 0),  # Using current high as year high for now
-        "yearLow": quote.get('l', 0),   # Using current low as year low for now
+        "peRatio": round(pe_ratio, 2) if pe_ratio else 0,
+        "yearHigh": round(year_high, 2) if year_high else 0,
+        "yearLow": round(year_low, 2) if year_low else 0,
     }
+
+
+@api_view(["GET"])
+def stock_search(request):
+    """
+    Stock Symbol Search - Search for stocks by symbol or company name
+    Endpoint: /api/stock-search/?query=apple
+    Purpose: Provide autocomplete suggestions for stock search
+    Features: Symbol and company name search, US exchange filter, top 10 results
+    Example: /api/stock-search/?query=tesla
+    """
+    query = request.GET.get("query", "").strip()
+
+    # Validate query
+    if not query or len(query) < 1:
+        return Response({"results": []})
+
+    # Check if API key is available
+    if not settings.FINNHUB_API_KEY or not finnhub_client:
+        # Return fallback suggestions for common stocks
+        fallback_results = _get_fallback_search_results(query)
+        return Response({"results": fallback_results, "fallback": True})
+
+    try:
+        # Use Finnhub's symbol search endpoint with US exchange filter
+        search_results = finnhub_client.symbol_lookup(query)
+
+        if not search_results or 'result' not in search_results:
+            return Response({"results": []})
+
+        # Filter to US exchanges only and limit to top 10 results
+        us_results = [
+            {
+                "symbol": item.get("symbol", ""),
+                "displaySymbol": item.get("displaySymbol", ""),
+                "description": item.get("description", ""),
+                "type": item.get("type", "")
+            }
+            for item in search_results.get("result", [])
+            if _is_us_exchange(item.get("symbol", ""))
+        ][:10]
+
+        return Response({"results": us_results})
+
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Error searching for stocks with query %s: %s", query, str(e))
+        # Return fallback results on error
+        fallback_results = _get_fallback_search_results(query)
+        return Response({"results": fallback_results, "fallback": True})
+
+
+def _is_us_exchange(symbol):
+    """Check if a symbol belongs to a US exchange (NASDAQ, NYSE, AMEX).
+
+    US stocks have simple symbols like 'AAPL' or share classes like 'BRK.B'.
+    International stocks have country suffixes like 'AAPL.SW' (Switzerland).
+    """
+    if not symbol:
+        return False
+
+    # Check if symbol has a dot
+    if '.' in symbol:
+        # Allow single-letter share classes (.A, .B, .C, etc.)
+        parts = symbol.split('.')
+        if len(parts) == 2:
+            # US share class: base symbol + single letter (e.g., BRK.B)
+            if len(parts[1]) == 1 and parts[1].isalpha():
+                return True
+        # All other dots indicate international exchanges
+        return False
+
+    # Exclude symbols with hyphens (often warrants or special securities)
+    if '-' in symbol:
+        return False
+
+    # Must be all uppercase letters (US convention)
+    if not symbol.isalpha() or not symbol.isupper():
+        return False
+
+    return True
+
+
+def _get_fallback_search_results(query):
+    """Get fallback search results from predefined stock list."""
+    query_lower = query.lower()
+    results = []
+
+    # Search through fallback stocks
+    for symbol, data in FALLBACK_STOCKS.items():
+        name = data.get('name', '')
+        # Match by symbol or name
+        if (query_lower in symbol.lower()
+                or query_lower in name.lower()):
+            results.append({
+                "symbol": symbol,
+                "displaySymbol": symbol,
+                "description": name,
+                "type": "Common Stock"
+            })
+
+    return results[:10]
 
 
 @api_view(["GET"])
@@ -254,8 +381,11 @@ def get_stock_data(request):
         # Fetch company profile
         company, company_name = _fetch_company_profile(symbol)
 
+        # Fetch stock metrics (52-week high/low, P/E ratio, etc.)
+        metrics = _fetch_stock_metrics(symbol)
+
         # Build response data
-        response_data = _build_stock_response_data(symbol, quote, company, company_name)
+        response_data = _build_stock_response_data(symbol, quote, company, company_name, metrics)
 
         # Cache the response for 1 minute
         cache.set(cache_key, response_data, 60)

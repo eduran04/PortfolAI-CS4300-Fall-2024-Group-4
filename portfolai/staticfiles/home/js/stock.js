@@ -1,59 +1,395 @@
 /**
- * Stock Search & Chart Management
- * Handles stock search, data display, and chart rendering
+ * Stock Search & Chart Management Module
+ * 
+ * Handles:
+ * - Stock symbol search functionality
+ * - Stock data display and formatting
+ * - TradingView widget integration and rendering
+ * 
+ * @module StockManagement
  */
 
-// Global chart instance for theme switching
-let chartInstance = null;
+// ============================================================================
+// Global Variables
+// ============================================================================
 
-// DOM references
-const searchInput = document.getElementById('stock-search');
-const searchButton = document.getElementById('search-button');
-const stockDetailsDiv = document.getElementById('stock-details');
-const companyNameHeader = document.getElementById('company-name');
-const searchErrorDiv = document.getElementById('search-error');
-const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
-const portfolaiAnalysisBtn = document.getElementById('portfolaiAnalysisBtn');
+/** @type {HTMLElement|null} Reference to the current TradingView widget container */
+let tradingViewWidget = null;
+
+/** @type {string} TradingView widget script URL */
+const TRADINGVIEW_WIDGET_URL = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js';
+
+/** @type {number} Delay in milliseconds before hiding the chart loader */
+const CHART_LOADER_DELAY = 500;
+
+/** @type {number} Debounce delay for autocomplete search in milliseconds */
+const AUTOCOMPLETE_DEBOUNCE_DELAY = 300;
+
+/** @type {number|null} Reference to the debounce timeout */
+let autocompleteTimeout = null;
+
+/** @type {number} Currently selected index in autocomplete dropdown */
+let selectedAutocompleteIndex = -1;
+
+/** @type {string[]} List of common NYSE-listed stock symbols */
+const NYSE_SYMBOLS = [
+  'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS',           // Financials
+  'XOM', 'CVX',                                    // Energy
+  'KO', 'JNJ', 'PG', 'WMT', 'TGT', 'HD', 'LOW',   // Consumer
+  'NKE', 'SBUX', 'MCD', 'DIS',                    // Retail/Food
+  'V', 'MA', 'AXP', 'BRK.B',                      // Payments/Finance
+  'GE', 'BA', 'CAT', 'DE',                        // Industrials
+  'OKLO'                                           // Energy/Utilities
+];
+
+/** @type {string[]} List of NYSE Arca (AMEX) listed ETFs */
+const NYSE_ARCA_ETFS = [
+  'VOO', 'SPY', 'QQQ', 'VTI', 'IVV', 'IWM',      // Broad market ETFs
+  'VEA', 'VWO', 'EFA', 'EEM',                     // International ETFs
+  'BND', 'TLT', 'AGG',                            // Bond ETFs
+  'GLD', 'SLV', 'USO',                            // Commodity ETFs
+  'ARKK', 'ARKQ', 'ARKG',                         // ARK ETFs
+  'XLF', 'XLE', 'XLK', 'XLV', 'XLI', 'XLP',      // Sector ETFs
+  'XLY', 'XLB', 'XLU', 'XME', 'XPH', 'XRT'       // More sector ETFs
+];
+
+// ============================================================================
+// DOM Element References
+// ============================================================================
+// These are accessed via getter functions to ensure DOM is ready
+
+function getSearchInput() {
+  return document.getElementById('stock-search');
+}
+
+function getClearSearchButton() {
+  return document.getElementById('clear-search-button');
+}
+
+function getStockDetailsDiv() {
+  return document.getElementById('stock-details');
+}
+
+function getCompanyNameHeader() {
+  return document.getElementById('company-name');
+}
+
+function getSearchErrorDiv() {
+  return document.getElementById('search-error');
+}
+
+function getAddToWatchlistBtn() {
+  return document.getElementById('addToWatchlistBtn');
+}
+
+function getPortfolaiAnalysisBtn() {
+  return document.getElementById('portfolaiAnalysisBtn');
+}
+
+function getAutocompleteDropdown() {
+  return document.getElementById('autocomplete-dropdown');
+}
+
+// ============================================================================
+// Autocomplete Functions
+// ============================================================================
 
 /**
- * Perform stock search and update UI
+ * Fetch stock search suggestions from API
+ * 
+ * @async
+ * @param {string} query - Search query (symbol or company name)
+ * @returns {Promise<Array>} Array of stock suggestions
+ */
+async function fetchStockSuggestions(query) {
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+  
+  try {
+    const response = await fetch(`/api/stock-search/?query=${encodeURIComponent(query)}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    console.error('Error fetching stock suggestions:', error);
+    return [];
+  }
+}
+
+/**
+ * Display autocomplete suggestions in dropdown
+ * 
+ * @param {Array} results - Array of stock objects from API
+ */
+function displayAutocompleteSuggestions(results) {
+  const dropdown = getAutocompleteDropdown();
+  if (!dropdown) return;
+  
+  // Reset selected index
+  selectedAutocompleteIndex = -1;
+  
+  // Clear previous results
+  dropdown.innerHTML = '';
+  
+  if (results.length === 0) {
+    dropdown.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">No results found</div>';
+    dropdown.classList.remove('hidden');
+    return;
+  }
+  
+  // Create result items
+  results.forEach((stock, index) => {
+    const item = document.createElement('div');
+    item.className = 'px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150';
+    item.setAttribute('role', 'option');
+    item.setAttribute('data-index', index);
+    item.setAttribute('data-symbol', stock.symbol);
+    
+    // Format: Symbol (bold) - Description (gray)
+    item.innerHTML = `
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="font-semibold text-gray-900 dark:text-gray-100">${stock.displaySymbol || stock.symbol}</span>
+          <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">${stock.description || ''}</span>
+        </div>
+        <span class="text-xs text-gray-500 dark:text-gray-500">${stock.type || ''}</span>
+      </div>
+    `;
+    
+    // Click handler to select stock
+    item.addEventListener('click', () => {
+      selectAutocompleteItem(stock.symbol);
+    });
+    
+    dropdown.appendChild(item);
+  });
+  
+  dropdown.classList.remove('hidden');
+}
+
+/**
+ * Hide autocomplete dropdown
+ */
+function hideAutocompleteDropdown() {
+  const dropdown = getAutocompleteDropdown();
+  if (dropdown) {
+    dropdown.classList.add('hidden');
+    dropdown.innerHTML = '';
+  }
+  selectedAutocompleteIndex = -1;
+}
+
+/**
+ * Select an autocomplete item and trigger search
+ * 
+ * @param {string} symbol - Stock symbol to search for
+ */
+function selectAutocompleteItem(symbol) {
+  const searchInput = getSearchInput();
+  if (searchInput) {
+    searchInput.value = symbol.toUpperCase();
+  }
+  hideAutocompleteDropdown();
+  toggleClearButton();
+  performSearch();
+}
+
+/**
+ * Handle keyboard navigation in autocomplete dropdown
+ * 
+ * @param {KeyboardEvent} event - Keyboard event
+ */
+function handleAutocompleteKeyboard(event) {
+  const dropdown = getAutocompleteDropdown();
+  if (!dropdown || dropdown.classList.contains('hidden')) {
+    return;
+  }
+  
+  const items = dropdown.querySelectorAll('[role="option"]');
+  if (items.length === 0) return;
+  
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault();
+      selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, items.length - 1);
+      updateAutocompleteSelection(items);
+      break;
+      
+    case 'ArrowUp':
+      event.preventDefault();
+      selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, 0);
+      updateAutocompleteSelection(items);
+      break;
+      
+    case 'Enter':
+      event.preventDefault();
+      if (selectedAutocompleteIndex >= 0 && selectedAutocompleteIndex < items.length) {
+        const selectedItem = items[selectedAutocompleteIndex];
+        const symbol = selectedItem.getAttribute('data-symbol');
+        selectAutocompleteItem(symbol);
+      }
+      break;
+      
+    case 'Escape':
+      event.preventDefault();
+      hideAutocompleteDropdown();
+      break;
+  }
+}
+
+/**
+ * Update visual selection in autocomplete dropdown
+ * 
+ * @param {NodeList} items - List of dropdown items
+ */
+function updateAutocompleteSelection(items) {
+  items.forEach((item, index) => {
+    if (index === selectedAutocompleteIndex) {
+      item.classList.add('bg-gray-100', 'dark:bg-gray-700');
+      item.scrollIntoView({ block: 'nearest' });
+    } else {
+      item.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+    }
+  });
+}
+
+/**
+ * Toggle visibility of clear button based on input content
+ */
+function toggleClearButton() {
+  const searchInput = getSearchInput();
+  const clearButton = getClearSearchButton();
+  
+  if (searchInput && clearButton) {
+    if (searchInput.value.trim().length > 0) {
+      clearButton.classList.remove('hidden');
+    } else {
+      clearButton.classList.add('hidden');
+    }
+  }
+}
+
+/**
+ * Clear search input and reset UI
+ */
+function clearSearch() {
+  const searchInput = getSearchInput();
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
+  }
+  
+  hideAutocompleteDropdown();
+  toggleClearButton();
+  
+  // Reset UI elements
+  displayStockDetails(null);
+  clearTradingViewWidget();
+  
+  const addToWatchlistBtn = getAddToWatchlistBtn();
+  const portfolaiAnalysisBtn = getPortfolaiAnalysisBtn();
+  if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+  if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
+}
+
+/**
+ * Handle search input changes with debouncing
+ * 
+ * @param {Event} event - Input event
+ */
+async function handleSearchInput(event) {
+  const query = event.target.value.trim();
+  
+  // Toggle clear button visibility
+  toggleClearButton();
+  
+  // Clear existing timeout
+  if (autocompleteTimeout) {
+    clearTimeout(autocompleteTimeout);
+  }
+  
+  // Hide dropdown if query is empty
+  if (!query || query.length === 0) {
+    hideAutocompleteDropdown();
+    return;
+  }
+  
+  // Debounce the API call
+  autocompleteTimeout = setTimeout(async () => {
+    const results = await fetchStockSuggestions(query);
+    displayAutocompleteSuggestions(results);
+  }, AUTOCOMPLETE_DEBOUNCE_DELAY);
+}
+
+/**
+ * Perform stock search and update UI with results
+ * 
+ * Handles the complete search flow:
+ * 1. Validates and normalizes the search input
+ * 2. Fetches stock data from the API
+ * 3. Displays stock information
+ * 4. Renders TradingView chart widget
+ * 5. Updates watchlist button state
+ * 
+ * @async
+ * @function performSearch
+ * @throws {Error} If stock data fetch fails
  */
 async function performSearch() {
+  console.log('performSearch called');
+  const searchInput = getSearchInput();
+  const searchErrorDiv = getSearchErrorDiv();
+  const addToWatchlistBtn = getAddToWatchlistBtn();
+  const portfolaiAnalysisBtn = getPortfolaiAnalysisBtn();
+  
+  if (!searchInput || !searchErrorDiv) {
+    console.error('Required DOM elements not found for search', { searchInput, searchErrorDiv });
+    return;
+  }
+  
   const searchTerm = searchInput.value.toUpperCase().trim();
+  console.log('Search term:', searchTerm);
   searchErrorDiv.classList.add('hidden');
   
+  // Update clear button visibility
+  toggleClearButton();
+  
+  // Handle empty search - reset UI to default state
   if (!searchTerm) {
     displayStockDetails(null);
-    if (chartInstance) {
-      chartInstance.remove();
-      chartInstance = null;
-      document.getElementById('chart-loader').classList.remove('hidden');
-    }
-    addToWatchlistBtn.disabled = true;
-    portfolaiAnalysisBtn.disabled = true;
+    clearTradingViewWidget();
+    if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+    if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
     return;
   }
 
   try {
-    // Show loading state
-    document.getElementById('chart-loader').classList.remove('hidden');
-    addToWatchlistBtn.disabled = true;
-    portfolaiAnalysisBtn.disabled = true;
+    // Show loading indicators
+    const chartLoader = document.getElementById('chart-loader');
+    if (chartLoader) chartLoader.classList.remove('hidden');
+    if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+    if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
 
-    // Fetch stock data from API
-    const stockData = await fetchStockData(searchTerm);
+    // Fetch stock data from API - always force refresh for search to ensure accurate data
+    console.log('Fetching stock data for:', searchTerm, '(force refresh)');
+    const stockData = await fetchStockData(searchTerm, true); // Force refresh for search
+    console.log('Stock data received:', stockData);
 
-    // Display stock details
+    // Display stock details in the sidebar
     displayStockDetails(stockData, searchTerm);
     
-    // Show fallback notice if using fallback data
-    if (stockData.fallback) {
+    // Show fallback notice if API is unavailable (using demo data)
+    const stockDetailsDiv = getStockDetailsDiv();
+    if (stockData.fallback && stockDetailsDiv) {
       const fallbackNotice = document.createElement('div');
       fallbackNotice.className = 'bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 text-yellow-700 dark:text-yellow-300 px-4 py-3 rounded mb-4';
       fallbackNotice.innerHTML = '⚠️ Using demo data - API not configured or unavailable';
       stockDetailsDiv.parentNode.insertBefore(fallbackNotice, stockDetailsDiv);
       
-      // Remove notice after 5 seconds
+      // Auto-remove notice after 5 seconds for better UX
       setTimeout(() => {
         if (fallbackNotice.parentNode) {
           fallbackNotice.parentNode.removeChild(fallbackNotice);
@@ -61,63 +397,108 @@ async function performSearch() {
       }, 5000);
     }
 
-    // Render chart with generated data
-    renderChart(
-      generateStockData(100),
-      localStorage.getItem('color-theme') || 'light',
-      searchTerm
-    );
+    // Render TradingView widget with the searched stock
+    renderTradingViewWidget(searchTerm);
+    
+    // Update news feed with stock-specific news (limit to 3 articles)
+    // Force refresh to get latest news for the searched stock
+    if (typeof populateNewsFeed === 'function') {
+      console.log('Updating news feed for symbol:', searchTerm);
+      populateNewsFeed(searchTerm);
+    } else {
+      console.warn('populateNewsFeed function not available');
+    }
+    
+    // Safety timeout to ensure loader is hidden even if widget fails
+    setTimeout(() => {
+      const chartLoader = document.getElementById('chart-loader');
+      if (chartLoader && !chartLoader.classList.contains('hidden')) {
+        console.warn('Chart loader still visible after timeout, hiding it');
+        chartLoader.classList.add('hidden');
+      }
+    }, 5000); // 5 second timeout
 
-    // Enable buttons
-    addToWatchlistBtn.disabled = false;
-    portfolaiAnalysisBtn.disabled = false;
-    addToWatchlistBtn.textContent = isStockInWatchlist(searchTerm)
-      ? 'Remove from Watchlist'
-      : 'Add to Watchlist';
-    addToWatchlistBtn.classList.toggle(
-      'bg-red-500',
-      isStockInWatchlist(searchTerm)
-    );
-    addToWatchlistBtn.classList.toggle(
-      'hover:bg-red-600',
-      isStockInWatchlist(searchTerm)
-    );
-    addToWatchlistBtn.classList.toggle(
-      'bg-green-500',
-      !isStockInWatchlist(searchTerm)
-    );
-    addToWatchlistBtn.classList.toggle(
-      'hover:bg-green-600',
-      !isStockInWatchlist(searchTerm)
-    );
+    // Update button states based on watchlist status
+    if (addToWatchlistBtn) {
+      addToWatchlistBtn.disabled = false;
+      // Toggle watchlist button text and colors
+      const isInWatchlist = isStockInWatchlist(searchTerm);
+      addToWatchlistBtn.textContent = isInWatchlist
+        ? 'Remove from Watchlist'
+        : 'Add to Watchlist';
+      
+      // Update button styling based on watchlist status
+      addToWatchlistBtn.classList.toggle('bg-red-500', isInWatchlist);
+      addToWatchlistBtn.classList.toggle('hover:bg-red-600', isInWatchlist);
+      addToWatchlistBtn.classList.toggle('bg-green-500', !isInWatchlist);
+      addToWatchlistBtn.classList.toggle('hover:bg-green-600', !isInWatchlist);
+    }
+    if (portfolaiAnalysisBtn) {
+      portfolaiAnalysisBtn.disabled = false;
+    }
 
   } catch (error) {
     console.error('Error fetching stock data:', error);
-    searchErrorDiv.classList.remove('hidden');
-    searchErrorDiv.textContent = `Error: ${error.message}`;
-    
-    if (chartInstance) {
-      chartInstance.remove();
-      chartInstance = null;
-      document.getElementById('chart-loader').classList.remove('hidden');
+    if (searchErrorDiv) {
+      searchErrorDiv.classList.remove('hidden');
+      searchErrorDiv.textContent = `Error: ${error.message}`;
     }
-    addToWatchlistBtn.disabled = true;
-    portfolaiAnalysisBtn.disabled = true;
+    
+    // Reset UI on error - ensure loader is hidden
+    const chartLoader = document.getElementById('chart-loader');
+    if (chartLoader) chartLoader.classList.add('hidden');
+    clearTradingViewWidget();
+    if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+    if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
   }
 }
 
 /**
- * Display stock details in the UI
- * @param {Object} stock - Stock data object
- * @param {string} symbol - Stock symbol
+ * Display stock details in the UI sidebar
+ * 
+ * Formats and renders stock information including:
+ * - Current price and daily change
+ * - Market data (open, high, low, volume)
+ * - Financial metrics (market cap, P/E ratio)
+ * - 52-week high/low
+ * 
+ * @param {Object|null} stock - Stock data object containing price, change, metrics, etc.
+ * @param {string} symbol - Stock symbol (e.g., 'AAPL', 'MSFT')
  */
 function displayStockDetails(stock, symbol = 'N/A') {
+  const companyNameHeader = getCompanyNameHeader();
+  const stockDetailsDiv = getStockDetailsDiv();
+  
+  if (!companyNameHeader || !stockDetailsDiv) {
+    console.warn('DOM elements not found for displaying stock details');
+    return;
+  }
+  
   if (stock) {
     companyNameHeader.textContent = `${stock.name} (${symbol})`;
+    
+    // Determine color class based on price change direction
     const changeClass = stock.change >= 0
       ? 'text-green-500 dark:text-green-400'
       : 'text-red-500 dark:text-red-400';
     const changeSign = stock.change >= 0 ? '+' : '';
+    
+    // Format market cap (API returns in millions)
+    // Convert to billions or trillions for display
+    let marketCapDisplay = 'N/A';
+    if (stock.marketCap && stock.marketCap > 0) {
+      const marketCapInBillions = stock.marketCap / 1000;
+      if (marketCapInBillions >= 1000) {
+        // Display in trillions for large caps
+        marketCapDisplay = `$${(marketCapInBillions / 1000).toFixed(2)}T`;
+      } else if (marketCapInBillions >= 1) {
+        // Display in billions
+        marketCapDisplay = `$${marketCapInBillions.toFixed(2)}B`;
+      } else {
+        // Display in millions for small caps
+        marketCapDisplay = `$${stock.marketCap.toFixed(2)}M`;
+      }
+    }
     
     stockDetailsDiv.innerHTML = `
       <div class="flex justify-between items-baseline">
@@ -130,161 +511,492 @@ function displayStockDetails(stock, symbol = 'N/A') {
           <p><strong>High:</strong> $${stock.high.toFixed(2)}</p>
           <p><strong>Low:</strong> $${stock.low.toFixed(2)}</p>
           <p><strong>Volume:</strong> ${stock.volume.toLocaleString()}</p>
-          <p><strong>Mkt Cap:</strong> $${(stock.marketCap / 1000000000).toFixed(1)}B</p>
+          <p><strong>Mkt Cap:</strong> ${marketCapDisplay}</p>
           <p><strong>P/E Ratio:</strong> ${stock.peRatio || 'N/A'}</p>
           <p><strong>52W H:</strong> $${stock.yearHigh.toFixed(2)}</p>
           <p><strong>52W L:</strong> $${stock.yearLow.toFixed(2)}</p>
       </div>
   `;
   } else {
+    // Display default empty state
     companyNameHeader.textContent = 'Company Overview';
     stockDetailsDiv.innerHTML = `<p class="text-sm text-gray-600 dark:text-gray-400">Search for a stock to see details.</p>`;
   }
 }
 
+// ============================================================================
+// TradingView Widget Helper Functions
+// ============================================================================
+
 /**
- * Generate mock stock data for charting
- * @param {number} count - Number of data points to generate
- * @returns {Array} Array of candlestick data objects
+ * Detect the stock exchange for a given symbol
+ * 
+ * Determines the most likely exchange (NASDAQ, NYSE, or AMEX/NYSE Arca) based on known symbols.
+ * Supports both stocks and ETFs. TradingView supports auto-detection if the 
+ * exchange is incorrect, but specifying the correct exchange improves widget 
+ * initialization speed.
+ * 
+ * Note: NYSE Arca (where many ETFs like VOO trade) is represented as "AMEX" in TradingView.
+ * 
+ * @param {string} symbol - Stock or ETF symbol to detect exchange for
+ * @returns {string} Exchange identifier ('NYSE', 'AMEX', or 'NASDAQ')
  */
-function generateStockData(count) {
-  const data = [];
-  let lastClose = 50 + Math.random() * 150;
-  let time = new Date();
-  time.setDate(time.getDate() - count);
-
-  for (let i = 0; i < count; i++) {
-    time.setDate(time.getDate() + 1);
-    const open = lastClose + (Math.random() - 0.5) * 5;
-    const high = Math.max(open, lastClose) + Math.random() * 5;
-    const low = Math.min(open, lastClose) - Math.random() * 5;
-    const close = low + Math.random() * (high - low);
-    lastClose = close;
-
-    data.push({
-      time: time.toISOString().split('T')[0],
-      open: parseFloat(open.toFixed(2)),
-      high: parseFloat(high.toFixed(2)),
-      low: parseFloat(low.toFixed(2)),
-      close: parseFloat(close.toFixed(2)),
-    });
+function detectExchange(symbol) {
+  if (!symbol || symbol.length === 0) {
+    return 'NASDAQ';
   }
-  return data;
+  
+  const upperSymbol = symbol.toUpperCase();
+  
+  // Check NYSE Arca ETFs first (many ETFs trade on NYSE Arca, represented as AMEX in TradingView)
+  if (NYSE_ARCA_ETFS.includes(upperSymbol)) {
+    return 'AMEX';
+  }
+  
+  // Check NYSE stocks
+  if (NYSE_SYMBOLS.includes(upperSymbol)) {
+    return 'NYSE';
+  }
+  
+  // Default to NASDAQ
+  return 'NASDAQ';
 }
 
 /**
- * Render or update the stock chart
- * @param {Array} data - Chart data array
- * @param {string} theme - Current theme ('light' or 'dark')
- * @param {string} symbol - Stock symbol for watermark
+ * Get the current theme (light or dark) from localStorage or system preference
+ * 
+ * @returns {string} Theme identifier ('light' or 'dark')
  */
-function renderChart(data, theme, symbol) {
-  const chartContainer = document.getElementById('chart-container');
-  const chartLoader = document.getElementById('chart-loader');
+function getCurrentTheme() {
+  const storedTheme = localStorage.getItem('color-theme');
+  if (storedTheme) {
+    return storedTheme;
+  }
+  
+  // Fallback to system preference
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
 
-  if (chartInstance) {
-    chartInstance.remove();
+/**
+ * Create TradingView widget configuration object
+ * 
+ * Generates the configuration JSON for the TradingView Symbol Overview widget
+ * with theme-appropriate colors and settings.
+ * 
+ * @param {string} symbol - Stock or ETF symbol to display
+ * @param {string} exchange - Exchange identifier (e.g., 'NASDAQ', 'NYSE', 'AMEX')
+ * @param {string} theme - Theme identifier ('light' or 'dark')
+ * @returns {Object} TradingView widget configuration object
+ */
+function createWidgetConfig(symbol, exchange, theme) {
+  const isDark = theme === 'dark';
+  
+  // Theme-specific color schemes
+  const colorScheme = isDark ? {
+    fontColor: 'rgb(106, 109, 120)',
+    gridLineColor: 'rgba(242, 242, 242, 0.06)',
+    volumeUpColor: 'rgba(34, 171, 148, 0.5)',
+    volumeDownColor: 'rgba(247, 82, 95, 0.5)',
+    backgroundColor: '#0F0F0F',
+    widgetFontColor: '#DBDBDB',
+    upColor: '#22ab94',
+    downColor: '#f7525f',
+    borderUpColor: '#22ab94',
+    borderDownColor: '#f7525f',
+    wickUpColor: '#22ab94',
+    wickDownColor: '#f7525f'
+  } : {
+    fontColor: 'rgb(106, 109, 120)',
+    gridLineColor: 'rgba(230, 230, 230, 0.8)',
+    volumeUpColor: 'rgba(34, 171, 148, 0.3)',
+    volumeDownColor: 'rgba(247, 82, 95, 0.3)',
+    backgroundColor: '#FFFFFF',
+    widgetFontColor: '#1F2937',
+    upColor: '#22c55e',
+    downColor: '#ef4444',
+    borderUpColor: '#22c55e',
+    borderDownColor: '#ef4444',
+    wickUpColor: '#22c55e',
+    wickDownColor: '#ef4444'
+  };
+  
+  return {
+    // Chart appearance
+    lineWidth: 2,
+    lineType: 0,
+    chartType: 'area',
+    
+    // Color scheme
+    ...colorScheme,
+    
+    // Widget settings
+    colorTheme: theme,
+    isTransparent: false,
+    locale: 'en',
+    chartOnly: false,
+    scalePosition: 'right',
+    scaleMode: 'Normal',
+    fontFamily: '-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif',
+    valuesTracking: '1',
+    changeMode: 'price-and-percent',
+    
+    // Symbol configuration - single stock display
+    symbols: [
+      [
+        symbol,
+        `${exchange}:${symbol}|1D`  // Format: EXCHANGE:SYMBOL|INTERVAL
+      ]
+    ],
+    
+    // Available date range selectors
+    dateRanges: [
+      '1d|1',      // 1 day, 1 minute intervals
+      '1m|30',     // 1 month, 30 minute intervals
+      '3m|60',     // 3 months, 60 minute intervals
+      '12m|1D',    // 12 months, daily intervals
+      '60m|1W',    // 60 months (5 years), weekly intervals
+      'all|1M'     // All time, monthly intervals
+    ],
+    
+    // Typography
+    fontSize: '10',
+    headerFontSize: 'medium',
+    
+    // Responsive sizing
+    autosize: true,
+    width: '100%',
+    height: '100%',
+    
+    // UI elements visibility
+    noTimeScale: false,
+    hideDateRanges: false,
+    hideMarketStatus: false,
+    hideSymbolLogo: false
+  };
+}
+
+/**
+ * Create the TradingView widget DOM structure
+ * 
+ * Builds the required DOM elements for the TradingView widget including
+ * the container div, script tag, and copyright attribution.
+ * 
+ * @param {HTMLElement} container - Container element to append widget to
+ * @param {string} symbol - Stock symbol being displayed
+ * @param {string} exchange - Exchange identifier
+ * @param {Object} config - Widget configuration object
+ * @returns {Object} Object containing widget div and copyright div references
+ */
+function createWidgetStructure(container, symbol, exchange, config) {
+  // Create widget div
+  const widgetDiv = document.createElement('div');
+  widgetDiv.className = 'tradingview-widget-container__widget';
+  
+  // Create and configure TradingView embed script
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = TRADINGVIEW_WIDGET_URL;
+  script.async = true;
+  script.innerHTML = JSON.stringify(config);
+  
+  widgetDiv.appendChild(script);
+  container.appendChild(widgetDiv);
+  
+  // Create copyright attribution (required by TradingView)
+  const copyrightDiv = document.createElement('div');
+  copyrightDiv.className = 'tradingview-widget-copyright';
+  copyrightDiv.innerHTML = `<a href="https://www.tradingview.com/symbols/${exchange}-${symbol}/" rel="noopener nofollow" target="_blank"><span class="blue-text">${symbol}</span></a><span class="trademark"> by TradingView</span>`;
+  container.appendChild(copyrightDiv);
+  
+  return { widgetDiv, copyrightDiv };
+}
+
+/**
+ * Hide the chart loader with error handling
+ * 
+ * Attempts to hide the loading spinner after the widget has initialized.
+ * Uses a timeout to allow TradingView script to load and render.
+ * 
+ * @param {HTMLElement|null} chartLoader - Chart loader element
+ */
+function hideChartLoader(chartLoader) {
+  if (!chartLoader) {
+    return;
+  }
+  
+  setTimeout(() => {
+    try {
+      chartLoader.classList.add('hidden');
+    } catch (error) {
+      console.warn('Error hiding chart loader:', error);
+    }
+  }, CHART_LOADER_DELAY);
+}
+
+/**
+ * Clear the TradingView widget and reset to loading state
+ * 
+ * Removes the current widget instance and shows the loading spinner.
+ * Called when:
+ * - User clears the search
+ * - An error occurs during search
+ * - Switching between stocks
+ * 
+ * @function clearTradingViewWidget
+ */
+function clearTradingViewWidget() {
+  const widgetContainer = document.getElementById('tradingview-widget-container');
+  if (widgetContainer) {
+    widgetContainer.innerHTML = '';
+  }
+  
+  // Show loading spinner
+  const chartLoader = document.getElementById('chart-loader');
+  if (chartLoader) {
+    chartLoader.classList.remove('hidden');
+  }
+  
+  // Clear global reference
+  tradingViewWidget = null;
+}
+
+/**
+ * Render or update the TradingView widget for a given stock symbol
+ * 
+ * Creates and configures a TradingView Symbol Overview widget with:
+ * - Theme-aware styling (light/dark) matching the application aesthetic
+ * - Single stock symbol display
+ * - Interactive chart with date range selectors
+ * - Proper exchange detection (NASDAQ/NYSE)
+ * 
+ * TradingView Widget Support:
+ * - US Exchanges: NASDAQ, NYSE, AMEX (NYSE Arca/American)
+ * - International: LSE (London), TSE (Tokyo), SSE (Shanghai), ASX, TSX, etc.
+ * - Auto-detection: TradingView can find symbols across exchanges if specified incorrectly
+ * - Note: NYSE Arca ETFs (like VOO, SPY) use "AMEX" as the exchange identifier
+ * 
+ * @param {string} symbol - Stock symbol to display (e.g., 'AAPL', 'MSFT', 'NFLX')
+ * @throws {Error} If widget container element is not found in DOM
+ */
+function renderTradingViewWidget(symbol) {
+  const widgetContainer = document.getElementById('tradingview-widget-container');
+  const chartLoader = document.getElementById('chart-loader');
+  
+  // Validate container exists
+  if (!widgetContainer) {
+    console.error('TradingView widget container not found');
+    return;
   }
 
-  chartInstance = LightweightCharts.createChart(chartContainer, {
-    width: chartContainer.clientWidth,
-    height: chartContainer.clientHeight,
-    layout: {
-      backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
-      textColor: theme === 'dark' ? '#d1d5db' : '#111827',
-    },
-    grid: {
-      vertLines: { color: theme === 'dark' ? '#374151' : '#e5e7eb' },
-      horzLines: { color: theme === 'dark' ? '#374151' : '#e5e7eb' },
-    },
-    crosshair: {
-      mode: LightweightCharts.CrosshairMode.Normal,
-    },
-    priceScale: {
-      borderColor: theme === 'dark' ? '#4b5563' : '#cccccc',
-    },
-    timeScale: {
-      borderColor: theme === 'dark' ? '#4b5563' : '#cccccc',
-      timeVisible: true,
-      secondsVisible: false,
-    },
-    watermark: {
-      color:
-        theme === 'dark' ? 'rgba(209, 213, 219, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-      visible: true,
-      text: symbol,
-      fontSize: 48,
-      horzAlign: 'center',
-      vertAlign: 'center',
-    },
-  });
+  // Validate symbol
+  if (!symbol || symbol.trim().length === 0) {
+    console.warn('Empty symbol provided to renderTradingViewWidget');
+    clearTradingViewWidget();
+    return;
+  }
 
-  const candleSeries = chartInstance.addCandlestickSeries({
-    upColor: theme === 'dark' ? '#10b981' : '#22c55e',
-    downColor: theme === 'dark' ? '#ef4444' : '#dc2626',
-    borderDownColor: theme === 'dark' ? '#ef4444' : '#dc2626',
-    borderUpColor: theme === 'dark' ? '#10b981' : '#22c55e',
-    wickDownColor: theme === 'dark' ? '#ef4444' : '#dc2626',
-    wickUpColor: theme === 'dark' ? '#10b981' : '#22c55e',
-  });
-
-  candleSeries.setData(data);
-  chartInstance.timeScale().fitContent();
-  chartLoader.classList.add('hidden');
-
-  window.addEventListener('resize', () => {
-    if (
-      chartInstance &&
-      chartContainer.clientWidth > 0 &&
-      chartContainer.clientHeight > 0
-    ) {
-      chartInstance.resize(
-        chartContainer.clientWidth,
-        chartContainer.clientHeight
-      );
+  try {
+    // Clear any previous widget instance
+    widgetContainer.innerHTML = '';
+    
+    // Detect exchange and theme
+    const exchange = detectExchange(symbol);
+    const theme = getCurrentTheme();
+    
+    // Create widget configuration
+    const config = createWidgetConfig(symbol, exchange, theme);
+    
+    // Build widget DOM structure
+    createWidgetStructure(widgetContainer, symbol, exchange, config);
+    
+    // Hide loading spinner after widget initializes
+    hideChartLoader(chartLoader);
+    
+    // Store reference for potential cleanup
+    tradingViewWidget = widgetContainer;
+    
+  } catch (error) {
+    console.error('Error rendering TradingView widget:', error);
+    
+    // Show error to user
+    if (chartLoader) {
+      chartLoader.classList.remove('hidden');
+      chartLoader.innerHTML = '<span class="text-red-500">Error loading chart. Please try again.</span>';
     }
-  });
+    
+    // Reset global reference
+    tradingViewWidget = null;
+  }
+}
+
+/**
+ * Re-render the TradingView widget when theme changes
+ * 
+ * If a widget is currently displayed, re-renders it with the new theme.
+ * This ensures the chart matches the application's theme.
+ * 
+ * @function updateWidgetTheme
+ */
+function updateWidgetTheme() {
+  const searchInput = getSearchInput();
+  if (!searchInput) return;
+  
+  const currentSymbol = searchInput.value.toUpperCase().trim();
+  if (currentSymbol && tradingViewWidget) {
+    renderTradingViewWidget(currentSymbol);
+  }
 }
 
 /**
  * Initialize stock search functionality
+ * 
+ * Sets up event listeners for:
+ * - Clear button click
+ * - Enter key press in search input
+ * - Autocomplete input changes
+ * - Keyboard navigation in autocomplete
+ * - Click outside to close dropdown
+ * - Theme changes (to update chart theme)
+ * 
+ * @function initializeStockSearch
  */
 function initializeStockSearch() {
-  searchButton.addEventListener('click', performSearch);
-  searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+  const searchInput = getSearchInput();
+  const clearButton = getClearSearchButton();
+  
+  if (!searchInput) {
+    console.error('Search input not found during initialization');
+    return;
+  }
+  
+  // Clear button click handler
+  if (clearButton) {
+    clearButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearSearch();
+    });
+  }
+  
+  // Input change handler for autocomplete
+  searchInput.addEventListener('input', handleSearchInput);
+  
+  // Keyboard handler for search input
+  searchInput.addEventListener('keydown', (e) => {
+    const dropdown = getAutocompleteDropdown();
+    const isDropdownVisible = dropdown && !dropdown.classList.contains('hidden');
+    
+    if (isDropdownVisible) {
+      // Handle autocomplete keyboard navigation
+      handleAutocompleteKeyboard(e);
+    } else if (e.key === 'Enter') {
+      // Perform search when Enter is pressed and dropdown is hidden
+      hideAutocompleteDropdown();
       performSearch();
     }
+  });
+  
+  // Click outside handler to close autocomplete dropdown
+  document.addEventListener('click', (e) => {
+    const dropdown = getAutocompleteDropdown();
+    const clearBtn = getClearSearchButton();
+    if (!dropdown) return;
+    
+    // Check if click is outside search input and dropdown (but not the clear button)
+    const isClickInsideSearch = searchInput.contains(e.target);
+    const isClickInsideDropdown = dropdown.contains(e.target);
+    const isClickOnClearButton = clearBtn && clearBtn.contains(e.target);
+    
+    if (!isClickInsideSearch && !isClickInsideDropdown && !isClickOnClearButton) {
+      hideAutocompleteDropdown();
+    }
+  });
+  
+  // Scroll handler to close autocomplete dropdown
+  // Prevents dropdown from appearing in wrong position when scrolling
+  window.addEventListener('scroll', () => {
+    const dropdown = getAutocompleteDropdown();
+    if (dropdown && !dropdown.classList.contains('hidden')) {
+      hideAutocompleteDropdown();
+    }
+  }, { passive: true });
+  
+  // Listen for theme changes to update chart
+  // Use a custom event dispatched by the theme toggle
+  window.addEventListener('theme-changed', () => {
+    updateWidgetTheme();
+  });
+  
+  // Also listen for localStorage changes (works across tabs)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'color-theme') {
+      updateWidgetTheme();
+    }
+  });
+  
+  // Monitor DOM for class changes on document element
+  const themeObserver = new MutationObserver(() => {
+    // Debounce to avoid multiple updates
+    clearTimeout(window._themeUpdateTimeout);
+    window._themeUpdateTimeout = setTimeout(() => {
+      updateWidgetTheme();
+    }, 100);
+  });
+  
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
   });
 }
 
 /**
  * Initialize PortfolAI analysis functionality
+ * 
+ * Sets up the AI analysis button to:
+ * - Fetch AI-powered stock analysis
+ * - Display results in a modal dialog
+ * - Handle loading states and errors
+ * 
+ * @function initializePortfolAIAnalysis
  */
 function initializePortfolAIAnalysis() {
+  const portfolaiAnalysisBtn = getPortfolaiAnalysisBtn();
+  if (!portfolaiAnalysisBtn) {
+    console.error('PortfolAI analysis button not found');
+    return;
+  }
+  
   portfolaiAnalysisBtn.addEventListener('click', async () => {
-    const currentSymbol = searchInput.value.toUpperCase();
+    const searchInput = getSearchInput();
+    if (!searchInput) {
+      alert('Search input not found');
+      return;
+    }
     
+    const currentSymbol = searchInput.value.toUpperCase().trim();
+    
+    // Validate symbol exists
     if (!currentSymbol) {
       alert('Please search for a stock first');
       return;
     }
     
-    // Disable button and show loading
+    // Update button to show loading state
     portfolaiAnalysisBtn.disabled = true;
     portfolaiAnalysisBtn.textContent = 'Analyzing...';
     
     try {
+      // Fetch AI analysis from API
       const data = await fetchPortfolAIAnalysis(currentSymbol);
       
-      // Display the analysis in a modal
+      // Display analysis in modal with formatted content
       showAnalysisModal(currentSymbol, data.analysis, data.fallback);
       
     } catch (error) {
       console.error('Error fetching analysis:', error);
       alert(`Error getting analysis: ${error.message}`);
     } finally {
-      // Re-enable button
+      // Always restore button state regardless of success/failure
       portfolaiAnalysisBtn.disabled = false;
       portfolaiAnalysisBtn.textContent = 'PortfolAI Analysis';
     }

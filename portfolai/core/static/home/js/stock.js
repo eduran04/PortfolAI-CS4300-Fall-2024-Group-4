@@ -22,6 +22,15 @@ const TRADINGVIEW_WIDGET_URL = 'https://s3.tradingview.com/external-embedding/em
 /** @type {number} Delay in milliseconds before hiding the chart loader */
 const CHART_LOADER_DELAY = 500;
 
+/** @type {number} Debounce delay for autocomplete search in milliseconds */
+const AUTOCOMPLETE_DEBOUNCE_DELAY = 300;
+
+/** @type {number|null} Reference to the debounce timeout */
+let autocompleteTimeout = null;
+
+/** @type {number} Currently selected index in autocomplete dropdown */
+let selectedAutocompleteIndex = -1;
+
 /** @type {string[]} List of common NYSE-listed stock symbols */
 const NYSE_SYMBOLS = [
   'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS',           // Financials
@@ -53,8 +62,8 @@ function getSearchInput() {
   return document.getElementById('stock-search');
 }
 
-function getSearchButton() {
-  return document.getElementById('search-button');
+function getClearSearchButton() {
+  return document.getElementById('clear-search-button');
 }
 
 function getStockDetailsDiv() {
@@ -75,6 +84,244 @@ function getAddToWatchlistBtn() {
 
 function getPortfolaiAnalysisBtn() {
   return document.getElementById('portfolaiAnalysisBtn');
+}
+
+function getAutocompleteDropdown() {
+  return document.getElementById('autocomplete-dropdown');
+}
+
+// ============================================================================
+// Autocomplete Functions
+// ============================================================================
+
+/**
+ * Fetch stock search suggestions from API
+ * 
+ * @async
+ * @param {string} query - Search query (symbol or company name)
+ * @returns {Promise<Array>} Array of stock suggestions
+ */
+async function fetchStockSuggestions(query) {
+  if (!query || query.trim().length === 0) {
+    return [];
+  }
+  
+  try {
+    const response = await fetch(`/api/stock-search/?query=${encodeURIComponent(query)}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    console.error('Error fetching stock suggestions:', error);
+    return [];
+  }
+}
+
+/**
+ * Display autocomplete suggestions in dropdown
+ * 
+ * @param {Array} results - Array of stock objects from API
+ */
+function displayAutocompleteSuggestions(results) {
+  const dropdown = getAutocompleteDropdown();
+  if (!dropdown) return;
+  
+  // Reset selected index
+  selectedAutocompleteIndex = -1;
+  
+  // Clear previous results
+  dropdown.innerHTML = '';
+  
+  if (results.length === 0) {
+    dropdown.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">No results found</div>';
+    dropdown.classList.remove('hidden');
+    return;
+  }
+  
+  // Create result items
+  results.forEach((stock, index) => {
+    const item = document.createElement('div');
+    item.className = 'px-4 py-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150';
+    item.setAttribute('role', 'option');
+    item.setAttribute('data-index', index);
+    item.setAttribute('data-symbol', stock.symbol);
+    
+    // Format: Symbol (bold) - Description (gray)
+    item.innerHTML = `
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="font-semibold text-gray-900 dark:text-gray-100">${stock.displaySymbol || stock.symbol}</span>
+          <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">${stock.description || ''}</span>
+        </div>
+        <span class="text-xs text-gray-500 dark:text-gray-500">${stock.type || ''}</span>
+      </div>
+    `;
+    
+    // Click handler to select stock
+    item.addEventListener('click', () => {
+      selectAutocompleteItem(stock.symbol);
+    });
+    
+    dropdown.appendChild(item);
+  });
+  
+  dropdown.classList.remove('hidden');
+}
+
+/**
+ * Hide autocomplete dropdown
+ */
+function hideAutocompleteDropdown() {
+  const dropdown = getAutocompleteDropdown();
+  if (dropdown) {
+    dropdown.classList.add('hidden');
+    dropdown.innerHTML = '';
+  }
+  selectedAutocompleteIndex = -1;
+}
+
+/**
+ * Select an autocomplete item and trigger search
+ * 
+ * @param {string} symbol - Stock symbol to search for
+ */
+function selectAutocompleteItem(symbol) {
+  const searchInput = getSearchInput();
+  if (searchInput) {
+    searchInput.value = symbol.toUpperCase();
+  }
+  hideAutocompleteDropdown();
+  toggleClearButton();
+  performSearch();
+}
+
+/**
+ * Handle keyboard navigation in autocomplete dropdown
+ * 
+ * @param {KeyboardEvent} event - Keyboard event
+ */
+function handleAutocompleteKeyboard(event) {
+  const dropdown = getAutocompleteDropdown();
+  if (!dropdown || dropdown.classList.contains('hidden')) {
+    return;
+  }
+  
+  const items = dropdown.querySelectorAll('[role="option"]');
+  if (items.length === 0) return;
+  
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault();
+      selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, items.length - 1);
+      updateAutocompleteSelection(items);
+      break;
+      
+    case 'ArrowUp':
+      event.preventDefault();
+      selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, 0);
+      updateAutocompleteSelection(items);
+      break;
+      
+    case 'Enter':
+      event.preventDefault();
+      if (selectedAutocompleteIndex >= 0 && selectedAutocompleteIndex < items.length) {
+        const selectedItem = items[selectedAutocompleteIndex];
+        const symbol = selectedItem.getAttribute('data-symbol');
+        selectAutocompleteItem(symbol);
+      }
+      break;
+      
+    case 'Escape':
+      event.preventDefault();
+      hideAutocompleteDropdown();
+      break;
+  }
+}
+
+/**
+ * Update visual selection in autocomplete dropdown
+ * 
+ * @param {NodeList} items - List of dropdown items
+ */
+function updateAutocompleteSelection(items) {
+  items.forEach((item, index) => {
+    if (index === selectedAutocompleteIndex) {
+      item.classList.add('bg-gray-100', 'dark:bg-gray-700');
+      item.scrollIntoView({ block: 'nearest' });
+    } else {
+      item.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+    }
+  });
+}
+
+/**
+ * Toggle visibility of clear button based on input content
+ */
+function toggleClearButton() {
+  const searchInput = getSearchInput();
+  const clearButton = getClearSearchButton();
+  
+  if (searchInput && clearButton) {
+    if (searchInput.value.trim().length > 0) {
+      clearButton.classList.remove('hidden');
+    } else {
+      clearButton.classList.add('hidden');
+    }
+  }
+}
+
+/**
+ * Clear search input and reset UI
+ */
+function clearSearch() {
+  const searchInput = getSearchInput();
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.focus();
+  }
+  
+  hideAutocompleteDropdown();
+  toggleClearButton();
+  
+  // Reset UI elements
+  displayStockDetails(null);
+  clearTradingViewWidget();
+  
+  const addToWatchlistBtn = getAddToWatchlistBtn();
+  const portfolaiAnalysisBtn = getPortfolaiAnalysisBtn();
+  if (addToWatchlistBtn) addToWatchlistBtn.disabled = true;
+  if (portfolaiAnalysisBtn) portfolaiAnalysisBtn.disabled = true;
+}
+
+/**
+ * Handle search input changes with debouncing
+ * 
+ * @param {Event} event - Input event
+ */
+async function handleSearchInput(event) {
+  const query = event.target.value.trim();
+  
+  // Toggle clear button visibility
+  toggleClearButton();
+  
+  // Clear existing timeout
+  if (autocompleteTimeout) {
+    clearTimeout(autocompleteTimeout);
+  }
+  
+  // Hide dropdown if query is empty
+  if (!query || query.length === 0) {
+    hideAutocompleteDropdown();
+    return;
+  }
+  
+  // Debounce the API call
+  autocompleteTimeout = setTimeout(async () => {
+    const results = await fetchStockSuggestions(query);
+    displayAutocompleteSuggestions(results);
+  }, AUTOCOMPLETE_DEBOUNCE_DELAY);
 }
 
 /**
@@ -106,6 +353,9 @@ async function performSearch() {
   const searchTerm = searchInput.value.toUpperCase().trim();
   console.log('Search term:', searchTerm);
   searchErrorDiv.classList.add('hidden');
+  
+  // Update clear button visibility
+  toggleClearButton();
   
   // Handle empty search - reset UI to default state
   if (!searchTerm) {
@@ -233,6 +483,23 @@ function displayStockDetails(stock, symbol = 'N/A') {
       : 'text-red-500 dark:text-red-400';
     const changeSign = stock.change >= 0 ? '+' : '';
     
+    // Format market cap (API returns in millions)
+    // Convert to billions or trillions for display
+    let marketCapDisplay = 'N/A';
+    if (stock.marketCap && stock.marketCap > 0) {
+      const marketCapInBillions = stock.marketCap / 1000;
+      if (marketCapInBillions >= 1000) {
+        // Display in trillions for large caps
+        marketCapDisplay = `$${(marketCapInBillions / 1000).toFixed(2)}T`;
+      } else if (marketCapInBillions >= 1) {
+        // Display in billions
+        marketCapDisplay = `$${marketCapInBillions.toFixed(2)}B`;
+      } else {
+        // Display in millions for small caps
+        marketCapDisplay = `$${stock.marketCap.toFixed(2)}M`;
+      }
+    }
+    
     stockDetailsDiv.innerHTML = `
       <div class="flex justify-between items-baseline">
           <p class="text-3xl font-bold">$${stock.price.toFixed(2)} <span class="text-xs text-gray-500 dark:text-gray-400">USD</span></p>
@@ -244,7 +511,7 @@ function displayStockDetails(stock, symbol = 'N/A') {
           <p><strong>High:</strong> $${stock.high.toFixed(2)}</p>
           <p><strong>Low:</strong> $${stock.low.toFixed(2)}</p>
           <p><strong>Volume:</strong> ${stock.volume.toLocaleString()}</p>
-          <p><strong>Mkt Cap:</strong> $${(stock.marketCap / 1000000000).toFixed(1)}B</p>
+          <p><strong>Mkt Cap:</strong> ${marketCapDisplay}</p>
           <p><strong>P/E Ratio:</strong> ${stock.peRatio || 'N/A'}</p>
           <p><strong>52W H:</strong> $${stock.yearHigh.toFixed(2)}</p>
           <p><strong>52W L:</strong> $${stock.yearLow.toFixed(2)}</p>
@@ -584,30 +851,75 @@ function updateWidgetTheme() {
  * Initialize stock search functionality
  * 
  * Sets up event listeners for:
- * - Search button click
+ * - Clear button click
  * - Enter key press in search input
+ * - Autocomplete input changes
+ * - Keyboard navigation in autocomplete
+ * - Click outside to close dropdown
  * - Theme changes (to update chart theme)
  * 
  * @function initializeStockSearch
  */
 function initializeStockSearch() {
-  const searchButton = getSearchButton();
   const searchInput = getSearchInput();
+  const clearButton = getClearSearchButton();
   
-  if (!searchButton || !searchInput) {
-    console.error('Search elements not found during initialization');
+  if (!searchInput) {
+    console.error('Search input not found during initialization');
     return;
   }
   
-  // Search button click handler
-  searchButton.addEventListener('click', performSearch);
+  // Clear button click handler
+  if (clearButton) {
+    clearButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearSearch();
+    });
+  }
   
-  // Enter key handler for search input
-  searchInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+  // Input change handler for autocomplete
+  searchInput.addEventListener('input', handleSearchInput);
+  
+  // Keyboard handler for search input
+  searchInput.addEventListener('keydown', (e) => {
+    const dropdown = getAutocompleteDropdown();
+    const isDropdownVisible = dropdown && !dropdown.classList.contains('hidden');
+    
+    if (isDropdownVisible) {
+      // Handle autocomplete keyboard navigation
+      handleAutocompleteKeyboard(e);
+    } else if (e.key === 'Enter') {
+      // Perform search when Enter is pressed and dropdown is hidden
+      hideAutocompleteDropdown();
       performSearch();
     }
   });
+  
+  // Click outside handler to close autocomplete dropdown
+  document.addEventListener('click', (e) => {
+    const dropdown = getAutocompleteDropdown();
+    const clearBtn = getClearSearchButton();
+    if (!dropdown) return;
+    
+    // Check if click is outside search input and dropdown (but not the clear button)
+    const isClickInsideSearch = searchInput.contains(e.target);
+    const isClickInsideDropdown = dropdown.contains(e.target);
+    const isClickOnClearButton = clearBtn && clearBtn.contains(e.target);
+    
+    if (!isClickInsideSearch && !isClickInsideDropdown && !isClickOnClearButton) {
+      hideAutocompleteDropdown();
+    }
+  });
+  
+  // Scroll handler to close autocomplete dropdown
+  // Prevents dropdown from appearing in wrong position when scrolling
+  window.addEventListener('scroll', () => {
+    const dropdown = getAutocompleteDropdown();
+    if (dropdown && !dropdown.classList.contains('hidden')) {
+      hideAutocompleteDropdown();
+    }
+  }, { passive: true });
   
   // Listen for theme changes to update chart
   // Use a custom event dispatched by the theme toggle

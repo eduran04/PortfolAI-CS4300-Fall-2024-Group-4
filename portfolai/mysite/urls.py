@@ -16,12 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from core.views import (
     landing,
     trading_dashboard,
     hello_api,
     stock_summary,
     get_stock_data,
+    stock_search,
     get_market_movers,
     get_news,
     portfolai_analysis,
@@ -43,6 +46,7 @@ urlpatterns = [
     path("api/hello/", hello_api, name="hello_api"),
     path("api/stock/", stock_summary, name="stock_summary"),
     path("api/stock-data/", get_stock_data, name="get_stock_data"),
+    path("api/stock-search/", stock_search, name="stock_search"),
     path("api/market-movers/", get_market_movers, name="get_market_movers"),
     path("api/news/", get_news, name="get_news"),
     path("api/portfolai-analysis/", portfolai_analysis, name="portfolai_analysis"),
@@ -54,8 +58,15 @@ urlpatterns = [
     path("api/watchlist/", get_watchlist, name="get_watchlist"),
     path("api/watchlist/add/", add_to_watchlist, name="add_to_watchlist"),
     path("api/watchlist/remove/", remove_from_watchlist, name="remove_from_watchlist"),
-    #learning resources endpoints
+    # learning resources endpoints
     path("api/learn/topics/", learn.learn_topics, name="learn_topics"),
     path("api/learn/topic/<slug:slug>/", learn.learn_topic_detail, name="learn_topic_detail"),
     path("api/learn/explain/", learn.learn_ai_explanation, name="learn_ai_explanation"),
 ]
+
+# Serve static files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Also serve files from STATICFILES_DIRS
+    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+    urlpatterns += staticfiles_urlpatterns()

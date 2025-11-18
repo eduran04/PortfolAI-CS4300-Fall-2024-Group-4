@@ -23,7 +23,7 @@ from .basic import landing, trading_dashboard, hello_api
 from .auth import SignUpView
 
 # Stock data views
-from .stock_data import get_stock_data, stock_summary
+from .stock_data import get_stock_data, stock_summary, stock_search
 
 # Market movers views
 from .market_movers import get_market_movers
@@ -58,6 +58,7 @@ __all__ = [
     # Stock data
     'get_stock_data',
     'stock_summary',
+    'stock_search',
     # Market movers
     'get_market_movers',
     # News

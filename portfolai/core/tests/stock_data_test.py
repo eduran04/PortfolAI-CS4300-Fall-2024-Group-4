@@ -16,6 +16,16 @@ from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from django.conf import settings
+from rest_framework.response import Response
+from core.views.stock_data import (
+    _get_cached_stock_data,
+    _fetch_and_validate_quote,
+    _fetch_company_profile,
+    _fetch_stock_metrics,
+    _build_stock_response_data,
+    _is_us_exchange,
+    _get_fallback_search_results,
+)
 from .test_helpers import assert_fallback_response
 
 
@@ -333,3 +343,268 @@ class StockDataTests(TestCase):  # pylint: disable=too-many-public-methods
             self.assertEqual(
                 recent_searches, ['MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA']
             )
+
+    def test_get_cached_stock_data_with_force_refresh(self):
+        """Test _get_cached_stock_data bypasses cache when force_refresh is True"""
+        cache_key = 'stock_data_TEST'
+        test_data = {'symbol': 'TEST', 'price': 100}
+        cache.set(cache_key, test_data, 60)
+
+        # With force_refresh=True, should return None (bypass cache)
+        result = _get_cached_stock_data(cache_key, True)
+        self.assertIsNone(result)
+
+        # With force_refresh=False, should return cached data
+        result = _get_cached_stock_data(cache_key, False)
+        self.assertIsNotNone(result)
+        self.assertIsInstance(result, Response)
+
+    def test_fetch_and_validate_quote_rate_limit(self):
+        """Test _fetch_and_validate_quote handles rate limit errors"""
+        cache_key = 'stock_data_AAPL'
+        cache.set(cache_key, {'symbol': 'AAPL', 'price': 150}, 60)
+
+        # Mock rate limit error
+        rate_limit_error = Exception("429 Too Many Requests")
+        rate_limit_error.status_code = 429
+
+        with patch('core.views.stock_data.finnhub_client') as mock_client:
+            with patch('core.views.stock_data.is_rate_limit_error', return_value=True):
+                mock_client.quote.side_effect = rate_limit_error
+                quote, response = _fetch_and_validate_quote('AAPL', cache_key)
+                # Should return cached response on rate limit
+                self.assertIsNone(quote)
+                self.assertIsNotNone(response)
+
+    def test_fetch_company_profile_exception(self):
+        """Test _fetch_company_profile handles exceptions gracefully"""
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.stock_data.finnhub_client') as mock_client:
+                mock_client.company_profile2.side_effect = Exception("Profile error")
+                company, company_name = _fetch_company_profile('AAPL')
+                self.assertEqual(company, {})
+                self.assertEqual(company_name, 'AAPL')
+
+    def test_fetch_stock_metrics_exception(self):
+        """Test _fetch_stock_metrics handles exceptions gracefully"""
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.stock_data.finnhub_client') as mock_client:
+                mock_client.company_basic_financials.side_effect = Exception("Metrics error")
+                metrics = _fetch_stock_metrics('AAPL')
+                self.assertEqual(metrics, {})
+
+    def test_build_stock_response_data_none_metrics(self):
+        """Test _build_stock_response_data handles None metrics"""
+        quote = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+        company = {'name': 'Apple Inc.', 'marketCapitalization': 3000000000000}
+
+        result = _build_stock_response_data('AAPL', quote, company, 'Apple Inc.', metrics=None)
+        self.assertEqual(result['symbol'], 'AAPL')
+        self.assertEqual(result['name'], 'Apple Inc.')
+        self.assertEqual(result['price'], 150.0)
+
+    def test_build_stock_response_data_none_pe_ratio(self):
+        """Test _build_stock_response_data handles None P/E ratio"""
+
+        quote = {'c': 150.0, 'pc': 148.0, 'o': 149.0, 'h': 151.0, 'l': 147.0, 'v': 1000000}
+        company = {'name': 'Apple Inc.', 'marketCapitalization': 3000000000000}
+        # No peBasicExclExtraTTM
+        metrics = {'52WeekHigh': 200.0, '52WeekLow': 100.0}
+
+        result = _build_stock_response_data('AAPL', quote, company, 'Apple Inc.', metrics=metrics)
+        # Should default to 0 when not in metrics or company
+        self.assertEqual(result['peRatio'], 0)
+
+    def test_stock_search_empty_query(self):
+        """Test stock_search with empty query"""
+        url = reverse('stock_search')
+        response = self.client.get(url, {'query': ''})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['results'], [])
+
+    def test_stock_search_no_query(self):
+        """Test stock_search without query parameter"""
+        url = reverse('stock_search')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['results'], [])
+
+    def test_stock_search_fallback_no_api_key(self):
+        """Test stock_search uses fallback when API key is missing"""
+        url = reverse('stock_search')
+        with patch.object(settings, 'FINNHUB_API_KEY', None):
+            with patch('core.views.stock_data.finnhub_client', None):
+                response = self.client.get(url, {'query': 'apple'})
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('results', data)
+                self.assertTrue(data.get('fallback', False))
+
+    def test_stock_search_api_exception(self):
+        """Test stock_search handles API exceptions"""
+        url = reverse('stock_search')
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.stock_data.finnhub_client') as mock_client:
+                mock_client.symbol_lookup.side_effect = Exception("API Error")
+                response = self.client.get(url, {'query': 'apple'})
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('results', data)
+                self.assertTrue(data.get('fallback', False))
+
+    def test_stock_search_empty_results(self):
+        """Test stock_search handles empty API results"""
+        url = reverse('stock_search')
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.stock_data.finnhub_client') as mock_client:
+                mock_client.symbol_lookup.return_value = None
+                response = self.client.get(url, {'query': 'xyz123'})
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertEqual(data['results'], [])
+
+    def test_stock_search_missing_result_key(self):
+        """Test stock_search handles missing 'result' key in API response"""
+        url = reverse('stock_search')
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.stock_data.finnhub_client') as mock_client:
+                mock_client.symbol_lookup.return_value = {}
+                response = self.client.get(url, {'query': 'test'})
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertEqual(data['results'], [])
+
+    def test_stock_search_filters_us_exchanges(self):
+        """Test stock_search filters to US exchanges only"""
+        url = reverse('stock_search')
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.stock_data.finnhub_client') as mock_client:
+                # Mock response with US and international stocks
+                mock_client.symbol_lookup.return_value = {
+                    'result': [
+                        {
+                            'symbol': 'AAPL',
+                            'description': 'Apple Inc.',
+                            'type': 'Common Stock'
+                        },
+                        {
+                            'symbol': 'AAPL.SW',
+                            'description': 'Apple Inc. (Switzerland)',
+                            'type': 'Common Stock'
+                        },
+                        {
+                            'symbol': 'MSFT',
+                            'description': 'Microsoft Corp.',
+                            'type': 'Common Stock'
+                        },
+                        {
+                            'symbol': 'BRK.B',
+                            'description': 'Berkshire Hathaway Class B',
+                            'type': 'Common Stock'
+                        },
+                    ]
+                }
+                response = self.client.get(url, {'query': 'apple'})
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                # Should only return US stocks (AAPL, MSFT, BRK.B), not AAPL.SW
+                symbols = [r['symbol'] for r in data['results']]
+                self.assertIn('AAPL', symbols)
+                self.assertIn('MSFT', symbols)
+                self.assertIn('BRK.B', symbols)
+                self.assertNotIn('AAPL.SW', symbols)
+
+    def test_is_us_exchange_empty_symbol(self):
+        """Test _is_us_exchange with empty symbol"""
+        self.assertFalse(_is_us_exchange(''))
+        self.assertFalse(_is_us_exchange(None))
+
+    def test_is_us_exchange_with_dot(self):
+        """Test _is_us_exchange with dot in symbol"""
+        # US share class (single letter after dot)
+        self.assertTrue(_is_us_exchange('BRK.B'))
+        self.assertTrue(_is_us_exchange('GOOGL.A'))
+        # International (multiple characters after dot)
+        self.assertFalse(_is_us_exchange('AAPL.SW'))
+        # Note: MSFT.L would return True with current logic (single letter),
+        # but .L is actually London exchange. Function treats any single
+        # letter as US share class, which is a limitation.
+        # Testing with a clear international exchange (multiple chars)
+        self.assertFalse(_is_us_exchange('AAPL.LON'))
+
+    def test_is_us_exchange_with_hyphen(self):
+        """Test _is_us_exchange with hyphen in symbol"""
+        self.assertFalse(_is_us_exchange('AAPL-W'))
+        self.assertFalse(_is_us_exchange('TEST-WARRANT'))
+
+    def test_is_us_exchange_case_sensitivity(self):
+        """Test _is_us_exchange case sensitivity"""
+        self.assertTrue(_is_us_exchange('AAPL'))
+        self.assertFalse(_is_us_exchange('aapl'))
+        self.assertFalse(_is_us_exchange('Aapl'))
+
+    def test_is_us_exchange_non_alpha(self):
+        """Test _is_us_exchange with non-alphabetic characters"""
+        self.assertFalse(_is_us_exchange('AAPL1'))
+        self.assertFalse(_is_us_exchange('123'))
+
+    def test_get_fallback_search_results_by_symbol(self):
+        """Test _get_fallback_search_results matches by symbol"""
+        results = _get_fallback_search_results('AAPL')
+        self.assertGreater(len(results), 0)
+        self.assertEqual(results[0]['symbol'], 'AAPL')
+
+    def test_get_fallback_search_results_by_name(self):
+        """Test _get_fallback_search_results matches by company name"""
+        results = _get_fallback_search_results('apple')
+        self.assertGreater(len(results), 0)
+        # Should find Apple Inc.
+        apple_result = [r for r in results if r['symbol'] == 'AAPL']
+        self.assertGreater(len(apple_result), 0)
+
+    def test_get_fallback_search_results_limit(self):
+        """Test _get_fallback_search_results limits to 10 results"""
+        # Search for something that matches many stocks (like 'inc')
+        results = _get_fallback_search_results('inc')
+        self.assertLessEqual(len(results), 10)
+
+    def test_get_stock_data_returns_cached_response(self):
+        """Test get_stock_data returns cached response when available"""
+        cache_key = 'stock_data_AAPL'
+        cached_data = {'symbol': 'AAPL', 'name': 'Apple Inc.', 'price': 150.0}
+        cache.set(cache_key, cached_data, 60)
+
+        url = reverse('get_stock_data')
+        with patch('core.views.stock_data.finnhub_client', None):
+            response = self.client.get(url, {'symbol': 'AAPL'})
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(data['symbol'], 'AAPL')
+
+    def test_get_stock_data_exception_with_fallback(self):
+        """Test get_stock_data exception handling with fallback available"""
+        cache.clear()
+        url = reverse('get_stock_data')
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.stock_data.finnhub_client') as mock_client:
+                mock_client.quote.side_effect = Exception("Unexpected error")
+                response = self.client.get(url, {'symbol': 'AAPL', 'force_refresh': 'true'})
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn('symbol', data)
+                self.assertTrue(data.get('fallback', False))
+
+    def test_get_stock_data_exception_no_fallback(self):
+        """Test get_stock_data exception handling without fallback"""
+        cache.clear()
+        url = reverse('get_stock_data')
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test_key'):
+            with patch('core.views.stock_data.finnhub_client') as mock_client:
+                mock_client.quote.side_effect = Exception("Unexpected error")
+                response = self.client.get(url, {'symbol': 'UNKNOWN', 'force_refresh': 'true'})
+                # Should return 500 error when no fallback available
+                self.assertEqual(response.status_code, 500)
+                data = response.json()
+                self.assertIn('error', data)
