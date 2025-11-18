@@ -350,9 +350,25 @@
     <script src="{% static 'home/js/stock.js' %}"></script>
     <script src="{% static 'home/js/watchlist.js' %}"></script>
     <script src="{% static 'home/js/ui.js' %}"></script>
-    <script src="{% static 'home/js/learn.js' %}"></script>
 
     
     <!-- Application initialization -->
     <script src="{% static 'home/js/main.js' %}"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log("===== LearnUI DOM DEBUG =====");
+        const ids = [
+            "learnCatTrack", "learnPillRow", "learnOverlay", "learnTitle",
+            "learnSubtopic", "learnSlide", "learnCounter", "learnClose",
+            "learnNext", "learnPrev", "learnAiStatus", "learnAiResponse",
+            "learnAskAiBtn"
+        ];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            console.log(id, el ? "FOUND" : "MISSING");
+        });
+    });
+    </script>
+
+    <script src="{% static 'home/js/learn.js' %}"></script>
 {% endblock %}
