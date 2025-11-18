@@ -180,120 +180,156 @@
                 </div>
             </div>
         </section>
-        <!-- ===================== LEARN SECTION ===================== -->
+
+        <!-- Learn Section -->
         <section id="learn" class="mb-8 scroll-mt-20">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-300">
-            <h2 class="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-200">Learning Resources</h2>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">
-            Explore beginner-friendly lessons to help you understand the stock market and build a confident investing foundation.
-            </p>
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-300">
+                <h2 class="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-200">
+                    Learning Resources
+                </h2>
 
-            <!-- Category Carousel (Row 1) -->
-            <div class="flex items-center gap-3 mb-6 learn-cat-track-container">
-            <button id="learnCatPrev" class="learn-cat-arrow" aria-label="Previous topic">
-                &#10094;
-            </button>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                    Explore beginner-friendly lessons to help you understand the stock market and build a confident investing foundation.
+                </p>
 
-            <div id="learnCatTrack" class="learn-cat-track">
-                <!-- Topic cards: gradient category cards -->
-                <div class="learn-topic-card" data-topic="Stock Market Basics">
-                <!--<div class="learn-topic-icon">📘</div>-->
-                <h3 class="learn-topic-title">Stock Market Basics</h3>
-                <p class="learn-topic-desc">Core concepts and why stocks exist.</p>
+                <!-- Topic Carosel -->
+                <div class="flex items-center gap-3 mb-6 learn-cat-track-container">
+                    <button 
+                        id="learnCatPrev" 
+                        class="learn-cat-arrow" 
+                        aria-label="Scroll to previous topic">
+                        &#10094;
+                    </button>
+
+                    <div id="learnCatTrack" class="learn-cat-track" role="list">
+                        <!-- Cards populated manually here, JS handles selection -->
+                        <div class="learn-topic-card" role="listitem" data-topic="Stock Market Basics">
+                            <h3 class="learn-topic-title">Stock Market Basics</h3>
+                            <p class="learn-topic-desc">Core concepts and why stocks exist.</p>
+                        </div>
+
+                        <div class="learn-topic-card" role="listitem" data-topic="Reading Stock Charts">
+                            <h3 class="learn-topic-title">Reading Stock Charts</h3>
+                            <p class="learn-topic-desc">Learn candlesticks, trends, and volume.</p>
+                        </div>
+
+                        <div class="learn-topic-card" role="listitem" data-topic="Company Fundamentals">
+                            <h3 class="learn-topic-title">Company Fundamentals</h3>
+                            <p class="learn-topic-desc">Revenue, profit, P/E, and more.</p>
+                        </div>
+
+                        <div class="learn-topic-card" role="listitem" data-topic="How to Analyze a Stock">
+                            <h3 class="learn-topic-title">How to Analyze a Stock</h3>
+                            <p class="learn-topic-desc">A simple analysis framework.</p>
+                        </div>
+
+                        <div class="learn-topic-card" role="listitem" data-topic="Building a Portfolio">
+                            <h3 class="learn-topic-title">Building a Portfolio</h3>
+                            <p class="learn-topic-desc">Diversification and allocation basics.</p>
+                        </div>
+
+                        <div class="learn-topic-card" role="listitem" data-topic="Beginner Mistakes">
+                            <h3 class="learn-topic-title">Beginner Mistakes</h3>
+                            <p class="learn-topic-desc">Avoid common investing pitfalls.</p>
+                        </div>
+
+                        <div class="learn-topic-card" role="listitem" data-topic="Understanding Market News">
+                            <h3 class="learn-topic-title">Understanding Market News</h3>
+                            <p class="learn-topic-desc">What headlines really mean.</p>
+                        </div>
+
+                        <div class="learn-topic-card" role="listitem" data-topic="Investing Styles">
+                            <h3 class="learn-topic-title">Investing Styles</h3>
+                            <p class="learn-topic-desc">Value, growth, dividend and more.</p>
+                        </div>
+
+                        <div class="learn-topic-card" role="listitem" data-topic="Tools & Resources">
+                            <h3 class="learn-topic-title">Tools & Resources</h3>
+                            <p class="learn-topic-desc">Helpful platforms and glossaries.</p>
+                        </div>
+                    </div>
+
+                    <button 
+                        id="learnCatNext" 
+                        class="learn-cat-arrow" 
+                        aria-label="Scroll to next topic">
+                        &#10095;
+                    </button>
                 </div>
 
-                <div class="learn-topic-card" data-topic="Reading Stock Charts">
-                <!--<div class="learn-topic-icon">📊</div>-->
-                <h3 class="learn-topic-title">Reading Stock Charts</h3>
-                <p class="learn-topic-desc">Learn candlesticks, trends, and volume.</p>
+                <!-- Subtopic pills -->
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                        Subtopics for:
+                        <span id="learnActiveTopicLabel" class="text-indigo-600 dark:text-indigo-400">
+                            Stock Market Basics
+                        </span>
+                    </h3>
                 </div>
 
-                <div class="learn-topic-card" data-topic="Company Fundamentals">
-                <!--<div class="learn-topic-icon">🏢</div>-->
-                <h3 class="learn-topic-title">Company Fundamentals</h3>
-                <p class="learn-topic-desc">Revenue, profit, P/E, and more.</p>
-                </div>
-
-                <div class="learn-topic-card" data-topic="How to Analyze a Stock">
-                <!--<div class="learn-topic-icon">🔍</div>-->
-                <h3 class="learn-topic-title">How to Analyze a Stock</h3>
-                <p class="learn-topic-desc">A simple analysis framework.</p>
-                </div>
-
-                <div class="learn-topic-card" data-topic="Building a Portfolio">
-                <!--<div class="learn-topic-icon">💼</div>-->
-                <h3 class="learn-topic-title">Building a Portfolio</h3>
-                <p class="learn-topic-desc">Diversification and allocation basics.</p>
-                </div>
-
-                <div class="learn-topic-card" data-topic="Beginner Mistakes">
-                <!--<div class="learn-topic-icon">⚠️</div>-->
-                <h3 class="learn-topic-title">Beginner Mistakes</h3>
-                <p class="learn-topic-desc">Avoid common investing pitfalls.</p>
-                </div>
-
-                <div class="learn-topic-card" data-topic="Understanding Market News">
-                <!--<div class="learn-topic-icon">📰</div>-->
-                <h3 class="learn-topic-title">Understanding Market News</h3>
-                <p class="learn-topic-desc">What headlines really mean.</p>
-                </div>
-
-                <div class="learn-topic-card" data-topic="Investing Styles">
-                <!--<div class="learn-topic-icon">🎯</div>-->
-                <h3 class="learn-topic-title">Investing Styles</h3>
-                <p class="learn-topic-desc">Value, growth, dividend and more.</p>
-                </div>
-
-                <div class="learn-topic-card" data-topic="Tools & Resources">
-                <!--<div class="learn-topic-icon">🛠️</div>-->
-                <h3 class="learn-topic-title">Tools & Resources</h3>
-                <p class="learn-topic-desc">Helpful platforms and glossaries.</p>
+                <div id="learnPillRow" class="learn-pill-row" role="tablist">
+                    <!-- Subtopic pills are injected by learn.js -->
                 </div>
             </div>
-
-            <button id="learnCatNext" class="learn-cat-arrow" aria-label="Next topic">
-                &#10095;
-            </button>
-            </div>
-
-            <!-- Subtopic Pills (Row 2) -->
-            <div class="mb-2 flex items-center justify-between gap-2">
-            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                Subtopics for: <span id="learnActiveTopicLabel" class="text-indigo-600 dark:text-indigo-400">Stock Market Basics</span>
-            </h3>
-            </div>
-            <div id="learnPillRow" class="learn-pill-row">
-            <!-- Pills will be injected by learn.js -->
-            </div>
-        </div>
         </section>
 
-        <!-- ===================== LEARN OVERLAY ===================== -->
-        <div id="learnOverlay" class="learn-overlay hidden">
-        <div class="learn-overlay-inner">
-            <button id="learnClose" class="learn-close-btn" aria-label="Close learning overlay">✕</button>
+        <!-- Learn Overlay -->
+        <div id="learnOverlay" class="learn-overlay hidden" aria-modal="true" role="dialog">
+            <div class="learn-overlay-inner">
+                <button 
+                    id="learnClose" 
+                    class="learn-close-btn" 
+                    aria-label="Close learning popup">
+                    ✕
+                </button>
 
-            <h2 id="learnTitle" class="learn-title"></h2>
-            <h3 id="learnSubtopic" class="learn-subtopic"></h3>
+                <h2 id="learnTitle" class="learn-title"></h2>
+                <h3 id="learnSubtopic" class="learn-subtopic"></h3>
 
-            <div id="learnSlide" class="learn-slide"></div>
+                <div id="learnSlide" class="learn-slide"></div>
 
-            <div class="learn-arrows">
-            <button id="learnPrev" class="learn-arrow" aria-label="Previous card">&larr;</button>
-            <span id="learnCounter" class="learn-counter">1 / 1</span>
-            <button id="learnNext" class="learn-arrow" aria-label="Next card">&rarr;</button>
-            </div>
+                <div class="learn-arrows">
+                    <button 
+                        id="learnPrev" 
+                        class="learn-arrow" 
+                        aria-label="Previous slide">
+                        &larr;
+                    </button>
 
-            <div class="learn-ai-section">
-            <button id="learnAskAiBtn" class="learn-ai-btn">
-                Ask AI to explain this better →
-            </button>
-            <div id="learnAiStatus" class="learn-ai-status"></div>
-            <div id="learnAiResponse" class="learn-ai-response"></div>
+                    <span id="learnCounter" class="learn-counter">1 / 1</span>
+
+                    <button 
+                        id="learnNext" 
+                        class="learn-arrow" 
+                        aria-label="Next slide">
+                        &rarr;
+                    </button>
+                </div>
+
+                <!-- AI Assistant Section -->
+                <div class="learn-ai-section">
+                    <button 
+                        id="learnAskAiBtn" 
+                        class="learn-ai-btn"
+                        aria-label="Ask PortfolAI to explain the concept">
+                        Ask AI to explain this better →
+                    </button>
+
+                    <!-- aria-live ensures screen readers notify updates -->
+                    <div 
+                        id="learnAiStatus" 
+                        class="learn-ai-status" 
+                        aria-live="polite">
+                    </div>
+
+                    <div 
+                        id="learnAiResponse" 
+                        class="learn-ai-response" 
+                        aria-live="polite">
+                    </div>
+                </div>
             </div>
         </div>
-        </div>
-
 
     </main>
 
