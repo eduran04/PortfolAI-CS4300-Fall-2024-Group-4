@@ -21,63 +21,87 @@ class StockSummaryTests(TestCase):
 
     def test_stock_summary_endpoint(self):
         """Test stock summary endpoint - requires API keys"""
-        url = reverse('stock_summary')
-        response = self.client.get(url, {'symbol': 'AAPL'})
+        with patch.object(settings, 'FINNHUB_API_KEY', None):
+            with patch.object(settings, 'OPENAI_API_KEY', None):
+                with patch('core.views.stock_data.finnhub_client', None):
+                    with patch('core.views.stock_data.openai_client', None):
+                        url = reverse('stock_summary')
+                        response = self.client.get(url, {'symbol': 'AAPL'})
 
-        # Stock summary requires API keys
-        self.assertEqual(response.status_code, 500)
-        data = response.json()
-        self.assertIn('error', data)
+                        # Stock summary requires API keys
+                        self.assertEqual(response.status_code, 500)
+                        data = response.json()
+                        self.assertIn('error', data)
 
     def test_stock_summary_no_symbol(self):
         """Test stock summary without symbol - requires API keys"""
-        url = reverse('stock_summary')
-        response = self.client.get(url)
+        with patch.object(settings, 'FINNHUB_API_KEY', None):
+            with patch.object(settings, 'OPENAI_API_KEY', None):
+                with patch('core.views.stock_data.finnhub_client', None):
+                    with patch('core.views.stock_data.openai_client', None):
+                        url = reverse('stock_summary')
+                        response = self.client.get(url)
 
-        # Stock summary requires API keys
-        self.assertEqual(response.status_code, 500)
-        data = response.json()
-        self.assertIn('error', data)
+                        # Stock summary requires API keys
+                        self.assertEqual(response.status_code, 500)
+                        data = response.json()
+                        self.assertIn('error', data)
 
     def test_stock_summary_empty_symbol(self):
         """Test stock summary with empty symbol - requires API keys"""
-        url = reverse('stock_summary')
-        response = self.client.get(url, {'symbol': ''})
+        with patch.object(settings, 'FINNHUB_API_KEY', None):
+            with patch.object(settings, 'OPENAI_API_KEY', None):
+                with patch('core.views.stock_data.finnhub_client', None):
+                    with patch('core.views.stock_data.openai_client', None):
+                        url = reverse('stock_summary')
+                        response = self.client.get(url, {'symbol': ''})
 
-        # Stock summary requires API keys
-        self.assertEqual(response.status_code, 500)
-        data = response.json()
-        self.assertIn('error', data)
+                        # Stock summary requires API keys
+                        self.assertEqual(response.status_code, 500)
+                        data = response.json()
+                        self.assertIn('error', data)
 
     def test_stock_summary_whitespace_symbol(self):
         """Test stock summary with whitespace symbol - requires API keys"""
-        url = reverse('stock_summary')
-        response = self.client.get(url, {'symbol': '   '})
+        with patch.object(settings, 'FINNHUB_API_KEY', None):
+            with patch.object(settings, 'OPENAI_API_KEY', None):
+                with patch('core.views.stock_data.finnhub_client', None):
+                    with patch('core.views.stock_data.openai_client', None):
+                        url = reverse('stock_summary')
+                        response = self.client.get(url, {'symbol': '   '})
 
-        # Stock summary requires API keys
-        self.assertEqual(response.status_code, 500)
-        data = response.json()
-        self.assertIn('error', data)
+                        # Stock summary requires API keys
+                        self.assertEqual(response.status_code, 500)
+                        data = response.json()
+                        self.assertIn('error', data)
 
     def test_stock_summary_lowercase_symbol(self):
         """Test stock summary with lowercase symbol - requires API keys"""
-        url = reverse('stock_summary')
-        response = self.client.get(url, {'symbol': 'aapl'})
+        with patch.object(settings, 'FINNHUB_API_KEY', None):
+            with patch.object(settings, 'OPENAI_API_KEY', None):
+                with patch('core.views.stock_data.finnhub_client', None):
+                    with patch('core.views.stock_data.openai_client', None):
+                        url = reverse('stock_summary')
+                        response = self.client.get(url, {'symbol': 'aapl'})
 
-        # Stock summary requires API keys
-        self.assertEqual(response.status_code, 500)
-        data = response.json()
-        self.assertIn('error', data)
+                        # Stock summary requires API keys
+                        self.assertEqual(response.status_code, 500)
+                        data = response.json()
+                        self.assertIn('error', data)
 
     def test_stock_summary_response_structure(self):
         """Test stock summary response structure - requires API keys"""
-        url = reverse('stock_summary')
-        response = self.client.get(url, {'symbol': 'AAPL'})
+        with patch.object(settings, 'FINNHUB_API_KEY', None):
+            with patch.object(settings, 'OPENAI_API_KEY', None):
+                with patch('core.views.stock_data.finnhub_client', None):
+                    with patch('core.views.stock_data.openai_client', None):
+                        url = reverse('stock_summary')
+                        response = self.client.get(url, {'symbol': 'AAPL'})
 
-        # Stock summary requires API keys
-        self.assertEqual(response.status_code, 500)
-        data = response.json()
-        self.assertIn('error', data)
+                        # Stock summary requires API keys
+                        self.assertEqual(response.status_code, 500)
+                        data = response.json()
+                        self.assertIn('error', data)
 
     def test_stock_summary_with_api_error(self):
         """Test stock summary with API error handling"""
@@ -98,14 +122,16 @@ class StockSummaryTests(TestCase):
         """Test stock summary with missing API key"""
         with patch.object(settings, 'FINNHUB_API_KEY', None):
             with patch.object(settings, 'OPENAI_API_KEY', None):
-                url = reverse('stock_summary')
-                response = self.client.get(url, {'symbol': 'AAPL'})
+                with patch('core.views.stock_data.finnhub_client', None):
+                    with patch('core.views.stock_data.openai_client', None):
+                        url = reverse('stock_summary')
+                        response = self.client.get(url, {'symbol': 'AAPL'})
 
-                # Stock summary returns 500 when API key is missing
-                self.assertEqual(response.status_code, 500)
-                data = response.json()
-                self.assertIn('error', data)
-                self.assertEqual(data['error'], 'API keys not configured')
+                        # Stock summary returns 500 when API key is missing
+                        self.assertEqual(response.status_code, 500)
+                        data = response.json()
+                        self.assertIn('error', data)
+                        self.assertEqual(data['error'], 'API keys not configured')
 
     def test_stock_summary_with_working_apis(self):
         """Test stock summary with working API mocks"""
