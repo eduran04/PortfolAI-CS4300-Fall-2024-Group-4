@@ -14,14 +14,16 @@ for when external APIs are unavailable.
 """
 
 from datetime import datetime
-import logging
+import requests
 
 import finnhub
-from newsapi import NewsApiClient
-from django.conf import settings
-from .api_helpers import is_rate_limit_error, process_news_articles
+try:
+    from newsapi import NewsApiClient
+except ImportError:
+    NewsApiClient = None  # pylint: disable=invalid-name
 
-logger = logging.getLogger(__name__)
+from django.conf import settings
+from .api_helpers import process_news_articles
 
 # ============================================================================
 # FALLBACK DATA FOR API UNAVAILABILITY
@@ -93,7 +95,7 @@ class MarketDataService:  # pylint: disable=too-few-public-methods
         else:
             self.finnhub_client = None
 
-    def get_market_movers(self):
+    def get_market_movers(self):  # pylint: disable=too-many-return-statements
         """
         Retrieve market movers data (top gainers and losers).
 
@@ -101,138 +103,130 @@ class MarketDataService:  # pylint: disable=too-few-public-methods
             dict: Market movers data with gainers and losers lists
         """
         # Check if API key is available, if not use fallback data
-        if not settings.FINNHUB_API_KEY or not self.finnhub_client:
+        if not settings.ALPHA_VANTAGE_API_KEY:
             return self._get_fallback_market_movers()
 
         try:
-            # Get stock symbols for major companies
-            major_symbols = [
-                'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA',
-                'NVDA', 'META', 'NFLX', 'AMD', 'INTC'
-            ]
+            # Use Alpha Vantage TOP_GAINERS_LOSERS endpoint
+            url = "https://www.alphavantage.co/query"
+            params = {
+                "function": "TOP_GAINERS_LOSERS",
+                "apikey": settings.ALPHA_VANTAGE_API_KEY
+            }
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
 
-            market_data = []
-
-            for symbol in major_symbols:
-                quote = self._fetch_quote_for_symbol(symbol)
-                if quote is None:
-                    # Rate limit hit, stop fetching
-                    break
-
-                processed_data = self._process_quote_data(symbol, quote)
-                if processed_data:
-                    market_data.append(processed_data)
-
-            # If no data was collected, use fallback
-            if not market_data:
+            # Check for Alpha Vantage API errors and validate response
+            fallback_reason = self._validate_alpha_vantage_response(data)
+            if fallback_reason:
+                print(f"Alpha Vantage API issue: {fallback_reason}")
                 return self._get_fallback_market_movers()
 
-            return self._build_market_movers_response(market_data)
+            # Transform Alpha Vantage response format
+            gainers = self._parse_market_movers_items(data.get('top_gainers', [])[:5])
+            losers = self._parse_market_movers_items(data.get('top_losers', [])[:5])
+
+            if not gainers and not losers:
+                print("No valid gainers or losers after parsing, using fallback")
+                return self._get_fallback_market_movers()
+
+            result = {
+                "gainers": gainers,
+                "losers": losers
+            }
+            print(
+                f"Successfully fetched {len(gainers)} gainers "
+                f"and {len(losers)} losers from Alpha Vantage"
+            )
+            return result
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             # Catch all exceptions to handle various API errors (network, rate limits, etc.)
-            logger.error("Error fetching market data: %s", str(e))
+            print(f"Exception in get_market_movers: {str(e)}")
             # Return fallback data on error
             return self._get_fallback_market_movers()
 
-    def _fetch_quote_for_symbol(self, symbol):
+    def _validate_alpha_vantage_response(self, data):
         """
-        Fetch quote data for a single symbol with rate limit detection.
+        Validate Alpha Vantage API response.
 
         Args:
-            symbol (str): Stock symbol to fetch quote for
+            data: Response data from API
 
         Returns:
-            dict or None: Quote data if successful, None if rate limited
+            str: Error message if validation fails, None if valid
         """
-        try:
-            quote = self.finnhub_client.quote(symbol)
-            return quote
-        except Exception as api_error:  # pylint: disable=broad-exception-caught
-            # Check for rate limit errors - stop fetching if rate limited
-            if is_rate_limit_error(api_error):
-                logger.warning(
-                    'Rate limit hit while fetching market movers, '
-                    'using partial data'
-                )
-                return None
-            # Re-raise other exceptions to be caught by outer handler
-            raise api_error
+        if "Error Message" in data:
+            return data.get("Error Message", "Unknown error")
+        if "Note" in data:
+            return data.get("Note", "Rate limit or subscription issue")
+        if "Information" in data:
+            return data.get("Information", "Rate limit or subscription issue")
+        if not data:
+            return "Empty response"
+        if 'top_gainers' not in data:
+            return f"Missing 'top_gainers'. Keys: {list(data.keys())}"
+        if 'top_losers' not in data:
+            return f"Missing 'top_losers'. Keys: {list(data.keys())}"
+        top_gainers = data.get('top_gainers', [])
+        top_losers = data.get('top_losers', [])
+        if not top_gainers and not top_losers:
+            return "Empty top_gainers and top_losers arrays"
+        return None
 
-    def _process_quote_data(self, symbol, quote):
+    def _parse_market_movers_items(self, items):
         """
-        Process quote data into market data dictionary format.
+        Parse market movers items from Alpha Vantage response.
 
         Args:
-            symbol (str): Stock symbol
-            quote (dict): Quote data from API
+            items: List of items to parse
 
         Returns:
-            dict or None: Processed market data if valid, None otherwise
+            list: Parsed items
         """
-        # Check if quote data is valid
-        if not quote or quote.get('c') is None:
-            return None
+        parsed_items = []
+        for item in items:
+            try:
+                ticker = item.get('ticker', '')
+                if not ticker:
+                    continue
 
-        try:
-            # Skip company profile to reduce API calls - use symbol as name
-            # This reduces API calls by 50% for market movers
-            current_price = quote.get('c', 0)
-            previous_close = quote.get('pc', 0)
-            change = current_price - previous_close
+                # Parse change_percentage string (e.g., "448.3959%") to float
+                change_percentage_str = item.get('change_percentage', '0%')
+                change_percent = float(change_percentage_str.rstrip('%'))
 
-            if previous_close != 0:
-                change_percent = change / previous_close * 100
-            else:
-                change_percent = 0
-
-            return {
-                "symbol": symbol,
-                "name": symbol,  # Use symbol as name to avoid extra API call
-                "price": round(current_price, 2),
-                "change": round(change, 2),
-                "changePercent": round(change_percent, 2)
-            }
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            # Catch all exceptions to handle various processing errors
-            logger.warning("Could not process data for %s: %s", symbol, e)
-            return None
-
-    def _build_market_movers_response(self, market_data):
-        """
-        Sort and format market data into gainers and losers response.
-
-        Args:
-            market_data (list): List of market data dictionaries
-
-        Returns:
-            dict: Market movers data with gainers and losers lists
-        """
-        # Sort by change percentage
-        market_data.sort(key=lambda x: x['changePercent'], reverse=True)
-
-        # Get top 5 gainers and losers
-        gainers = market_data[:5]
-        losers = market_data[-5:][::-1]  # Reverse to get worst performers first
-
-        return {
-            "gainers": gainers,
-            "losers": losers
-        }
+                parsed_items.append({
+                    "symbol": ticker,
+                    "name": ticker,  # Use ticker as name
+                    "price": float(item.get('price', 0)),
+                    "change": float(item.get('change_amount', 0)),
+                    "changePercent": round(change_percent, 2)
+                })
+            except (ValueError, TypeError):
+                continue
+        return parsed_items
 
     def _get_fallback_market_movers(self):
         """Get fallback market movers data when API is unavailable."""
-        fallback_stocks = list(FALLBACK_STOCKS.values())
+        print("Using fallback market movers data")
+        # Convert dict to list with symbol included
+        fallback_stocks = [
+            {**stock_data, "symbol": symbol}
+            for symbol, stock_data in FALLBACK_STOCKS.items()
+        ]
         fallback_stocks.sort(key=lambda x: x['changePercent'], reverse=True)
 
         gainers = fallback_stocks[:5]
         losers = fallback_stocks[-5:][::-1]
 
-        return {
+        result = {
             "gainers": gainers,
             "losers": losers,
             "fallback": True
         }
+        print(f"Fallback data: {len(gainers)} gainers, {len(losers)} losers")
+        return result
 
 
 class NewsService:  # pylint: disable=too-few-public-methods
@@ -246,7 +240,7 @@ class NewsService:  # pylint: disable=too-few-public-methods
 
     def __init__(self):
         """Initialize the service with API clients if keys are available."""
-        if settings.NEWS_API_KEY:
+        if settings.NEWS_API_KEY and NewsApiClient:
             self.newsapi = NewsApiClient(api_key=settings.NEWS_API_KEY)
         else:
             self.newsapi = None
@@ -273,9 +267,8 @@ class NewsService:  # pylint: disable=too-few-public-methods
 
             return self._build_news_response(articles)
 
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             # Catch all exceptions to handle various API errors (network, rate limits, etc.)
-            logger.error("Error fetching news: %s", str(e))
             # Return fallback news on error
             return self._get_fallback_news_response()
 
@@ -321,23 +314,22 @@ class NewsService:  # pylint: disable=too-few-public-methods
 
         return self._fetch_news_with_fallback(primary_call, fallback_call, error_message)
 
-    def _fetch_news_with_fallback(self, primary_call, fallback_call, error_message):
+    def _fetch_news_with_fallback(self, primary_call, fallback_call, _error_message):
         """
         Execute primary API call with fallback on failure.
 
         Args:
             primary_call (callable): Primary API call to execute
             fallback_call (callable): Fallback API call if primary fails
-            error_message (str): Error message for logging
+            _error_message (str): Error message for logging (unused, kept for API consistency)
 
         Returns:
             dict: Articles response from API
         """
         try:
             return primary_call()
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             # Catch all exceptions to handle various API errors (network, rate limits, etc.)
-            logger.warning("%s: %s", error_message, e)
             return fallback_call()
 
     def _call_get_everything(self, q, **kwargs):
@@ -395,7 +387,6 @@ class NewsService:  # pylint: disable=too-few-public-methods
         """
         # Check if we got valid articles
         if not articles or 'articles' not in articles:
-            logger.warning("No articles found in NewsAPI response")
             return self._get_fallback_news_response()
 
         news_items = process_news_articles(articles)

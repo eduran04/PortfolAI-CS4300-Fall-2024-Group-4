@@ -21,12 +21,16 @@ from django.conf.urls.static import static
 from core.views import (
     landing,
     trading_dashboard,
+    markets_view,
+    learn_view,
     hello_api,
     stock_summary,
     get_stock_data,
     stock_search,
+    company_overview,
     get_market_movers,
     get_news,
+    get_market_news,
     portfolai_analysis,
     get_watchlist,
     add_to_watchlist,
@@ -40,6 +44,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", landing, name="landing"),
     path("dashboard/", trading_dashboard, name="dashboard"),
+    path("markets/", markets_view, name="markets"),
+    path("learn/", learn_view, name="learn"),
     # Authentication URLs (login, logout, signup)
     path("accounts/", include('core.urls')),
     # API endpoints
@@ -47,8 +53,10 @@ urlpatterns = [
     path("api/stock/", stock_summary, name="stock_summary"),
     path("api/stock-data/", get_stock_data, name="get_stock_data"),
     path("api/stock-search/", stock_search, name="stock_search"),
+    path("api/company-overview/", company_overview, name="company_overview"),
     path("api/market-movers/", get_market_movers, name="get_market_movers"),
     path("api/news/", get_news, name="get_news"),
+    path("api/market-news/", get_market_news, name="get_market_news"),
     path("api/portfolai-analysis/", portfolai_analysis, name="portfolai_analysis"),
     # Chatbot API endpoints
     path("api/chat/", chat_api, name="chat_api"),

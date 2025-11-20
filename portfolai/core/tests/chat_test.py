@@ -525,12 +525,12 @@ class ChatTests(TestCase):  # pylint: disable=too-many-public-methods
 
     def test_get_newsapi_context_exception(self):
         """Test _get_newsapi_context handles exceptions gracefully"""
-        mock_newsapi = type('obj', (object,), {
-            'get_everything': lambda **kwargs: (_ for _ in ()).throw(Exception("API Error"))
-        })
-        with patch('core.views.chat.newsapi', mock_newsapi):
-            result = _get_newsapi_context('AAPL')
-            self.assertEqual(result, "")
+        with patch('core.views.chat.newsapi', {'api_token': 'test_token'}):
+            # Patch requests.get since it's imported inside the function
+            with patch('requests.get') as mock_get:
+                mock_get.side_effect = Exception("API Error")
+                result = _get_newsapi_context('AAPL')
+                self.assertEqual(result, "")
 
     def test_get_web_search_context_empty_symbols(self):
         """Test _get_web_search_context returns empty for empty symbols list"""

@@ -6,10 +6,10 @@ Chatbot endpoint for AI-powered user interactions with session-based memory,
 user context awareness, and real-time web search capabilities.
 """
 
-from datetime import datetime, timedelta
 import json
 import logging
 import re
+import requests
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -244,7 +244,8 @@ def _format_news_articles(articles, symbol):
     recent_news = []
     for article in articles[:3]:
         title = article.get('title')
-        published_at = article.get('publishedAt')
+        # Handle both old and new format
+        published_at = article.get('publishedAt') or article.get('published_at')
         if title and published_at:
             recent_news.append(f"- {title} ({published_at[:10]})")
 
@@ -255,21 +256,40 @@ def _format_news_articles(articles, symbol):
 
 
 def _get_newsapi_context(symbol):
-    """Get NewsAPI context for a symbol."""
-    if not newsapi:
+    """Get The News API context for a symbol."""
+    if not newsapi or not newsapi.get('api_token'):
         return ""
 
     try:
-        news_articles = newsapi.get_everything(
-            q=f"{symbol} stock",
-            from_param=(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d'),
-            language='en',
-            sort_by='publishedAt',
-            page_size=3
-        )
+        url = 'https://api.thenewsapi.com/v1/news/all'
+        params = {
+            'api_token': newsapi['api_token'],
+            'search': f"{symbol} stock",
+            'language': 'en',
+            'categories': 'business',
+            'limit': 3,
+            'sort': 'published_at'
+        }
 
-        articles = news_articles.get('articles') if news_articles else None
-        return _format_news_articles(articles, symbol)
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        if 'error' in data or not data.get('data'):
+            return ""
+
+        articles = data.get('data', [])[:3]
+
+        # Transform to expected format
+        formatted_articles = []
+        for article in articles:
+            if article.get('title') and article.get('published_at'):
+                formatted_articles.append({
+                    'title': article.get('title', ''),
+                    'publishedAt': article.get('published_at', '')
+                })
+
+        return _format_news_articles(formatted_articles, symbol)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.warning("Could not fetch news for %s: %s", symbol, e)

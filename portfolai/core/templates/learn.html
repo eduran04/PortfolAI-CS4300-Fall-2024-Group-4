@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}PortfolAI - Learn{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'home/css/style.css' %}">
+{% endblock %}
+
+{% block content %}
+    <nav class="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-[10000] transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{% url 'landing' %}" class="flex-shrink-0 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                        PortfolAI
+                    </a>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="{% url 'dashboard' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                        <a href="{% url 'markets' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Markets</a>
+                        <a href="{% url 'learn' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Learn</a>
+
+                        {% if user.is_authenticated %}
+                            <form method="POST" action="{% url 'logout' %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Logout</button>
+                            </form>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white px-3 py-2 rounded-md text-sm font-medium">Login</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5" aria-label="Toggle dark mode">
+                        <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                        <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414 1.414l.707.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                    </button>
+                    <div class="-mr-2 flex md:hidden">
+                        <button type="button" id="mobile-menu-button" class="bg-gray-100 dark:bg-gray-700 inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-300 hover:text-gray-500 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-700 focus:ring-indigo-500" aria-controls="mobile-menu" aria-expanded="false" aria-label="Toggle mobile menu">
+                            <span class="sr-only">Open main menu</span>
+                            <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                            <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="{% url 'dashboard' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Home</a>
+                <a href="{% url 'markets' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Markets</a>
+                <a href="{% url 'learn' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Learn</a>
+                {% if user.is_authenticated %}
+                    <form method="POST" action="{% url 'logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full text-left text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 block px-3 py-2 rounded-md text-base font-medium">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white dark:bg-gray-900 min-h-screen">
+        <!-- ===================== LEARN SECTION ===================== -->
+        <section id="learn" class="mb-8 scroll-mt-20">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg transition-colors duration-300">
+            <h2 class="text-2xl font-bold mb-2 text-gray-800 dark:text-gray-200">Learning Resources</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+            Explore beginner-friendly lessons to help you understand the stock market and build a confident investing foundation.
+            </p>
+
+            <!-- Category Carousel (Row 1) -->
+            <div class="flex items-center gap-3 mb-6 learn-cat-track-container">
+            <button id="learnCatPrev" class="learn-cat-arrow" aria-label="Previous topic">
+                &#10094;
+            </button>
+
+            <div id="learnCatTrack" class="learn-cat-track">
+                <!-- Topic cards: gradient category cards -->
+                <div class="learn-topic-card" data-topic="Stock Market Basics">
+                <!--<div class="learn-topic-icon">📘</div>-->
+                <h3 class="learn-topic-title">Stock Market Basics</h3>
+                <p class="learn-topic-desc">Core concepts and why stocks exist.</p>
+                </div>
+
+                <div class="learn-topic-card" data-topic="Reading Stock Charts">
+                <!--<div class="learn-topic-icon">📊</div>-->
+                <h3 class="learn-topic-title">Reading Stock Charts</h3>
+                <p class="learn-topic-desc">Learn candlesticks, trends, and volume.</p>
+                </div>
+
+                <div class="learn-topic-card" data-topic="Company Fundamentals">
+                <!--<div class="learn-topic-icon">🏢</div>-->
+                <h3 class="learn-topic-title">Company Fundamentals</h3>
+                <p class="learn-topic-desc">Revenue, profit, P/E, and more.</p>
+                </div>
+
+                <div class="learn-topic-card" data-topic="How to Analyze a Stock">
+                <!--<div class="learn-topic-icon">🔍</div>-->
+                <h3 class="learn-topic-title">How to Analyze a Stock</h3>
+                <p class="learn-topic-desc">A simple analysis framework.</p>
+                </div>
+
+                <div class="learn-topic-card" data-topic="Building a Portfolio">
+                <!--<div class="learn-topic-icon">💼</div>-->
+                <h3 class="learn-topic-title">Building a Portfolio</h3>
+                <p class="learn-topic-desc">Diversification and allocation basics.</p>
+                </div>
+
+                <div class="learn-topic-card" data-topic="Beginner Mistakes">
+                <!--<div class="learn-topic-icon">⚠️</div>-->
+                <h3 class="learn-topic-title">Beginner Mistakes</h3>
+                <p class="learn-topic-desc">Avoid common investing pitfalls.</p>
+                </div>
+
+                <div class="learn-topic-card" data-topic="Understanding Market News">
+                <!--<div class="learn-topic-icon">📰</div>-->
+                <h3 class="learn-topic-title">Understanding Market News</h3>
+                <p class="learn-topic-desc">What headlines really mean.</p>
+                </div>
+
+                <div class="learn-topic-card" data-topic="Investing Styles">
+                <!--<div class="learn-topic-icon">🎯</div>-->
+                <h3 class="learn-topic-title">Investing Styles</h3>
+                <p class="learn-topic-desc">Value, growth, dividend and more.</p>
+                </div>
+
+                <div class="learn-topic-card" data-topic="Tools & Resources">
+                <!--<div class="learn-topic-icon">🛠️</div>-->
+                <h3 class="learn-topic-title">Tools & Resources</h3>
+                <p class="learn-topic-desc">Helpful platforms and glossaries.</p>
+                </div>
+            </div>
+
+            <button id="learnCatNext" class="learn-cat-arrow" aria-label="Next topic">
+                &#10095;
+            </button>
+            </div>
+
+            <!-- Subtopic Pills (Row 2) -->
+            <div class="mb-2 flex items-center justify-between gap-2">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                Subtopics for: <span id="learnActiveTopicLabel" class="text-indigo-600 dark:text-indigo-400">Stock Market Basics</span>
+            </h3>
+            </div>
+            <div id="learnPillRow" class="learn-pill-row">
+            <!-- Pills will be injected by learn.js -->
+            </div>
+        </div>
+        </section>
+
+        <!-- ===================== LEARN OVERLAY ===================== -->
+        <div id="learnOverlay" class="learn-overlay hidden">
+        <div class="learn-overlay-inner">
+            <button id="learnClose" class="learn-close-btn" aria-label="Close learning overlay">✕</button>
+
+            <h2 id="learnTitle" class="learn-title"></h2>
+            <h3 id="learnSubtopic" class="learn-subtopic"></h3>
+
+            <div id="learnSlide" class="learn-slide"></div>
+
+            <div class="learn-arrows">
+            <button id="learnPrev" class="learn-arrow" aria-label="Previous card">&larr;</button>
+            <span id="learnCounter" class="learn-counter">1 / 1</span>
+            <button id="learnNext" class="learn-arrow" aria-label="Next card">&rarr;</button>
+            </div>
+
+            <div class="learn-ai-section">
+            <button id="learnAskAiBtn" class="learn-ai-btn">
+                Ask AI to explain this better →
+            </button>
+            <div id="learnAiStatus" class="learn-ai-status"></div>
+            <div id="learnAiResponse" class="learn-ai-response"></div>
+            </div>
+        </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 dark:bg-gray-700 text-white py-8 text-center transition-colors duration-300">
+        <p>© <span id="currentYear"></span> PortfolAI. All rights reserved.</p>
+        <p class="text-sm text-gray-400">Data provided for informational purposes only.</p>
+    </footer>
+{% endblock %}
+
+{% block extra_scripts %}
+    <!-- Core utilities and API -->
+    <script src="{% static 'home/js/utils.js' %}"></script>
+    <script src="{% static 'home/js/api.js' %}"></script>
+    
+    <!-- Feature modules -->
+    <script src="{% static 'home/js/ui.js' %}"></script>
+    <script src="{% static 'home/js/learn.js' %}"></script>
+    
+    <!-- Application initialization -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize UI components (theme, mobile menu)
+            if (typeof initializeUI === 'function') {
+                // Only initialize theme and mobile menu, not ticker/market movers
+                const themeToggleBtn = document.getElementById('theme-toggle');
+                const mobileMenuButton = document.getElementById('mobile-menu-button');
+                const mobileMenu = document.getElementById('mobile-menu');
+                
+                // Initialize theme
+                if (themeToggleBtn) {
+                    const currentTheme = localStorage.getItem('theme') || 'light';
+                    document.documentElement.classList.toggle('dark', currentTheme === 'dark');
+                    // Theme toggle functionality is in ui.js, but we can call it if available
+                }
+                
+                // Initialize mobile menu
+                if (mobileMenuButton && mobileMenu) {
+                    mobileMenuButton.addEventListener('click', () => {
+                        mobileMenu.classList.toggle('hidden');
+                    });
+                }
+                
+                // Set current year
+                const yearEl = document.getElementById('currentYear');
+                if (yearEl) {
+                    yearEl.textContent = new Date().getFullYear();
+                }
+            }
+        });
+    </script>
+{% endblock %}
+

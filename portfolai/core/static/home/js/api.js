@@ -9,7 +9,8 @@ const CACHE_DURATIONS = {
   stockData: 60000,      // 1 minute for stock data
   marketMovers: 120000,  // 2 minutes for market movers
   news: 300000,          // 5 minutes for news
-  analysis: 600000       // 10 minutes for AI analysis
+  analysis: 600000,      // 10 minutes for AI analysis
+  companyOverview: 300000 // 5 minutes for company overview
 };
 
 /**
@@ -48,6 +49,8 @@ function getCachedData(key, duration = null) {
         cacheDuration = CACHE_DURATIONS.marketMovers;
       } else if (key.startsWith('news_')) {
         cacheDuration = CACHE_DURATIONS.news;
+      } else if (key.startsWith('companyOverview_')) {
+        cacheDuration = CACHE_DURATIONS.companyOverview;
       } else {
         cacheDuration = 60000; // Default 1 minute
       }
@@ -274,10 +277,18 @@ async function fetchNews(symbol = null, forceRefresh = false) {
   }
   
   try {
-    // Add force_refresh parameter when forcing refresh
-    const url = symbol 
-      ? `/api/news/?symbol=${symbol}${forceRefresh ? '&force_refresh=true' : ''}` 
-      : `/api/news/${forceRefresh ? '?force_refresh=true' : ''}`;
+    // Build URL with symbol and force_refresh parameters
+    const params = new URLSearchParams();
+    if (symbol) {
+      params.append('symbol', symbol);
+    }
+    if (forceRefresh) {
+      params.append('force_refresh', 'true');
+    }
+    const queryString = params.toString();
+    const url = `/api/news/${queryString ? '?' + queryString : ''}`;
+    
+    console.log(`Fetching news from: ${url}`);
     const response = await fetch(url, {
       method: 'GET',
       headers: {

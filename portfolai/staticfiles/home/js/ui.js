@@ -133,12 +133,25 @@ async function populateTicker(forceRefresh = false) {
     console.log('Market movers data received:', data);
 
     // Combine gainers and losers for ticker
-    tickerData = [...data.gainers, ...data.losers];
+    const gainers = data.gainers || [];
+    const losers = data.losers || [];
+    tickerData = [...gainers, ...losers].filter(stock => stock && stock.symbol); // Filter out invalid entries
+    
+    if (tickerData.length === 0) {
+      tickerMove.innerHTML = '<div class="ticker-item text-gray-400">No market data available</div>';
+      return;
+    }
     
     let tickerHTML = '';
     // Display each stock twice for continuous scrolling
     for (let i = 0; i < 2; i++) {
       tickerData.forEach((stock) => {
+        // Defensive checks for all required fields
+        if (!stock || !stock.symbol || stock.price === undefined || stock.change === undefined || stock.changePercent === undefined) {
+          console.warn('Invalid stock data in ticker:', stock);
+          return;
+        }
+        
         const changeClass = stock.change >= 0
           ? 'text-green-400'
           : 'text-red-400';
@@ -147,8 +160,8 @@ async function populateTicker(forceRefresh = false) {
         tickerHTML += `
         <div class="ticker-item inline-flex items-center">
             <span class="font-semibold">${stock.symbol}</span>
-            <span class="ml-2 text-sm">$${stock.price.toFixed(2)}</span>
-            <span class="ml-1 text-xs ${changeClass}">${changeSign}${stock.change.toFixed(2)} (${changeSign}${stock.changePercent.toFixed(2)}%)</span>
+            <span class="ml-2 text-sm">$${Number(stock.price).toFixed(2)}</span>
+            <span class="ml-1 text-xs ${changeClass}">${changeSign}${Number(stock.change).toFixed(2)} (${changeSign}${Number(stock.changePercent).toFixed(2)}%)</span>
         </div>
     `;
       });
@@ -157,7 +170,7 @@ async function populateTicker(forceRefresh = false) {
 
   } catch (error) {
     console.error('Error fetching ticker data:', error);
-    tickerMove.innerHTML = '<div class="ticker-item text-gray-400">Loading market data...</div>';
+    tickerMove.innerHTML = '<div class="ticker-item text-gray-400">Error loading market data</div>';
   }
 }
 
@@ -181,27 +194,28 @@ async function populateMarketMovers() {
     const { gainers, losers } = data;
 
     // Display gainers
-    topGainersList.innerHTML = gainers.length
-      ? gainers
+    const validGainers = gainers.filter(stock => stock && stock.symbol && stock.price !== undefined && stock.changePercent !== undefined);
+    topGainersList.innerHTML = validGainers.length
+      ? validGainers
           .map(
                     (stock) => `
                   <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
-                    stock.symbol
+                    stock.symbol || ''
                   }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
                   <div>
                   <span class="font-semibold text-gray-800 dark:text-gray-200">${
-                            stock.symbol
+                            stock.symbol || 'N/A'
                           }</span>
-                          <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
+                          <span class="text-xs text-gray-500 dark:text-gray-400 block">${(stock.name || stock.symbol || '').substring(
                             0,
                             20
-                          )}${stock.name.length > 20 ? '...' : ''}</span>
+                          )}${(stock.name || stock.symbol || '').length > 20 ? '...' : ''}</span>
                           </div>
                           <div class="text-right">
-                          <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
+                          <span class="font-medium text-gray-800 dark:text-gray-200">$${Number(stock.price || 0).toFixed(
                             2
                           )}</span>
-                          <span class="block text-sm text-green-500 dark:text-green-400">+${stock.changePercent.toFixed(2)}%</span>
+                          <span class="block text-sm text-green-500 dark:text-green-400">+${Number(stock.changePercent || 0).toFixed(2)}%</span>
                           </div>
                   </li>
               `
@@ -210,27 +224,28 @@ async function populateMarketMovers() {
       : '<li class="text-sm text-gray-500 dark:text-gray-400">No significant gainers today.</li>';
 
     // Display losers
-    topLosersList.innerHTML = losers.length
-      ? losers
+    const validLosers = losers.filter(stock => stock && stock.symbol && stock.price !== undefined && stock.changePercent !== undefined);
+    topLosersList.innerHTML = validLosers.length
+      ? validLosers
           .map(
             (stock) => `
             <li class="flex justify-between items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors duration-150 cursor-pointer" onclick="document.getElementById('stock-search').value='${
-              stock.symbol
+              stock.symbol || ''
             }'; performSearch(); document.getElementById('stock-search').scrollIntoView({ behavior: 'smooth' });">
                 <div>
                     <span class="font-semibold text-gray-800 dark:text-gray-200">${
-                      stock.symbol
+                      stock.symbol || 'N/A'
                     }</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400 block">${stock.name.substring(
+                    <span class="text-xs text-gray-500 dark:text-gray-400 block">${(stock.name || stock.symbol || '').substring(
                             0,
                             20
-                          )}${stock.name.length > 20 ? '...' : ''}</span>
+                          )}${(stock.name || stock.symbol || '').length > 20 ? '...' : ''}</span>
                           </div>
                           <div class="text-right">
-                              <span class="font-medium text-gray-800 dark:text-gray-200">$${stock.price.toFixed(
+                              <span class="font-medium text-gray-800 dark:text-gray-200">$${Number(stock.price || 0).toFixed(
                                 2
                               )}</span>
-                              <span class="block text-sm text-red-500 dark:text-red-400">${stock.changePercent.toFixed(2)}%</span>
+                              <span class="block text-sm text-red-500 dark:text-red-400">${Number(stock.changePercent || 0).toFixed(2)}%</span>
                           </div>
                       </li>
               `
@@ -247,7 +262,7 @@ async function populateMarketMovers() {
 
 /**
  * Populate news feed with article(s)
- * @param {string} symbol - Optional stock symbol to filter news
+ * @param {string} symbol - Optional stock symbol to filter news (if provided, forces refresh)
  */
 async function populateNewsFeed(symbol = null) {
   console.log('populateNewsFeed called with symbol:', symbol);
@@ -258,19 +273,59 @@ async function populateNewsFeed(symbol = null) {
   }
 
   const searchInput = document.getElementById('stock-search');
-  const currentSymbol = symbol || (searchInput ? searchInput.value.toUpperCase().trim() : '');
+  // If symbol is explicitly passed, use it; otherwise check search input
+  const currentSymbol = (symbol && symbol.trim()) ? symbol.toUpperCase().trim() : (searchInput ? searchInput.value.toUpperCase().trim() : '');
 
-  const shouldForceRefresh = symbol !== null && symbol !== undefined && symbol !== '';
+  // Force refresh if symbol is explicitly provided (from search) or if we have a current symbol from search input
+  const shouldForceRefresh = (symbol !== null && symbol !== undefined && symbol !== '');
+
+  // Clear all news caches when switching symbols to prevent stale data
+  if (shouldForceRefresh && currentSymbol) {
+    // Clear cache for the new symbol and any old symbols
+    if (typeof clearCachedData === 'function') {
+      clearCachedData(`news_${currentSymbol}`);
+      clearCachedData('news_general');
+      // Also try to clear any other symbol caches that might exist
+      try {
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith('news_') && key !== `news_${currentSymbol}`) {
+            clearCachedData(key);
+          }
+        });
+      } catch (e) {
+        console.warn('Could not clear all news caches:', e);
+      }
+    }
+  }
+
+  // Show loading state when fetching news
+  if (currentSymbol) {
+    newsFeedDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Loading news for ' + currentSymbol + '...</p>';
+  } else {
+    newsFeedDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Loading news...</p>';
+  }
 
   try {
-    console.log('Fetching news for symbol:', currentSymbol, 'forceRefresh:', shouldForceRefresh);
+    console.log('Fetching news for symbol:', currentSymbol || 'general', 'forceRefresh:', shouldForceRefresh);
 
     const data = await fetchNews(currentSymbol || null, shouldForceRefresh);
     console.log('News data received:', data);
+    console.log('Number of articles:', data.articles ? data.articles.length : 0);
+    console.log('Current symbol:', currentSymbol);
 
     const articles = data.articles || [];
+    
+    // Verify we have articles for the correct symbol
+    if (currentSymbol && articles.length > 0) {
+      console.log('First article source:', articles[0].source);
+      console.log('First article title:', articles[0].title);
+    }
 
     const displayArticles = currentSymbol ? articles.slice(0, 3) : articles;
+    
+    // Clear the news feed div completely before rendering new content
+    newsFeedDiv.innerHTML = '';
 
     let fallbackNotice = '';
     if (data.fallback) {
@@ -294,34 +349,112 @@ async function populateNewsFeed(symbol = null) {
       }
     }
 
-    newsFeedDiv.innerHTML =
-      fallbackNotice +
+    // Build the news feed HTML
+    const newsHTML = fallbackNotice +
       (displayArticles.length
         ? displayArticles
             .map(
-              (news) => `
-            <div class="news-card bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow transition-all duration-200 cursor-pointer">
-              <a href="${news.url}" target="_blank" rel="noopener noreferrer" class="block hover:text-indigo-600 dark:hover:text-indigo-400">
-                <h4 class="text-md font-semibold text-gray-800 dark:text-gray-100 mb-1">${news.title}</h4>
-                ${
-                  news.description
-                    ? `<p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                         ${news.description.substring(0, 100)}${
-                        news.description.length > 100 ? '...' : ''
-                      }
-                       </p>`
-                    : ''
+              (news) => {
+                // Handle both old and new format
+                const source = news.source || 'Unknown';
+                // Backend already provides formatted time, but fallback to formatting if needed
+                let time = news.time;
+                if (!time && (news.publishedAt || news.published_at)) {
+                  const publishedAt = news.publishedAt || news.published_at;
+                  try {
+                    const date = new Date(publishedAt);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / 60000);
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffDays = Math.floor(diffMs / 86400000);
+                    
+                    if (diffMins < 1) {
+                      time = 'Just now';
+                    } else if (diffMins < 60) {
+                      time = `${diffMins}m ago`;
+                    } else if (diffHours < 24) {
+                      time = `${diffHours}h ago`;
+                    } else if (diffDays < 7) {
+                      time = `${diffDays}d ago`;
+                    } else {
+                      time = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                    }
+                  } catch (e) {
+                    time = 'Recently';
+                  }
                 }
-              </a>
-              <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
-                <span>${news.source}</span>
-                <span>${news.time}</span>
+                const description = news.description || news.snippet || '';
+                const truncatedDescription = description.length > 150 
+                  ? description.substring(0, 150) + '...' 
+                  : description;
+                
+                // Handle image URL - check multiple possible field names and ensure it's a valid URL
+                let imageUrl = news.image || news.image_url || '';
+                // If image URL is empty or invalid, use placeholder
+                if (!imageUrl || imageUrl.trim() === '' || imageUrl === '#' || !imageUrl.startsWith('http')) {
+                  imageUrl = 'https://via.placeholder.com/400x200?text=News';
+                }
+                
+                return `
+            <article class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
+              <div class="flex flex-col md:flex-row gap-4">
+                <div class="md:w-1/3">
+                  <img 
+                    src="${imageUrl}" 
+                    alt="${news.title || 'News image'}"
+                    class="w-full h-48 object-cover rounded-md"
+                    onerror="this.onerror=null; this.src='https://via.placeholder.com/400x200?text=News'"
+                    loading="lazy"
+                  />
+                </div>
+                <div class="md:w-2/3 flex flex-col justify-between">
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      <a 
+                        href="${news.url || '#'}" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        ${news.title || 'No title'}
+                      </a>
+                    </h3>
+                    ${
+                      truncatedDescription
+                        ? `<p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                             ${truncatedDescription}
+                           </p>`
+                        : ''
+                    }
+                  </div>
+                  <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium">${source}</span>
+                      <span>•</span>
+                      <span>${time}</span>
+                    </div>
+                    <a 
+                      href="${news.url || '#'}" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      class="text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                      Read more →
+                    </a>
+                  </div>
+                </div>
               </div>
-            </div>
-          `
+            </article>
+          `;
+              }
             )
             .join('')
         : '<p class="text-sm text-gray-500 dark:text-gray-400">No news available at the moment.</p>');
+    
+    // Update the DOM with new content
+    newsFeedDiv.innerHTML = newsHTML;
+    console.log('News feed updated with', displayArticles.length, 'articles for', currentSymbol || 'general news');
   } catch (error) {
     console.error('Error fetching news:', error);
     newsFeedDiv.innerHTML =

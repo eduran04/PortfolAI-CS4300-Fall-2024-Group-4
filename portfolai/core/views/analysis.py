@@ -7,6 +7,7 @@ Advanced AI analysis endpoints with OpenAI integration.
 
 from datetime import datetime, timedelta
 import logging
+import requests
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -159,25 +160,34 @@ def _fetch_news_context(symbol):
     Returns:
         str: Formatted news context string or empty string if unavailable
     """
-    if not newsapi:
+    if not newsapi or not newsapi.get('api_token'):
         return ""
 
     try:
-        news_articles = newsapi.get_everything(
-            q=f"{symbol} stock",
-            from_param=(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d'),
-            language='en',
-            sort_by='publishedAt',
-            page_size=5
-        )
-        if not news_articles or not news_articles.get('articles'):
+        url = 'https://api.thenewsapi.com/v1/news/all'
+        params = {
+            'api_token': newsapi['api_token'],
+            'search': f"{symbol} stock",
+            'language': 'en',
+            'categories': 'business',
+            'limit': 5,
+            'sort': 'published_at'
+        }
+
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        if 'error' in data or not data.get('data'):
             return ""
 
+        articles = data.get('data', [])[:3]
+
         recent_news = []
-        for article in news_articles['articles'][:3]:
-            if article.get('title') and article.get('publishedAt'):
+        for article in articles:
+            if article.get('title') and article.get('published_at'):
                 title = article['title']
-                date = article['publishedAt'][:10]
+                date = article['published_at'][:10]
                 recent_news.append(f"- {title} ({date})")
 
         if recent_news:
@@ -186,7 +196,7 @@ def _fetch_news_context(symbol):
                 + "\n".join(recent_news)
             )
     except Exception as e:  # pylint: disable=broad-exception-caught
-        print(f"Warning: Could not fetch news for analysis: {e}")
+        logger.warning("Could not fetch news for analysis: %s", e)
 
     return ""
 

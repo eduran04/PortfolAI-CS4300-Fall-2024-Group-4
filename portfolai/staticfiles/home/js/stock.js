@@ -33,7 +33,7 @@ let selectedAutocompleteIndex = -1;
 
 /** @type {string[]} List of common NYSE-listed stock symbols */
 const NYSE_SYMBOLS = [
-  'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS',           // Financials
+  'JPM', 'BAC', 'WFC', 'C', 'GS', 'MS', 'COF',         // Financials
   'XOM', 'CVX',                                    // Energy
   'KO', 'JNJ', 'PG', 'WMT', 'TGT', 'HD', 'LOW',   // Consumer
   'NKE', 'SBUX', 'MCD', 'DIS',                    // Retail/Food
@@ -148,14 +148,21 @@ function displayAutocompleteSuggestions(results) {
     item.setAttribute('data-index', index);
     item.setAttribute('data-symbol', stock.symbol);
     
-    // Format: Symbol (bold) - Description (gray)
+    // Format: Logo (if available) - Symbol (bold) - Description (gray) - Type
+    const logoHtml = stock.logo 
+      ? `<img src="${stock.logo}" alt="${stock.description || stock.symbol} logo" class="w-8 h-8 object-contain rounded mr-3 flex-shrink-0" onerror="this.style.display='none'">`
+      : '';
+    
     item.innerHTML = `
       <div class="flex items-center justify-between">
-        <div>
-          <span class="font-semibold text-gray-900 dark:text-gray-100">${stock.displaySymbol || stock.symbol}</span>
-          <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">${stock.description || ''}</span>
+        <div class="flex items-center flex-1 min-w-0">
+          ${logoHtml}
+          <div class="min-w-0 flex-1">
+            <span class="font-semibold text-gray-900 dark:text-gray-100">${stock.displaySymbol || stock.symbol}</span>
+            <span class="text-sm text-gray-600 dark:text-gray-400 ml-2">${stock.description || ''}</span>
+          </div>
         </div>
-        <span class="text-xs text-gray-500 dark:text-gray-500">${stock.type || ''}</span>
+        <span class="text-xs text-gray-500 dark:text-gray-500 ml-2 flex-shrink-0">${stock.type || ''}</span>
       </div>
     `;
     
@@ -403,10 +410,24 @@ async function performSearch() {
     // Update news feed with stock-specific news (limit to 3 articles)
     // Force refresh to get latest news for the searched stock
     if (typeof populateNewsFeed === 'function') {
-      console.log('Updating news feed for symbol:', searchTerm);
-      populateNewsFeed(searchTerm);
+      console.log('Updating news feed for symbol:', searchTerm, '(force refresh)');
+      // Explicitly pass the symbol to force refresh and update news
+      await populateNewsFeed(searchTerm);
     } else {
       console.warn('populateNewsFeed function not available');
+    }
+    
+    // Fetch and display company overview
+    try {
+      const overviewData = await fetchCompanyOverview(searchTerm);
+      displayCompanyOverview(overviewData, searchTerm);
+    } catch (error) {
+      console.error('Error fetching company overview:', error);
+      // Hide overview section on error
+      const overviewDiv = document.getElementById('company-overview');
+      const viewOverviewBtn = document.getElementById('viewOverviewBtn');
+      if (overviewDiv) overviewDiv.classList.add('hidden');
+      if (viewOverviewBtn) viewOverviewBtn.classList.add('hidden');
     }
     
     // Safety timeout to ensure loader is hidden even if widget fails
@@ -475,6 +496,7 @@ function displayStockDetails(stock, symbol = 'N/A') {
   }
   
   if (stock) {
+    // Display stock information (logo removed from card section)
     companyNameHeader.textContent = `${stock.name} (${symbol})`;
     
     // Determine color class based on price change direction
@@ -522,6 +544,277 @@ function displayStockDetails(stock, symbol = 'N/A') {
     companyNameHeader.textContent = 'Company Overview';
     stockDetailsDiv.innerHTML = `<p class="text-sm text-gray-600 dark:text-gray-400">Search for a stock to see details.</p>`;
   }
+  
+  // Hide company overview section when stock details are cleared
+  const overviewDiv = document.getElementById('company-overview');
+  const viewOverviewBtn = document.getElementById('viewOverviewBtn');
+  if (overviewDiv) overviewDiv.classList.add('hidden');
+  if (viewOverviewBtn) viewOverviewBtn.classList.add('hidden');
+}
+
+/**
+ * Format large numbers to billions/trillions
+ * @param {number|null} value - Number to format
+ * @returns {string} Formatted string
+ */
+function formatLargeNumber(value) {
+  if (value === null || value === undefined || isNaN(value)) return 'N/A';
+  if (value >= 1_000_000_000_000) {
+    return `$${(value / 1_000_000_000_000).toFixed(2)}T`;
+  } else if (value >= 1_000_000_000) {
+    return `$${(value / 1_000_000_000).toFixed(2)}B`;
+  } else if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(2)}M`;
+  }
+  return `$${value.toFixed(2)}`;
+}
+
+/**
+ * Format percentage values
+ * @param {number|null} value - Percentage value (0-1 or 0-100)
+ * @param {boolean} isDecimal - Whether value is already a decimal (0-1)
+ * @returns {string} Formatted percentage string
+ */
+function formatPercentage(value, isDecimal = false) {
+  if (value === null || value === undefined || isNaN(value)) return 'N/A';
+  const percent = isDecimal ? value * 100 : value;
+  return `${percent.toFixed(2)}%`;
+}
+
+/**
+ * Format number with 2 decimal places
+ * @param {number|null} value - Number to format
+ * @returns {string} Formatted string
+ */
+function formatNumber(value) {
+  if (value === null || value === undefined || isNaN(value)) return 'N/A';
+  return value.toFixed(2);
+}
+
+/**
+ * Display company overview in the UI
+ * @param {Object} overview - Company overview data object
+ * @param {string} symbol - Stock symbol
+ */
+function displayCompanyOverview(overview, symbol) {
+  const overviewDiv = document.getElementById('company-overview');
+  const viewOverviewBtn = document.getElementById('viewOverviewBtn');
+  
+  if (!overviewDiv) {
+    console.warn('Company overview div not found');
+    return;
+  }
+  
+  if (!overview || overview.error) {
+    overviewDiv.innerHTML = '<p class="text-sm text-red-500 dark:text-red-400">Unable to load company overview.</p>';
+    if (viewOverviewBtn) viewOverviewBtn.classList.add('hidden');
+    return;
+  }
+  
+  // Build HTML for company overview
+  let html = '';
+  
+  // Company Description (expandable)
+  if (overview.description) {
+    const shortDesc = overview.description.substring(0, 200);
+    const isLong = overview.description.length > 200;
+    html += `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">About</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          <span id="desc-short">${shortDesc}${isLong ? '...' : ''}</span>
+          ${isLong ? `<span id="desc-full" class="hidden">${overview.description}</span>` : ''}
+        </p>
+        ${isLong ? `<button onclick="this.previousElementSibling.querySelector('#desc-short').classList.toggle('hidden'); this.previousElementSibling.querySelector('#desc-full').classList.toggle('hidden'); this.textContent = this.textContent === 'Show More' ? 'Show Less' : 'Show More';" class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm mt-1">Show More</button>` : ''}
+      </div>
+    `;
+  }
+  
+  // Key Information
+  html += `
+    <div class="mb-4">
+      <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Key Information</h3>
+      <div class="grid grid-cols-2 gap-2 text-sm">
+        ${overview.sector ? `<p><strong>Sector:</strong> ${overview.sector}</p>` : ''}
+        ${overview.industry ? `<p><strong>Industry:</strong> ${overview.industry}</p>` : ''}
+        ${overview.exchange ? `<p><strong>Exchange:</strong> ${overview.exchange}</p>` : ''}
+        ${overview.country ? `<p><strong>Country:</strong> ${overview.country}</p>` : ''}
+        ${overview.currency ? `<p><strong>Currency:</strong> ${overview.currency}</p>` : ''}
+        ${overview.fiscalYearEnd ? `<p><strong>Fiscal Year End:</strong> ${overview.fiscalYearEnd}</p>` : ''}
+      </div>
+    </div>
+  `;
+  
+  // Financial Metrics
+  if (overview.financials) {
+    html += `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Financial Metrics</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          ${overview.financials.marketCap !== null ? `<p><strong>Market Cap:</strong> ${formatLargeNumber(overview.financials.marketCap)}</p>` : ''}
+          ${overview.financials.ebitda !== null ? `<p><strong>EBITDA:</strong> ${formatLargeNumber(overview.financials.ebitda)}</p>` : ''}
+          ${overview.financials.revenueTTM !== null ? `<p><strong>Revenue (TTM):</strong> ${formatLargeNumber(overview.financials.revenueTTM)}</p>` : ''}
+          ${overview.financials.grossProfitTTM !== null ? `<p><strong>Gross Profit (TTM):</strong> ${formatLargeNumber(overview.financials.grossProfitTTM)}</p>` : ''}
+          ${overview.financials.bookValue !== null ? `<p><strong>Book Value:</strong> $${formatNumber(overview.financials.bookValue)}</p>` : ''}
+          ${overview.financials.eps !== null ? `<p><strong>EPS:</strong> $${formatNumber(overview.financials.eps)}</p>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Valuation Ratios
+  if (overview.valuation) {
+    html += `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Valuation</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          ${overview.valuation.peRatio !== null ? `<p><strong>P/E Ratio:</strong> ${formatNumber(overview.valuation.peRatio)}</p>` : ''}
+          ${overview.valuation.pegRatio !== null ? `<p><strong>PEG Ratio:</strong> ${formatNumber(overview.valuation.pegRatio)}</p>` : ''}
+          ${overview.valuation.priceToBook !== null ? `<p><strong>Price/Book:</strong> ${formatNumber(overview.valuation.priceToBook)}</p>` : ''}
+          ${overview.valuation.priceToSales !== null ? `<p><strong>Price/Sales:</strong> ${formatNumber(overview.valuation.priceToSales)}</p>` : ''}
+          ${overview.valuation.evToRevenue !== null ? `<p><strong>EV/Revenue:</strong> ${formatNumber(overview.valuation.evToRevenue)}</p>` : ''}
+          ${overview.valuation.evToEbitda !== null ? `<p><strong>EV/EBITDA:</strong> ${formatNumber(overview.valuation.evToEbitda)}</p>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Profitability
+  if (overview.profitability) {
+    html += `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Profitability</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          ${overview.profitability.profitMargin !== null ? `<p><strong>Profit Margin:</strong> ${formatPercentage(overview.profitability.profitMargin, true)}</p>` : ''}
+          ${overview.profitability.operatingMargin !== null ? `<p><strong>Operating Margin:</strong> ${formatPercentage(overview.profitability.operatingMargin, true)}</p>` : ''}
+          ${overview.profitability.returnOnAssets !== null ? `<p><strong>ROA:</strong> ${formatPercentage(overview.profitability.returnOnAssets, true)}</p>` : ''}
+          ${overview.profitability.returnOnEquity !== null ? `<p><strong>ROE:</strong> ${formatPercentage(overview.profitability.returnOnEquity, true)}</p>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Growth
+  if (overview.growth) {
+    html += `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Growth</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          ${overview.growth.earningsGrowthYOY !== null ? `<p><strong>Earnings Growth (YoY):</strong> ${formatPercentage(overview.growth.earningsGrowthYOY, true)}</p>` : ''}
+          ${overview.growth.revenueGrowthYOY !== null ? `<p><strong>Revenue Growth (YoY):</strong> ${formatPercentage(overview.growth.revenueGrowthYOY, true)}</p>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Analyst Ratings
+  if (overview.analyst) {
+    const ratings = overview.analyst.ratings;
+    const totalRatings = ratings.strongBuy + ratings.buy + ratings.hold + ratings.sell + ratings.strongSell;
+    html += `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Analyst Ratings</h3>
+        ${overview.analyst.targetPrice !== null ? `<p class="text-sm mb-2"><strong>Target Price:</strong> $${formatNumber(overview.analyst.targetPrice)}</p>` : ''}
+        ${totalRatings > 0 ? `
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between"><span>Strong Buy:</span><span class="text-green-600 dark:text-green-400">${ratings.strongBuy}</span></div>
+            <div class="flex justify-between"><span>Buy:</span><span class="text-green-500 dark:text-green-400">${ratings.buy}</span></div>
+            <div class="flex justify-between"><span>Hold:</span><span class="text-yellow-500 dark:text-yellow-400">${ratings.hold}</span></div>
+            <div class="flex justify-between"><span>Sell:</span><span class="text-red-500 dark:text-red-400">${ratings.sell}</span></div>
+            <div class="flex justify-between"><span>Strong Sell:</span><span class="text-red-600 dark:text-red-400">${ratings.strongSell}</span></div>
+            <div class="flex justify-between mt-2 pt-2 border-t border-gray-300 dark:border-gray-600"><span><strong>Total:</strong></span><span><strong>${totalRatings}</strong></span></div>
+          </div>
+        ` : '<p class="text-sm text-gray-500 dark:text-gray-400">No analyst ratings available</p>'}
+      </div>
+    `;
+  }
+  
+  // Technical Indicators
+  if (overview.technical) {
+    html += `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Technical Indicators</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          ${overview.technical['52WeekHigh'] !== null && overview.technical['52WeekHigh'] !== undefined ? `<p><strong>52W High:</strong> $${formatNumber(overview.technical['52WeekHigh'])}</p>` : ''}
+          ${overview.technical['52WeekLow'] !== null && overview.technical['52WeekLow'] !== undefined ? `<p><strong>52W Low:</strong> $${formatNumber(overview.technical['52WeekLow'])}</p>` : ''}
+          ${overview.technical['50DayMA'] !== null ? `<p><strong>50-Day MA:</strong> $${formatNumber(overview.technical['50DayMA'])}</p>` : ''}
+          ${overview.technical['200DayMA'] !== null ? `<p><strong>200-Day MA:</strong> $${formatNumber(overview.technical['200DayMA'])}</p>` : ''}
+          ${overview.technical.beta !== null ? `<p><strong>Beta:</strong> ${formatNumber(overview.technical.beta)}</p>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Shares & Ownership
+  if (overview.shares) {
+    html += `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Shares & Ownership</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          ${overview.shares.outstanding !== null ? `<p><strong>Outstanding:</strong> ${(overview.shares.outstanding / 1_000_000).toFixed(2)}M</p>` : ''}
+          ${overview.shares.float !== null ? `<p><strong>Float:</strong> ${(overview.shares.float / 1_000_000).toFixed(2)}M</p>` : ''}
+          ${overview.shares.percentInsiders !== null ? `<p><strong>Insider %:</strong> ${formatPercentage(overview.shares.percentInsiders)}</p>` : ''}
+          ${overview.shares.percentInstitutions !== null ? `<p><strong>Institution %:</strong> ${formatPercentage(overview.shares.percentInstitutions)}</p>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  // Dividend Information
+  if (overview.dividend) {
+    html += `
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">Dividend</h3>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          ${overview.dividend.perShare !== null ? `<p><strong>Dividend/Share:</strong> $${formatNumber(overview.dividend.perShare)}</p>` : ''}
+          ${overview.dividend.yield !== null ? `<p><strong>Yield:</strong> ${formatPercentage(overview.dividend.yield, true)}</p>` : ''}
+          ${overview.dividend.date ? `<p><strong>Dividend Date:</strong> ${overview.dividend.date}</p>` : ''}
+          ${overview.dividend.exDate ? `<p><strong>Ex-Dividend Date:</strong> ${overview.dividend.exDate}</p>` : ''}
+        </div>
+      </div>
+    `;
+  }
+  
+  overviewDiv.innerHTML = html;
+  // Keep overview hidden by default - user clicks button to show it
+  overviewDiv.classList.add('hidden');
+  
+  // Show the button to toggle overview
+  if (viewOverviewBtn) {
+    viewOverviewBtn.classList.remove('hidden');
+    viewOverviewBtn.textContent = 'View Full Overview';
+  }
+}
+
+/**
+ * Initialize company overview button functionality
+ * 
+ * Sets up the view overview button to toggle company overview display
+ * 
+ * @function initializeCompanyOverview
+ */
+function initializeCompanyOverview() {
+  const viewOverviewBtn = document.getElementById('viewOverviewBtn');
+  if (!viewOverviewBtn) {
+    console.warn('View overview button not found');
+    return;
+  }
+  
+  viewOverviewBtn.addEventListener('click', () => {
+    const overviewDiv = document.getElementById('company-overview');
+    if (!overviewDiv) {
+      console.warn('Company overview div not found');
+      return;
+    }
+    
+    if (overviewDiv.classList.contains('hidden')) {
+      overviewDiv.classList.remove('hidden');
+      viewOverviewBtn.textContent = 'Hide Overview';
+    } else {
+      overviewDiv.classList.add('hidden');
+      viewOverviewBtn.textContent = 'View Full Overview';
+    }
+  });
 }
 
 // ============================================================================
@@ -639,6 +932,16 @@ function createWidgetConfig(symbol, exchange, theme) {
     fontFamily: '-apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif',
     valuesTracking: '1',
     changeMode: 'price-and-percent',
+    
+    // Exchanges to search across
+    // Includes: NASDAQ, NASDAQ GIDS, NYSE, NYSE Arca, Cboe CFE, OTC Markets
+    exchanges: [
+      'NASDAQ',      // NASDAQ Stock Market (Cboe One - Delayed Stocks)
+      'NYSE',        // New York Stock Exchange (Cboe One - Delayed Stocks)
+      'AMEX',        // NYSE Arca (Cboe One - Delayed Stocks) - TradingView uses AMEX for Arca
+      'OTC',         // OTC Markets (OTC - Delayed Stocks)
+      'CBOE'         // Cboe Futures Exchange (CBOE - Delayed Futures)
+    ],
     
     // Symbol configuration - single stock display
     symbols: [
