@@ -34,7 +34,8 @@ def get_market_movers(_request):
         # Ensure we always return valid data structure
         if not market_movers_data:
             # Access protected method for fallback behavior
-            market_movers_data = market_data_service._get_fallback_market_movers()  # pylint: disable=protected-access
+            # pylint: disable=protected-access
+            market_movers_data = market_data_service._get_fallback_market_movers()
 
         # Ensure gainers and losers are always lists
         if 'gainers' not in market_movers_data:
@@ -52,7 +53,8 @@ def get_market_movers(_request):
         try:
             market_data_service = MarketDataService()
             # Access protected method for fallback behavior
-            fallback_data = market_data_service._get_fallback_market_movers()  # pylint: disable=protected-access
+            # pylint: disable=protected-access
+            fallback_data = market_data_service._get_fallback_market_movers()
             return Response(fallback_data)
         except Exception:  # pylint: disable=broad-exception-caught
             # Last resort - return empty structure

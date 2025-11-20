@@ -219,7 +219,8 @@ class MarketMoversTests(TestCase):
                 mock_instance = mock_service.return_value
                 mock_instance.get_market_movers.return_value = None
                 # Access protected method for testing fallback behavior
-                mock_instance._get_fallback_market_movers.return_value = {  # pylint: disable=protected-access
+                # pylint: disable=protected-access
+                mock_instance._get_fallback_market_movers.return_value = {
                     'gainers': [],
                     'losers': [],
                     'fallback': True
@@ -242,7 +243,8 @@ class MarketMoversTests(TestCase):
                 mock_instance = mock_service.return_value
                 mock_instance.get_market_movers.return_value = {'losers': []}
                 # Access protected method for testing fallback behavior
-                mock_instance._get_fallback_market_movers.return_value = {  # pylint: disable=protected-access
+                # pylint: disable=protected-access
+                mock_instance._get_fallback_market_movers.return_value = {
                     'gainers': [],
                     'losers': []
                 }
@@ -264,7 +266,8 @@ class MarketMoversTests(TestCase):
                 mock_instance = mock_service.return_value
                 mock_instance.get_market_movers.return_value = {'gainers': []}
                 # Access protected method for testing fallback behavior
-                mock_instance._get_fallback_market_movers.return_value = {  # pylint: disable=protected-access
+                # pylint: disable=protected-access
+                mock_instance._get_fallback_market_movers.return_value = {
                     'gainers': [],
                     'losers': []
                 }
@@ -286,7 +289,10 @@ class MarketMoversTests(TestCase):
                 mock_instance = mock_service.return_value
                 mock_instance.get_market_movers.side_effect = Exception("Service error")
                 # Access protected method for testing fallback behavior
-                mock_instance._get_fallback_market_movers.side_effect = Exception("Fallback error")  # pylint: disable=protected-access
+                # pylint: disable=protected-access
+                mock_instance._get_fallback_market_movers.side_effect = Exception(
+                    "Fallback error"
+                )
 
                 url = reverse('get_market_movers')
                 response = self.client.get(url)
