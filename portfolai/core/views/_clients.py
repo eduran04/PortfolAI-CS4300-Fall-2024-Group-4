@@ -11,7 +11,6 @@ import logging
 
 import openai
 import finnhub
-from newsapi import NewsApiClient
 from django.conf import settings
 from ..services import (  # noqa: F401  # pylint: disable=unused-import
     MarketDataService,
@@ -33,7 +32,9 @@ if settings.FINNHUB_API_KEY:
 else:
     finnhub_client = None
 
+# The News API client - using requests library
+# Keep newsapi variable name for backward compatibility
 if settings.NEWS_API_KEY:
-    newsapi = NewsApiClient(api_key=settings.NEWS_API_KEY)
+    newsapi = {'api_token': settings.NEWS_API_KEY, 'base_url': 'https://api.thenewsapi.com'}
 else:
     newsapi = None

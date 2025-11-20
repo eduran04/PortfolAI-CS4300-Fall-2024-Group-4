@@ -5,16 +5,13 @@ Stock Data Views - Real-Time Stock Data Retrieval
 Core stock data endpoints with comprehensive fallback systems.
 """
 
-import logging
-
+import requests
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
 from ._clients import finnhub_client, openai_client, FALLBACK_STOCKS
 from ..api_helpers import is_rate_limit_error
-
-logger = logging.getLogger(__name__)
 
 
 def _build_fallback_response(symbol, stock_data, rate_limited=False):
@@ -40,7 +37,6 @@ def _build_fallback_response(symbol, stock_data, rate_limited=False):
 
 def _handle_rate_limit(symbol, cache_key):
     """Handle rate limit errors by trying cache or fallback."""
-    logger.warning('Rate limit hit for %s, using cached or fallback data', symbol)
     # Try to return cached data even if expired
     cached_data = cache.get(cache_key)
     if cached_data:
@@ -89,10 +85,7 @@ def _get_cached_stock_data(cache_key, force_refresh):
     if not force_refresh:
         cached_data = cache.get(cache_key)
         if cached_data:
-            logger.info('Returning cached stock data for %s', cache_key.split('_')[-1])
             return Response(cached_data)
-    else:
-        logger.info('Force refresh requested for %s, bypassing cache', cache_key.split('_')[-1])
     return None
 
 
@@ -133,8 +126,7 @@ def _fetch_company_profile(symbol):
     try:
         company = finnhub_client.company_profile2(symbol=symbol)
         company_name = company.get('name', symbol)
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.warning("Could not fetch company profile for %s: %s", symbol, e)
+    except Exception:  # pylint: disable=broad-exception-caught
         company = {}
 
     return company, company_name
@@ -148,8 +140,7 @@ def _fetch_stock_metrics(symbol):
     try:
         metrics_response = finnhub_client.company_basic_financials(symbol, 'all')
         return metrics_response.get('metric', {})
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.warning("Could not fetch metrics for %s: %s", symbol, e)
+    except Exception:  # pylint: disable=broad-exception-caught
         return {}
 
 
@@ -188,6 +179,7 @@ def _build_stock_response_data(symbol, quote, company, company_name, metrics=Non
         "peRatio": round(pe_ratio, 2) if pe_ratio else 0,
         "yearHigh": round(year_high, 2) if year_high else 0,
         "yearLow": round(year_low, 2) if year_low else 0,
+        "logo": company.get('logo', '') if company else '',
     }
 
 
@@ -219,22 +211,45 @@ def stock_search(request):
         if not search_results or 'result' not in search_results:
             return Response({"results": []})
 
-        # Filter to US exchanges only and limit to top 10 results
-        us_results = [
-            {
-                "symbol": item.get("symbol", ""),
+        # Filter to US exchanges only, exclude symbols with "." extension,
+        # and limit to top 10 results
+        us_results = []
+        for item in search_results.get("result", []):
+            symbol = item.get("symbol", "")
+
+            # Skip if not US exchange
+            if not _is_us_exchange(symbol):
+                continue
+
+            # Skip symbols with "." extension (e.g., "2212.T", "8051.T")
+            if "." in symbol:
+                continue
+
+            result_item = {
+                "symbol": symbol,
                 "displaySymbol": item.get("displaySymbol", ""),
                 "description": item.get("description", ""),
-                "type": item.get("type", "")
+                "type": item.get("type", ""),
+                "logo": ""  # Will be fetched if available
             }
-            for item in search_results.get("result", [])
-            if _is_us_exchange(item.get("symbol", ""))
-        ][:10]
+
+            # Try to fetch logo from company profile (non-blocking, may fail)
+            try:
+                company_profile = finnhub_client.company_profile2(symbol=symbol)
+                if company_profile and company_profile.get('logo'):
+                    result_item["logo"] = company_profile.get('logo', '')
+            except Exception:  # pylint: disable=broad-exception-caught
+                # Logo fetch failed, continue without logo
+                pass
+
+            us_results.append(result_item)
+
+            if len(us_results) >= 10:
+                break
 
         return Response({"results": us_results})
 
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Error searching for stocks with query %s: %s", query, str(e))
+    except Exception:  # pylint: disable=broad-exception-caught
         # Return fallback results on error
         fallback_results = _get_fallback_search_results(query)
         return Response({"results": fallback_results, "fallback": True})
@@ -342,7 +357,7 @@ def stock_summary(request):
 
 
 @api_view(["GET"])
-def get_stock_data(request):
+def get_stock_data(request):  # pylint: disable=too-many-return-statements
     """
     Core Stock Data Retrieval - Feature 1: Real-Time Stock Data
     Endpoint: /api/stock-data/?symbol=AAPL
@@ -393,11 +408,174 @@ def get_stock_data(request):
         return Response(response_data)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Error fetching data for %s: %s", symbol, str(e))
         # Try fallback data if available
         if symbol in FALLBACK_STOCKS:
             return _build_fallback_response(symbol, FALLBACK_STOCKS[symbol])
         return Response(
             {"error": f"Failed to fetch data for {symbol}: {str(e)}"},
+            status=500
+        )
+
+
+def _format_large_number(value):
+    """Format large numbers to billions/trillions."""
+    if not value or value == "None" or value == "":
+        return None
+    try:
+        num = float(value)
+        if num >= 1_000_000_000_000:
+            return round(num / 1_000_000_000_000, 2)
+        if num >= 1_000_000_000:
+            return round(num / 1_000_000_000, 2)
+        if num >= 1_000_000:
+            return round(num / 1_000_000, 2)
+        return num
+    except (ValueError, TypeError):
+        return None
+
+
+def _parse_numeric(value):
+    """Parse numeric value from string, return None if invalid."""
+    if not value or value == "None" or value == "":
+        return None
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return None
+
+
+@api_view(["GET"])
+def company_overview(request):  # pylint: disable=too-many-return-statements
+    """
+    Company Overview - Get detailed company information using Alpha Vantage OVERVIEW endpoint
+    Endpoint: /api/company-overview/?symbol=AAPL
+    Purpose: Get comprehensive company overview data
+    Features: Company description, financials, valuation, profitability, growth, analyst ratings
+    Example: /api/company-overview/?symbol=AAPL
+    """
+    symbol = request.GET.get("symbol", "").strip().upper()
+    force_refresh = request.GET.get("force_refresh", "false").lower() == "true"
+
+    if not symbol:
+        return Response({"error": "Symbol parameter is required"}, status=400)
+
+    # Check if API key is available
+    if not settings.ALPHA_VANTAGE_API_KEY:
+        return Response({"error": "Alpha Vantage API key not configured"}, status=500)
+
+    # Check cache first (5 minute cache)
+    cache_key = f'company_overview_{symbol}'
+    if not force_refresh:
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+
+    try:
+        # Fetch from Alpha Vantage OVERVIEW endpoint
+        url = "https://www.alphavantage.co/query"
+        params = {
+            "function": "OVERVIEW",
+            "symbol": symbol,
+            "apikey": settings.ALPHA_VANTAGE_API_KEY
+        }
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        # Check for Alpha Vantage API errors
+        if "Error Message" in data:
+            return Response({"error": data.get("Error Message", "API error")}, status=500)
+
+        if "Note" in data:
+            # Rate limit - try to return cached data even if expired
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return Response(cached_data)
+            return Response({"error": "API rate limit reached"}, status=429)
+
+        # Check if we got valid data
+        if not data or "Symbol" not in data:
+            return Response({"error": "No data available for this symbol"}, status=404)
+
+        # Transform Alpha Vantage flat response into structured format
+        overview = {
+            "symbol": data.get("Symbol", symbol),
+            "name": data.get("Name", ""),
+            "description": data.get("Description", ""),
+            "sector": data.get("Sector", ""),
+            "industry": data.get("Industry", ""),
+            "exchange": data.get("Exchange", ""),
+            "country": data.get("Country", ""),
+            "currency": data.get("Currency", ""),
+            "fiscalYearEnd": data.get("FiscalYearEnd", ""),
+            "financials": {
+                "marketCap": _parse_numeric(data.get("MarketCapitalization")),
+                "ebitda": _parse_numeric(data.get("EBITDA")),
+                "revenueTTM": _parse_numeric(data.get("RevenueTTM")),
+                "grossProfitTTM": _parse_numeric(data.get("GrossProfitTTM")),
+                "bookValue": _parse_numeric(data.get("BookValue")),
+                "eps": _parse_numeric(data.get("EPS")),
+            },
+            "valuation": {
+                "peRatio": _parse_numeric(data.get("PERatio")),
+                "pegRatio": _parse_numeric(data.get("PEGRatio")),
+                "priceToBook": _parse_numeric(data.get("PriceToBookRatio")),
+                "priceToSales": _parse_numeric(data.get("PriceToSalesRatio")),
+                "evToRevenue": _parse_numeric(data.get("EVToRevenue")),
+                "evToEbitda": _parse_numeric(data.get("EVToEBITDA")),
+            },
+            "profitability": {
+                "profitMargin": _parse_numeric(data.get("ProfitMargin")),
+                "operatingMargin": _parse_numeric(data.get("OperatingMarginTTM")),
+                "returnOnAssets": _parse_numeric(data.get("ReturnOnAssetsTTM")),
+                "returnOnEquity": _parse_numeric(data.get("ReturnOnEquityTTM")),
+            },
+            "growth": {
+                "earningsGrowthYOY": _parse_numeric(data.get("QuarterlyEarningsGrowthYOY")),
+                "revenueGrowthYOY": _parse_numeric(data.get("QuarterlyRevenueGrowthYOY")),
+            },
+            "analyst": {
+                "targetPrice": _parse_numeric(data.get("AnalystTargetPrice")),
+                "ratings": {
+                    "strongBuy": int(data.get("RatingStrongBuy", 0) or 0),
+                    "buy": int(data.get("RatingBuy", 0) or 0),
+                    "hold": int(data.get("RatingHold", 0) or 0),
+                    "sell": int(data.get("RatingSell", 0) or 0),
+                    "strongSell": int(data.get("RatingStrongSell", 0) or 0),
+                }
+            },
+            "technical": {
+                "52WeekHigh": _parse_numeric(data.get("52WeekHigh")),
+                "52WeekLow": _parse_numeric(data.get("52WeekLow")),
+                "50DayMA": _parse_numeric(data.get("50DayMovingAverage")),
+                "200DayMA": _parse_numeric(data.get("200DayMovingAverage")),
+                "beta": _parse_numeric(data.get("Beta")),
+            },
+            "shares": {
+                "outstanding": _parse_numeric(data.get("SharesOutstanding")),
+                "float": _parse_numeric(data.get("SharesFloat")),
+                "percentInsiders": _parse_numeric(data.get("PercentInsiders")),
+                "percentInstitutions": _parse_numeric(data.get("PercentInstitutions")),
+            },
+            "dividend": {
+                "perShare": _parse_numeric(data.get("DividendPerShare")),
+                "yield": _parse_numeric(data.get("DividendYield")),
+                "date": data.get("DividendDate", ""),
+                "exDate": data.get("ExDividendDate", ""),
+            }
+        }
+
+        # Cache the response for 5 minutes (300 seconds)
+        cache.set(cache_key, overview, 300)
+
+        return Response(overview)
+
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        # Try to return cached data even if expired as fallback
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+        return Response(
+            {"error": f"Failed to fetch company overview: {str(e)}"},
             status=500
         )

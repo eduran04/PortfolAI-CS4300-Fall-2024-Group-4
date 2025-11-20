@@ -506,15 +506,20 @@ class StockDataTests(TestCase):  # pylint: disable=too-many-public-methods
                         },
                     ]
                 }
+                # Mock company_profile2 to return quickly (prevents timeout)
+                # The code calls this for each result to fetch logos
+                mock_client.company_profile2.return_value = {}
+
                 response = self.client.get(url, {'query': 'apple'})
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
-                # Should only return US stocks (AAPL, MSFT, BRK.B), not AAPL.SW
+                # Should only return US stocks (AAPL, MSFT),
+                # not AAPL.SW or BRK.B (filtered out due to ".")
                 symbols = [r['symbol'] for r in data['results']]
                 self.assertIn('AAPL', symbols)
                 self.assertIn('MSFT', symbols)
-                self.assertIn('BRK.B', symbols)
                 self.assertNotIn('AAPL.SW', symbols)
+                self.assertNotIn('BRK.B', symbols)  # Filtered out because it contains "."
 
     def test_is_us_exchange_empty_symbol(self):
         """Test _is_us_exchange with empty symbol"""

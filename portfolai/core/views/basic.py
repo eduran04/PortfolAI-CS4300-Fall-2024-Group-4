@@ -29,6 +29,26 @@ def trading_dashboard(request):
     return render(request, "home.html")
 
 
+@login_required
+def markets_view(request):
+    """
+    Markets view - Feature: Market Movers and Market News
+    Renders the markets page with market movers and market news
+    Requires user authentication.
+    """
+    return render(request, "markets.html")
+
+
+@login_required
+def learn_view(request):
+    """
+    Learn view - Feature: Learning Resources
+    Renders the learning resources page
+    Requires user authentication.
+    """
+    return render(request, "learn.html")
+
+
 @api_view(["GET"])
 def hello_api(_request):
     """

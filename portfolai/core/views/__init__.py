@@ -17,19 +17,19 @@ from ._clients import (
 )
 
 # Basic views
-from .basic import landing, trading_dashboard, hello_api
+from .basic import landing, trading_dashboard, markets_view, learn_view, hello_api
 
 # Authentication views
 from .auth import SignUpView
 
 # Stock data views
-from .stock_data import get_stock_data, stock_summary, stock_search
+from .stock_data import get_stock_data, stock_summary, stock_search, company_overview
 
 # Market movers views
 from .market_movers import get_market_movers
 
 # News views
-from .news import get_news
+from .news import get_news, get_market_news
 
 # Analysis views
 from .analysis import portfolai_analysis
@@ -52,6 +52,8 @@ __all__ = [
     # Basic views
     'landing',
     'trading_dashboard',
+    'markets_view',
+    'learn_view',
     'hello_api',
     # Authentication
     'SignUpView',
@@ -59,10 +61,12 @@ __all__ = [
     'get_stock_data',
     'stock_summary',
     'stock_search',
+    'company_overview',
     # Market movers
     'get_market_movers',
     # News
     'get_news',
+    'get_market_news',
     # Analysis
     'portfolai_analysis',
     # Chat

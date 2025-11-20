@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   try {
+    initializeCompanyOverview();
+    console.log('Company overview initialized');
+  } catch (e) {
+    console.error('Error initializing company overview:', e);
+  }
+  
+  try {
     initializeWatchlist();
     console.log('Watchlist initialized');
   } catch (e) {

@@ -10,6 +10,8 @@ Tests for watchlist endpoints (functional tests)
 Note: Authentication tests are in auth_test.py
 """
 
+from unittest.mock import MagicMock, patch
+
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -117,3 +119,88 @@ class WatchlistTests(TestCase):
         data = response.json()
         self.assertIn('message', data)
         self.assertIn('not in your watchlist', data['message'])
+
+    def test_get_watchlist_exception(self):
+        """Test get_watchlist exception handling"""
+        url = reverse('get_watchlist')
+        with patch('core.views.watchlist.Watchlist.objects.filter') as mock_filter:
+            mock_filter.side_effect = Exception("Database error")
+
+            response = self.client.get(url)
+
+            self.assertEqual(response.status_code, 500)
+            data = response.json()
+            self.assertIn('error', data)
+
+    def test_add_to_watchlist_exception(self):
+        """Test add_to_watchlist exception handling"""
+        url = reverse('add_to_watchlist')
+        with patch('core.views.watchlist.Watchlist.objects.create') as mock_create:
+            mock_create.side_effect = Exception("Database error")
+
+            response = self.client.post(
+                url,
+                {'symbol': 'AAPL'},
+                content_type='application/json'
+            )
+
+            self.assertEqual(response.status_code, 500)
+            data = response.json()
+            self.assertIn('error', data)
+
+    def test_add_to_watchlist_empty_symbol(self):
+        """Test add_to_watchlist with empty symbol"""
+        url = reverse('add_to_watchlist')
+        response = self.client.post(
+            url,
+            {'symbol': ''},
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_remove_from_watchlist_exception(self):
+        """Test remove_from_watchlist exception handling"""
+        url = reverse('remove_from_watchlist')
+        with patch('core.views.watchlist.Watchlist.objects.filter') as mock_filter:
+            # Mock the queryset and its delete method
+            mock_queryset = MagicMock()
+            mock_queryset.delete.side_effect = Exception("Database error")
+            mock_filter.return_value = mock_queryset
+
+            response = self.client.delete(
+                url,
+                {'symbol': 'AAPL'},
+                content_type='application/json'
+            )
+
+            self.assertEqual(response.status_code, 500)
+            data = response.json()
+            self.assertIn('error', data)
+
+    def test_remove_from_watchlist_empty_symbol(self):
+        """Test remove_from_watchlist with empty symbol"""
+        url = reverse('remove_from_watchlist')
+        response = self.client.delete(
+            url,
+            {'symbol': ''},
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertIn('error', data)
+
+    def test_remove_from_watchlist_query_param(self):
+        """Test remove_from_watchlist with symbol in query parameter"""
+        # Add item first
+        Watchlist.objects.create(user=self.user, symbol='AAPL')
+
+        url = reverse('remove_from_watchlist')
+        response = self.client.delete(url + '?symbol=AAPL')
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('message', data)
