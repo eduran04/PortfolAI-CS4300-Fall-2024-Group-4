@@ -5,6 +5,7 @@ Stock Data Views - Real-Time Stock Data Retrieval
 Core stock data endpoints with comprehensive fallback systems.
 """
 
+import logging
 import requests
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -12,6 +13,8 @@ from django.core.cache import cache
 from django.conf import settings
 from ._clients import finnhub_client, openai_client, FALLBACK_STOCKS
 from ..api_helpers import is_rate_limit_error
+
+logger = logging.getLogger(__name__)
 
 
 def _build_fallback_response(symbol, stock_data, rate_limited=False):
@@ -238,9 +241,9 @@ def stock_search(request):
                 company_profile = finnhub_client.company_profile2(symbol=symbol)
                 if company_profile and company_profile.get('logo'):
                     result_item["logo"] = company_profile.get('logo', '')
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 # Logo fetch failed, continue without logo
-                pass
+                logger.debug("Could not fetch logo for %s: %s", symbol, str(e))
 
             us_results.append(result_item)
 
