@@ -17,7 +17,11 @@ from datetime import datetime
 import requests
 
 import finnhub
-from newsapi import NewsApiClient
+try:
+    from newsapi import NewsApiClient
+except ImportError:
+    NewsApiClient = None  # pylint: disable=invalid-name
+
 from django.conf import settings
 from .api_helpers import process_news_articles
 
@@ -236,7 +240,7 @@ class NewsService:  # pylint: disable=too-few-public-methods
 
     def __init__(self):
         """Initialize the service with API clients if keys are available."""
-        if settings.NEWS_API_KEY:
+        if settings.NEWS_API_KEY and NewsApiClient:
             self.newsapi = NewsApiClient(api_key=settings.NEWS_API_KEY)
         else:
             self.newsapi = None
