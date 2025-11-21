@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
 from ._clients import MarketDataService, finnhub_client
+from ..api_helpers import get_cached_response
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,7 @@ def get_ticker_data(request):
     Example: /api/ticker/
     """
     force_refresh = request.GET.get("force_refresh", "false").lower() == "true"
-    
+
     # Fixed list of ticker symbols
     TICKER_SYMBOLS = [
         "AAPL",   # Apple (fixed from APPL)
@@ -96,29 +97,31 @@ def get_ticker_data(request):
         "AVGO",   # Broadcom
         "INTC"    # Intel (fixed from INTEL)
     ]
-    
+
     # Check cache first (1 minute cache) - skip if force_refresh is True
     cache_key = 'ticker_data'
-    if not force_refresh:
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            return Response(cached_data)
+    cached_response = get_cached_response(cache_key, force_refresh)
+    if cached_response:
+        return cached_response
 
     try:
         ticker_stocks = []
-        
+
         if settings.FINNHUB_API_KEY and finnhub_client:
             # Fetch quotes from Finnhub for all symbols
             for symbol in TICKER_SYMBOLS:
                 try:
                     quote = finnhub_client.quote(symbol)
-                    
+
                     if quote and quote.get('c') is not None:
                         current_price = quote.get('c', 0)
                         previous_close = quote.get('pc', 0)
                         change = current_price - previous_close
-                        change_percent = (change / previous_close * 100) if previous_close != 0 else 0
-                        
+                        change_percent = (
+                            (change / previous_close * 100)
+                            if previous_close != 0 else 0
+                        )
+
                         stock_data = {
                             "symbol": symbol,
                             "name": symbol,
@@ -127,7 +130,7 @@ def get_ticker_data(request):
                             "changePercent": round(change_percent, 2)
                         }
                         ticker_stocks.append(stock_data)
-                            
+
                 except Exception as e:  # pylint: disable=broad-exception-caught
                     logger.warning("Failed to fetch Finnhub quote for %s: %s", symbol, str(e))
                     # Skip symbols that fail to fetch
@@ -140,7 +143,7 @@ def get_ticker_data(request):
                 "fallback": True,
                 "error": "Finnhub API key not configured"
             })
-        
+
         if not ticker_stocks:
             return Response({
                 "gainers": [],
@@ -148,25 +151,25 @@ def get_ticker_data(request):
                 "fallback": True,
                 "error": "No ticker data available"
             })
-        
+
         # Split into gainers and losers based on change
         ticker_gainers = [stock for stock in ticker_stocks if stock.get('change', 0) >= 0]
         ticker_losers = [stock for stock in ticker_stocks if stock.get('change', 0) < 0]
-        
+
         # Sort gainers by changePercent descending, losers by changePercent ascending
         ticker_gainers.sort(key=lambda x: x.get('changePercent', 0), reverse=True)
         ticker_losers.sort(key=lambda x: x.get('changePercent', 0))
-        
+
         result = {
             "gainers": ticker_gainers,
             "losers": ticker_losers
         }
-        
+
         # Cache the response for 1 minute (60 seconds)
         cache.set(cache_key, result, 60)
-        
+
         return Response(result)
-        
+
     except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Error in get_ticker_data: %s", str(e))
         # Return empty structure on error

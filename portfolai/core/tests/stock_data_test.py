@@ -18,7 +18,6 @@ from django.urls import reverse
 from django.conf import settings
 from rest_framework.response import Response
 from core.views.stock_data import (
-    _get_cached_stock_data,
     _fetch_and_validate_quote,
     _fetch_company_profile,
     _fetch_stock_metrics,
@@ -26,6 +25,7 @@ from core.views.stock_data import (
     _is_us_exchange,
     _get_fallback_search_results,
 )
+from core.api_helpers import get_cached_response
 from .test_helpers import assert_fallback_response
 
 
@@ -345,17 +345,17 @@ class StockDataTests(TestCase):  # pylint: disable=too-many-public-methods
             )
 
     def test_get_cached_stock_data_with_force_refresh(self):
-        """Test _get_cached_stock_data bypasses cache when force_refresh is True"""
+        """Test get_cached_response bypasses cache when force_refresh is True"""
         cache_key = 'stock_data_TEST'
         test_data = {'symbol': 'TEST', 'price': 100}
         cache.set(cache_key, test_data, 60)
 
         # With force_refresh=True, should return None (bypass cache)
-        result = _get_cached_stock_data(cache_key, True)
+        result = get_cached_response(cache_key, True)
         self.assertIsNone(result)
 
         # With force_refresh=False, should return cached data
-        result = _get_cached_stock_data(cache_key, False)
+        result = get_cached_response(cache_key, False)
         self.assertIsNotNone(result)
         self.assertIsInstance(result, Response)
 

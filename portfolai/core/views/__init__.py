@@ -26,7 +26,7 @@ from .auth import SignUpView
 from .stock_data import get_stock_data, stock_summary, stock_search, company_overview
 
 # Market movers views
-from .market_movers import get_market_movers
+from .market_movers import get_market_movers, get_ticker_data
 
 # News views
 from .news import get_news, get_market_news
@@ -64,6 +64,7 @@ __all__ = [
     'company_overview',
     # Market movers
     'get_market_movers',
+    'get_ticker_data',
     # News
     'get_news',
     'get_market_news',
