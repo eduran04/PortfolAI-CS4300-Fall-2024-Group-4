@@ -8,6 +8,7 @@
 const CACHE_DURATIONS = {
   stockData: 60000,      // 1 minute for stock data
   marketMovers: 120000,  // 2 minutes for market movers
+  tickerData: 60000,     // 1 minute for ticker data (Finnhub quotes)
   news: 300000,          // 5 minutes for news
   analysis: 600000,      // 10 minutes for AI analysis
   companyOverview: 300000 // 5 minutes for company overview
@@ -47,6 +48,8 @@ function getCachedData(key, duration = null) {
         cacheDuration = CACHE_DURATIONS.stockData;
       } else if (key === 'marketMovers') {
         cacheDuration = CACHE_DURATIONS.marketMovers;
+      } else if (key === 'tickerData') {
+        cacheDuration = CACHE_DURATIONS.tickerData;
       } else if (key.startsWith('news_')) {
         cacheDuration = CACHE_DURATIONS.news;
       } else if (key.startsWith('companyOverview_')) {
@@ -158,6 +161,59 @@ async function fetchStockData(symbol, forceRefresh = false) {
       } catch (e) {
         // Invalid cache
       }
+    }
+    throw error;
+  }
+}
+
+/**
+ * Fetch ticker data (uses Finnhub for quotes, Alpha Vantage for symbol selection)
+ * @param {boolean} forceRefresh - Force refresh, bypass cache
+ * @returns {Promise<Object>} Object containing gainers and losers arrays with Finnhub data
+ */
+async function fetchTickerData(forceRefresh = false) {
+  const cacheKey = 'tickerData';
+  
+  // Check cache first (unless forcing refresh)
+  if (!forceRefresh) {
+    const cached = getCachedData(cacheKey);
+    if (cached) {
+      console.log('Using cached ticker data');
+      return cached;
+    }
+  }
+  
+  try {
+    const url = '/api/ticker/' + (forceRefresh ? '?force_refresh=true' : '');
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    // Cache the response
+    setCachedData(cacheKey, data);
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching ticker data:', error);
+    // Try to return cached data even if expired as fallback
+    const cached = getCachedData(cacheKey);
+    if (cached) {
+      console.log('Using expired cache as fallback for ticker data');
+      return cached;
     }
     throw error;
   }

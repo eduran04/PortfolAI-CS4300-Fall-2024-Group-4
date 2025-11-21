@@ -231,6 +231,9 @@ function initializeMarketNews() {
  * @returns {Object} TradingView stock heatmap widget configuration
  */
 function createStockHeatmapConfig() {
+  const theme = getCurrentTheme();
+  const isDark = theme === 'dark';
+  
   return {
     "dataSource": "SPX500",
     "blockSize": "market_cap_basic",
@@ -238,7 +241,7 @@ function createStockHeatmapConfig() {
     "grouping": "sector",
     "locale": "en",
     "symbolUrl": "",
-    "colorTheme": "dark",
+    "colorTheme": isDark ? "dark" : "light",
     "exchanges": [],
     "hasTopBar": false,
     "isDataSetEnabled": false,
@@ -255,13 +258,16 @@ function createStockHeatmapConfig() {
  * @returns {Object} TradingView crypto heatmap widget configuration
  */
 function createCryptoHeatmapConfig() {
+  const theme = getCurrentTheme();
+  const isDark = theme === 'dark';
+  
   return {
     "dataSource": "Crypto",
     "blockSize": "market_cap_calc",
     "blockColor": "24h_close_change|5",
     "locale": "en",
     "symbolUrl": "",
-    "colorTheme": "dark",
+    "colorTheme": isDark ? "dark" : "light",
     "hasTopBar": false,
     "isDataSetEnabled": false,
     "isZoomEnabled": true,
@@ -277,6 +283,9 @@ function createCryptoHeatmapConfig() {
  * @returns {Object} TradingView ETF heatmap widget configuration
  */
 function createETFHeatmapConfig() {
+  const theme = getCurrentTheme();
+  const isDark = theme === 'dark';
+  
   return {
     "dataSource": "AllUSEtf",
     "blockSize": "volume",
@@ -284,7 +293,7 @@ function createETFHeatmapConfig() {
     "grouping": "asset_class",
     "locale": "en",
     "symbolUrl": "",
-    "colorTheme": "dark",
+    "colorTheme": isDark ? "dark" : "light",
     "hasTopBar": false,
     "isDataSetEnabled": false,
     "isZoomEnabled": true,
@@ -296,12 +305,31 @@ function createETFHeatmapConfig() {
 }
 
 /**
+ * Get current theme from localStorage or system preference
+ * @returns {string} Current theme ('dark' or 'light')
+ */
+function getCurrentTheme() {
+  const storedTheme = localStorage.getItem('color-theme');
+  if (storedTheme) {
+    return storedTheme;
+  }
+  
+  // Fallback to system preference
+  return document.documentElement.classList.contains('dark') 
+    ? 'dark' 
+    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+}
+
+/**
  * Create TradingView forex heatmap widget configuration
  * @returns {Object} TradingView forex heatmap widget configuration
  */
 function createForexHeatmapConfig() {
+  const theme = getCurrentTheme();
+  const isDark = theme === 'dark';
+  
   return {
-    "colorTheme": "dark",
+    "colorTheme": isDark ? "dark" : "light",
     "isTransparent": false,
     "locale": "en",
     "currencies": [
@@ -315,7 +343,7 @@ function createForexHeatmapConfig() {
       "NZD",
       "CNY"
     ],
-    "backgroundColor": "#F9FAFB",
+    "backgroundColor": isDark ? "#1F2937" : "#F9FAFB",
     "width": "100%",
     "height": "100%"
   };
@@ -352,8 +380,9 @@ function clearAllHeatmaps() {
 /**
  * Render a TradingView heatmap widget
  * @param {string} type - Heatmap type (stock, crypto, etf, forex)
+ * @param {boolean} force - Force re-render even if widget exists (for theme changes)
  */
-function renderTradingViewHeatmap(type = 'stock') {
+function renderTradingViewHeatmap(type = 'stock', force = false) {
   const widgetContainer = document.getElementById(`tradingview-heatmap-${type}`);
   const loader = document.getElementById('heatmap-loader');
   
@@ -382,15 +411,18 @@ function renderTradingViewHeatmap(type = 'stock') {
   }
 
   // Check if widget already exists and is loaded in this container
-  const existingScript = widgetContainer.querySelector('script[src]');
-  if (existingScript && widgetContainer.querySelector('.tradingview-widget-container__widget')) {
-    // Widget already loaded, just show it and hide loader
-    if (loader) {
-      setTimeout(() => {
-        loader.classList.add('hidden');
-      }, 100);
+  // Skip this check if force is true (for theme changes)
+  if (!force) {
+    const existingScript = widgetContainer.querySelector('script[src]');
+    if (existingScript && widgetContainer.querySelector('.tradingview-widget-container__widget')) {
+      // Widget already loaded, just show it and hide loader
+      if (loader) {
+        setTimeout(() => {
+          loader.classList.add('hidden');
+        }, 100);
+      }
+      return;
     }
-    return;
   }
 
   try {
@@ -514,5 +546,15 @@ function initializeHeatmap() {
 
   // Render initial heatmap (stock)
   renderTradingViewHeatmap('stock');
+  
+  // Listen for theme changes and re-render the current heatmap
+  window.addEventListener('theme-changed', (event) => {
+    // Only re-render if we're currently showing a heatmap
+    if (currentHeatmapType) {
+      console.log(`Theme changed to ${event.detail.theme}, re-rendering ${currentHeatmapType} heatmap`);
+      // Force re-render the current heatmap with new theme
+      renderTradingViewHeatmap(currentHeatmapType, true);
+    }
+  });
 }
 

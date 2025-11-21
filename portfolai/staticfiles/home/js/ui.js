@@ -128,9 +128,9 @@ async function populateTicker(forceRefresh = false) {
   }
   
   try {
-    console.log('Fetching market movers for ticker...');
-    const data = await fetchMarketMovers(forceRefresh);
-    console.log('Market movers data received:', data);
+    console.log('Fetching ticker data (Finnhub quotes)...');
+    const data = await fetchTickerData(forceRefresh);
+    console.log('Ticker data received:', data);
 
     // Combine gainers and losers for ticker
     const gainers = data.gainers || [];
