@@ -7,6 +7,8 @@ code duplication across the codebase.
 """
 
 from datetime import datetime
+from django.core.cache import cache
+from rest_framework.response import Response
 
 
 def is_rate_limit_error(exception):
@@ -92,3 +94,21 @@ def process_news_articles(articles, format_time_func=None):
         })
 
     return news_items
+
+
+def get_cached_response(cache_key, force_refresh):
+    """
+    Get cached response if available and not forcing refresh.
+
+    Args:
+        cache_key: The cache key to check
+        force_refresh: If True, skip cache check
+
+    Returns:
+        Response object if cached data found, None otherwise
+    """
+    if not force_refresh:
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+    return None

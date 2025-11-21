@@ -133,12 +133,9 @@ class MarketDataService:  # pylint: disable=too-few-public-methods
 
             result = {
                 "gainers": gainers,
-                "losers": losers
+                "losers": losers,
+                "fallback": False  # Explicitly mark as real data
             }
-            print(
-                f"Successfully fetched {len(gainers)} gainers "
-                f"and {len(losers)} losers from Alpha Vantage"
-            )
             return result
 
         except Exception as e:  # pylint: disable=broad-exception-caught

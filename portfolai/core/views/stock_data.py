@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
 from ._clients import finnhub_client, openai_client, FALLBACK_STOCKS
-from ..api_helpers import is_rate_limit_error
+from ..api_helpers import is_rate_limit_error, get_cached_response
 
 logger = logging.getLogger(__name__)
 
@@ -81,15 +81,6 @@ def _update_recent_searches(request, symbol):
         recent_searches.pop(0)
     request.session['recent_searches'] = recent_searches
     request.session.modified = True
-
-
-def _get_cached_stock_data(cache_key, force_refresh):
-    """Get cached stock data if available and not forcing refresh."""
-    if not force_refresh:
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            return Response(cached_data)
-    return None
 
 
 def _fetch_and_validate_quote(symbol, cache_key):
@@ -382,7 +373,7 @@ def get_stock_data(request):  # pylint: disable=too-many-return-statements
     cache_key = f'stock_data_{symbol}'
 
     # Check cache first (1 minute cache) - skip if force_refresh is True
-    cached_response = _get_cached_stock_data(cache_key, force_refresh)
+    cached_response = get_cached_response(cache_key, force_refresh)
     if cached_response:
         return cached_response
 
@@ -468,10 +459,9 @@ def company_overview(request):  # pylint: disable=too-many-return-statements
 
     # Check cache first (5 minute cache)
     cache_key = f'company_overview_{symbol}'
-    if not force_refresh:
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            return Response(cached_data)
+    cached_response = get_cached_response(cache_key, force_refresh)
+    if cached_response:
+        return cached_response
 
     try:
         # Fetch from Alpha Vantage OVERVIEW endpoint
