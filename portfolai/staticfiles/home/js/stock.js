@@ -990,6 +990,15 @@ function createWidgetConfig(symbol, exchange, theme) {
  * @param {Object} config - Widget configuration object
  * @returns {Object} Object containing widget div and copyright div references
  */
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function createWidgetStructure(container, symbol, exchange, config) {
   // Create widget div
   const widgetDiv = document.createElement('div');
@@ -1008,7 +1017,9 @@ function createWidgetStructure(container, symbol, exchange, config) {
   // Create copyright attribution (required by TradingView)
   const copyrightDiv = document.createElement('div');
   copyrightDiv.className = 'tradingview-widget-copyright';
-  copyrightDiv.innerHTML = `<a href="https://www.tradingview.com/symbols/${exchange}-${symbol}/" rel="noopener nofollow" target="_blank"><span class="blue-text">${symbol}</span></a><span class="trademark"> by TradingView</span>`;
+  const safeSymbol = escapeHTML(symbol);
+  const safeExchange = escapeHTML(exchange);
+  copyrightDiv.innerHTML = `<a href="https://www.tradingview.com/symbols/${safeExchange}-${safeSymbol}/" rel="noopener nofollow" target="_blank"><span class="blue-text">${safeSymbol}</span></a><span class="trademark"> by TradingView</span>`;
   container.appendChild(copyrightDiv);
   
   return { widgetDiv, copyrightDiv };
