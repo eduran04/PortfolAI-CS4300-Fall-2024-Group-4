@@ -26,8 +26,24 @@ function initializeChat() {
   // --- Position State --- //
   let isExpanded = false;
 
+  // --- Helper: Escape HTML --- //
+  function escapeHTML(str) {
+    return str.replace(/[&<>"']/g, function(match) {
+      switch (match) {
+        case "&": return "&amp;";
+        case "<": return "&lt;";
+        case ">": return "&gt;";
+        case '"': return "&quot;";
+        case "'": return "&#39;";
+        default: return match;
+      }
+    });
+  }
+
   // --- Format Bot Message --- //
   function formatBotMessage(text) {
+    // Escape all HTML in input
+    text = escapeHTML(text);
     // Remove trailing colons from bold text
     text = text.replace(/\*\*(.+?)\*\*\s*:/g, '<strong>$1</strong>');
 
