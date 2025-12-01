@@ -26,16 +26,33 @@ function initializeChat() {
   // --- Position State --- //
   let isExpanded = false;
 
+  // Simple HTML escaping for text insertion (only escapes necessary characters)
+  function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // --- Format Bot Message --- //
   function formatBotMessage(text) {
+    // First escape the text to prevent XSS, then apply markdown formatting
+    // Note: Markdown patterns (** and `) are not affected by HTML escaping
+    let escapedText = escapeHTML(text);
+    
     // Remove trailing colons from bold text
-    text = text.replace(/\*\*(.+?)\*\*\s*:/g, '<strong>$1</strong>');
+    escapedText = escapedText.replace(/\*\*(.+?)\*\*\s*:/g, '<strong>$1</strong>');
 
     // Convert remaining **bold** to <strong>
-    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    escapedText = escapedText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
     // Convert inline code/values like `$1.85` to styled spans
-    text = text.replace(/`([^`]+)`/g, '<span class="chat-value">$1</span>');
+    escapedText = escapedText.replace(/`([^`]+)`/g, '<span class="chat-value">$1</span>');
+    
+    // Use the escaped and formatted text for further processing
+    text = escapedText;
 
     // Split into lines for processing
     const lines = text.split('\n');
@@ -78,6 +95,7 @@ function initializeChat() {
           inUnorderedList = false;
           listDepth = 0;
         }
+        // Text is already escaped at the beginning of the function
         formatted += `<h4 class="chat-header">${headerMatch[1]}</h4>`;
         continue;
       }
@@ -95,6 +113,7 @@ function initializeChat() {
           inOrderedList = true;
           listDepth = indentLevel;
         }
+        // Text is already escaped and markdown-formatted at the beginning
         formatted += `<li>${numberedMatch[2]}</li>`;
         continue;
       }
@@ -117,6 +136,7 @@ function initializeChat() {
         }
 
         // Handle bold text within bullet points (remove colons)
+        // Text is already escaped and markdown-formatted at the beginning
         let content = bulletMatch[1];
         content = content.replace(/^(.+?):\s*/, '<strong>$1</strong> ');
 
@@ -141,6 +161,7 @@ function initializeChat() {
             inUnorderedList = true;
             listDepth = indentLevel;
           }
+          // Text is already escaped at the beginning
           formatted += `<li><strong>${keyValueMatch[1]}</strong> ${keyValueMatch[2]}</li>`;
           continue;
         }
@@ -160,6 +181,7 @@ function initializeChat() {
         }
       }
 
+      // Text is already escaped and markdown-formatted at the beginning
       formatted += `<p>${trimmedLine}</p>`;
     }
 

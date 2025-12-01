@@ -9,6 +9,16 @@
  * @module StockManagement
  */
 
+// Simple HTML escaping for text insertion (only escapes necessary characters)
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ============================================================================
 // Global Variables
 // ============================================================================
@@ -1008,7 +1018,7 @@ function createWidgetStructure(container, symbol, exchange, config) {
   // Create copyright attribution (required by TradingView)
   const copyrightDiv = document.createElement('div');
   copyrightDiv.className = 'tradingview-widget-copyright';
-  copyrightDiv.innerHTML = `<a href="https://www.tradingview.com/symbols/${exchange}-${symbol}/" rel="noopener nofollow" target="_blank"><span class="blue-text">${symbol}</span></a><span class="trademark"> by TradingView</span>`;
+  copyrightDiv.innerHTML = `<a href="https://www.tradingview.com/symbols/${escapeHTML(exchange)}-${escapeHTML(symbol)}/" rel="noopener nofollow" target="_blank"><span class="blue-text">${escapeHTML(symbol)}</span></a><span class="trademark"> by TradingView</span>`;
   container.appendChild(copyrightDiv);
   
   return { widgetDiv, copyrightDiv };
