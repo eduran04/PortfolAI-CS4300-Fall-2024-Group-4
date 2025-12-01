@@ -10,85 +10,29 @@ from openai import OpenAI, OpenAIError
 MAX_FILES = 30
 WORKFLOW_DIR = ".github/workflows"
 
-WORKFLOW_CONTEXT = """
-**GitHub Workflow Requirements and Standards:**
+SYSTEM_PROMPT = """Review the code and provide actionable feedback. Focus on:
 
-This repository uses automated CI/CD workflows that enforce the following standards:
-
-1. **Code Coverage (code-coverage.yml):**
-   - Minimum 80% test coverage required (--cov-fail-under=80)
-   - Tests run with pytest on core.views, core.forms
-   - Coverage reports are posted to PRs
-   - Ensure new code has adequate test coverage
-
-2. **Security Checks (security-check.yml):**
-   - Bandit security scanner runs on all code (MEDIUM severity threshold)
-   - Pylint static analysis for code quality
-   - Flake8 for PEP 8 compliance
-   - Pay special attention to security vulnerabilities flagged by these tools
-
-3. **Deployment (deploy.yml):**
-   - All code must pass tests before deployment
-   - Static files must be collectable (collectstatic)
-   - Migrations must run successfully
-   - Code must pass Pylint and Bandit checks
-
-4. **Testing Standards:**
-   - Use pytest with timeout protection (30s per test)
-   - Tests should be in core/tests/ directory
-   - Follow existing test patterns and naming conventions
-   - Mock external API calls to avoid real requests
-"""
-
-SYSTEM_PROMPT = f"""Please review the following code and provide comprehensive feedback. 
-Consider the following aspects:
-
-**General Code Quality:**
-- Code quality and adherence to best practices
-- Potential bugs or edge cases
-- Performance optimizations
+**Code Quality:**
+- Bugs, edge cases, performance issues
 - Readability and maintainability
+- Best practices for Django/Python/JavaScript
 
-**Security Considerations:**
-Pay special attention to security vulnerabilities including:
+**Security:**
 - Input validation and sanitization
-- Authentication and authorization mechanisms
-- SQL injection prevention (proper ORM usage)
-- XSS and CSRF protection (Django-specific)
-- Sensitive data handling and exposure
-- Dependency vulnerabilities
-- Issues that would be flagged by Bandit security scanner
+- SQL injection, XSS, CSRF protection
+- Sensitive data exposure
+- Issues flagged by Bandit scanner
 
-**Django/Python/JavaScript Specific Considerations:**
-- Django framework best practices (proper use of ORM, views patterns, built-in features)
-- Python standards compliance (PEP 8, type hints, docstrings)
-- JavaScript best practices and modern patterns
-- Error handling and input validation
-- Code organization and separation of concerns
-- Pylint and Flake8 compliance
+**Testing:**
+- Test coverage (target 80%+)
+- Missing tests for new code
+- Proper mocking and edge cases
 
-**Test Coverage Requirements:**
-- Ensure new code has adequate test coverage (target 80%+)
-- Check if new functions/views have corresponding tests
-- Verify tests follow existing patterns and use proper mocking
-- Consider edge cases and error scenarios in tests
+**Format:**
+For each issue, provide: line reference, clear explanation, and code example if helpful. 
+Prioritize security, bugs, and test coverage gaps.
 
-{WORKFLOW_CONTEXT}
-
-**Review Structure:**
-For each suggestion, please provide:
-- Specific issue identified with line references when applicable
-- Recommended improvement with clear explanation
-- Code example showing before/after implementation
-- Security implications if applicable
-- Impact on test coverage if applicable
-
-Focus on actionable feedback that will help improve code quality, maintainability, and adherence to industry standards.
-Prioritize suggestions that address security vulnerabilities, performance issues, maintainability concerns, or test coverage gaps.
-
-**Scoring:**
-At the end of your review, provide an overall code quality score out of 10, considering all the aspects mentioned above.
-Also note if the code is likely to pass the automated CI/CD checks (coverage, security scans, linting)."""
+End with a code quality score (0-10) and whether it will pass CI/CD checks."""
 
 
 def initialize() -> tuple[OpenAI, Github, str, str]:
@@ -148,7 +92,7 @@ def _extract_coverage_info(comment_body: str) -> list[str]:
     except ValueError:
         pass
     
-    lines = comment.body.split('\n')
+    lines = comment_body.split('\n')
     keywords = ['coverage', 'missing', 'total', 'fail']
     relevant_lines = [line for line in lines 
                      if any(keyword in line.lower() for keyword in keywords)]
