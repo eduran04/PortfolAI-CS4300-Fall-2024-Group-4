@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from ._clients import openai_client, newsapi
 from ..models import Watchlist
+from ..api_helpers import log_error_with_context
 
 logger = logging.getLogger(__name__)
 
@@ -396,19 +397,16 @@ def chat_api(request):
         return JsonResponse({"response": reply}, status=200)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
-        error_type = type(e).__name__
-        error_message = str(e)
-        user_name = (
-            request.user.username if request.user.is_authenticated
-            else 'anonymous'
-        )
-        logger.error(
-            "Chatbot error: Type=%s, Message=%s, User=%s",
-            error_type, error_message, user_name
+        log_error_with_context(
+            e, request, logger,
+            "Chatbot error: Type=%s, Message=%s, User=%s"
         )
         return JsonResponse(
             {
-                "response": "An internal error occurred while processing your request. Please try again later.",
+                "response": (
+                    "An internal error occurred while processing your request. "
+                    "Please try again later."
+                ),
                 "fallback": True,
             },
             status=200,

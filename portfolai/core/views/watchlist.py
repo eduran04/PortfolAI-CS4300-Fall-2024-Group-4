@@ -10,6 +10,7 @@ import logging
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from ..models import Watchlist
+from ..api_helpers import log_error_with_context
 
 logger = logging.getLogger(__name__)
 
@@ -33,17 +34,24 @@ def get_watchlist(request):
             "count": len(symbols)
         })
     except Exception as e:  # pylint: disable=broad-exception-caught
-        error_type = type(e).__name__
-        error_message = str(e)
         user_name = (
             request.user.username if request.user.is_authenticated
             else 'anonymous'
         )
-        logger.error(
+        log_error_with_context(
+            e, request, logger,
             "Error fetching watchlist for user %s: Type=%s, Message=%s",
-            user_name, error_type, error_message
+            user_name
         )
-        return Response({"error": "An internal error occurred while fetching your watchlist. Please try again later."}, status=500)
+        return Response(
+            {
+                "error": (
+                    "An internal error occurred while fetching your watchlist. "
+                    "Please try again later."
+                )
+            },
+            status=500
+        )
 
 
 @api_view(["POST"])
@@ -83,15 +91,22 @@ def add_to_watchlist(request):
 
     except Exception as e:  # pylint: disable=broad-exception-caught
         # Log detailed error information for debugging
-        error_type = type(e).__name__
-        error_message = str(e)
         symbol_attempted = request.data.get('symbol', 'unknown')
-        logger.error(
+        user_id = request.user.id if request.user.is_authenticated else 'N/A'
+        log_error_with_context(
+            e, request, logger,
             "Error adding %s to watchlist for user %s: Type=%s, Message=%s, UserID=%s",
-            symbol_attempted, request.user.username, error_type, error_message,
-            request.user.id if request.user.is_authenticated else 'N/A'
+            symbol_attempted, request.user.username, user_id
         )
-        return Response({"error": "An internal error occurred while adding to watchlist. Please try again later."}, status=500)
+        return Response(
+            {
+                "error": (
+                    "An internal error occurred while adding to watchlist. "
+                    "Please try again later."
+                )
+            },
+            status=500
+        )
 
 
 @api_view(["DELETE"])
@@ -135,12 +150,17 @@ def remove_from_watchlist(request):
             request.data.get('symbol')
             or request.GET.get('symbol', 'unknown')
         )
-        username = request.user.username
-        logger.error(
-            "Error removing %s from watchlist for user %s: %s",
-            symbol_attempted, username, str(e)
+        log_error_with_context(
+            e, request, logger,
+            "Error removing %s from watchlist for user %s: Type=%s, Message=%s, User=%s",
+            symbol_attempted, request.user.username
         )
         return Response(
-            {"error": "An internal error occurred while removing from watchlist. Please try again later."},
+            {
+                "error": (
+                    "An internal error occurred while removing from watchlist. "
+                    "Please try again later."
+                )
+            },
             status=500
         )

@@ -137,7 +137,12 @@ def learn_ai_explanation(request: HttpRequest) -> JsonResponse:
             topic, error_type, error_message
         )
         return JsonResponse(
-            {"error": "An internal error occurred while generating the explanation. Please try again later."},
+            {
+                "error": (
+                    "An internal error occurred while generating the explanation. "
+                    "Please try again later."
+                )
+            },
             status=500
         )
 
