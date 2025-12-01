@@ -34,14 +34,9 @@ def get_watchlist(request):
             "count": len(symbols)
         })
     except Exception as e:  # pylint: disable=broad-exception-caught
-        user_name = (
-            request.user.username if request.user.is_authenticated
-            else 'anonymous'
-        )
         log_error_with_context(
             e, request, logger,
-            "Error fetching watchlist for user %s: Type=%s, Message=%s",
-            user_name
+            "Error fetching watchlist: Type=%s, Message=%s, User=%s"
         )
         return Response(
             {
@@ -95,8 +90,8 @@ def add_to_watchlist(request):
         user_id = request.user.id if request.user.is_authenticated else 'N/A'
         log_error_with_context(
             e, request, logger,
-            "Error adding %s to watchlist for user %s: Type=%s, Message=%s, UserID=%s",
-            symbol_attempted, request.user.username, user_id
+            "Error adding %s to watchlist (UserID=%s): Type=%s, Message=%s, User=%s",
+            symbol_attempted, user_id
         )
         return Response(
             {
@@ -152,8 +147,8 @@ def remove_from_watchlist(request):
         )
         log_error_with_context(
             e, request, logger,
-            "Error removing %s from watchlist for user %s: Type=%s, Message=%s, User=%s",
-            symbol_attempted, request.user.username
+            "Error removing %s from watchlist: Type=%s, Message=%s, User=%s",
+            symbol_attempted
         )
         return Response(
             {
