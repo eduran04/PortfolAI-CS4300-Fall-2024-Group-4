@@ -3,6 +3,16 @@
  * Handles theme, navigation, ticker, market movers, and news functionality
  */
 
+// Simple HTML escaping for text insertion (only escapes necessary characters)
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // DOM references - accessed via getter functions to ensure DOM is ready
 function getThemeToggleBtn() {
   return document.getElementById('theme-toggle');
@@ -301,7 +311,7 @@ async function populateNewsFeed(symbol = null) {
 
   // Show loading state when fetching news
   if (currentSymbol) {
-    newsFeedDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Loading news for ' + currentSymbol + '...</p>';
+    newsFeedDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Loading news for ' + escapeHTML(currentSymbol) + '...</p>';
   } else {
     newsFeedDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400">Loading news...</p>';
   }
