@@ -347,7 +347,18 @@ def stock_summary(request):
         })
 
     except Exception as e:  # pylint: disable=broad-exception-caught
-        return Response({"error": str(e)}, status=500)
+        # Log detailed error information for debugging
+        error_type = type(e).__name__
+        error_message = str(e)
+        user_name = (
+            request.user.username if request.user.is_authenticated
+            else 'anonymous'
+        )
+        logger.error(
+            "Error generating AI summary for %s: Type=%s, Message=%s, User=%s",
+            symbol, error_type, error_message, user_name
+        )
+        return Response({"error": "An internal error occurred while generating the summary. Please try again later."}, status=500)
 
 
 @api_view(["GET"])
@@ -402,11 +413,22 @@ def get_stock_data(request):  # pylint: disable=too-many-return-statements
         return Response(response_data)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
+        # Log detailed error information for debugging
+        error_type = type(e).__name__
+        error_message = str(e)
+        user_name = (
+            request.user.username if request.user.is_authenticated
+            else 'anonymous'
+        )
+        logger.error(
+            "Error fetching stock data for %s: Type=%s, Message=%s, User=%s",
+            symbol, error_type, error_message, user_name
+        )
         # Try fallback data if available
         if symbol in FALLBACK_STOCKS:
             return _build_fallback_response(symbol, FALLBACK_STOCKS[symbol])
         return Response(
-            {"error": f"Failed to fetch data for {symbol}: {str(e)}"},
+            {"error": "An internal error occurred while fetching stock data. Please try again later."},
             status=500
         )
 
@@ -564,11 +586,22 @@ def company_overview(request):  # pylint: disable=too-many-return-statements
         return Response(overview)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
+        # Log detailed error information for debugging
+        error_type = type(e).__name__
+        error_message = str(e)
+        user_name = (
+            request.user.username if request.user.is_authenticated
+            else 'anonymous'
+        )
+        logger.error(
+            "Error fetching company overview for %s: Type=%s, Message=%s, User=%s",
+            symbol, error_type, error_message, user_name
+        )
         # Try to return cached data even if expired as fallback
         cached_data = cache.get(cache_key)
         if cached_data:
             return Response(cached_data)
         return Response(
-            {"error": f"Failed to fetch company overview: {str(e)}"},
+            {"error": "An internal error occurred while fetching company overview. Please try again later."},
             status=500
         )

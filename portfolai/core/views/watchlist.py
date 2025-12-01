@@ -33,8 +33,17 @@ def get_watchlist(request):
             "count": len(symbols)
         })
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Error fetching watchlist for user %s: %s", request.user.username, str(e))
-        return Response({"error": f"Failed to fetch watchlist: {str(e)}"}, status=500)
+        error_type = type(e).__name__
+        error_message = str(e)
+        user_name = (
+            request.user.username if request.user.is_authenticated
+            else 'anonymous'
+        )
+        logger.error(
+            "Error fetching watchlist for user %s: Type=%s, Message=%s",
+            user_name, error_type, error_message
+        )
+        return Response({"error": "An internal error occurred while fetching your watchlist. Please try again later."}, status=500)
 
 
 @api_view(["POST"])
@@ -82,7 +91,7 @@ def add_to_watchlist(request):
             symbol_attempted, request.user.username, error_type, error_message,
             request.user.id if request.user.is_authenticated else 'N/A'
         )
-        return Response({"error": f"Failed to add to watchlist: {error_message}"}, status=500)
+        return Response({"error": "An internal error occurred while adding to watchlist. Please try again later."}, status=500)
 
 
 @api_view(["DELETE"])
@@ -132,6 +141,6 @@ def remove_from_watchlist(request):
             symbol_attempted, username, str(e)
         )
         return Response(
-            {"error": f"Failed to remove from watchlist: {str(e)}"},
+            {"error": "An internal error occurred while removing from watchlist. Please try again later."},
             status=500
         )

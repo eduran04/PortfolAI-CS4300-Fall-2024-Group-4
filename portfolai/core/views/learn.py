@@ -1,9 +1,12 @@
 """Learning resources API views for the PortfolAI application."""
 
 import json
+import logging
 from django.http import JsonResponse, HttpRequest
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+
+logger = logging.getLogger(__name__)
 
 
 # -------------------------------------------------------------------
@@ -127,7 +130,16 @@ def learn_ai_explanation(request: HttpRequest) -> JsonResponse:
             messages=[{"role": "user", "content": f"Explain this concept simply: {topic}"}],
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught
-        return JsonResponse({"error": str(exc)}, status=500)
+        error_type = type(exc).__name__
+        error_message = str(exc)
+        logger.error(
+            "Error generating AI explanation for topic '%s': Type=%s, Message=%s",
+            topic, error_type, error_message
+        )
+        return JsonResponse(
+            {"error": "An internal error occurred while generating the explanation. Please try again later."},
+            status=500
+        )
 
     explanation = response["choices"][0]["message"]["content"]
     return JsonResponse({"explanation": explanation})

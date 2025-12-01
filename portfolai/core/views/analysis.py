@@ -500,8 +500,7 @@ def portfolai_analysis(request):
         )
         return Response({
             "error": (
-                f"Failed to generate analysis for {symbol}: "
-                f"{error_message}"
+                "An internal error occurred while generating the analysis. Please try again later."
             ),
             "fallback": True
         }, status=500)

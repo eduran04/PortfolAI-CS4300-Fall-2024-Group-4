@@ -396,10 +396,19 @@ def chat_api(request):
         return JsonResponse({"response": reply}, status=200)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.error("Chatbot error: %s", e)
+        error_type = type(e).__name__
+        error_message = str(e)
+        user_name = (
+            request.user.username if request.user.is_authenticated
+            else 'anonymous'
+        )
+        logger.error(
+            "Chatbot error: Type=%s, Message=%s, User=%s",
+            error_type, error_message, user_name
+        )
         return JsonResponse(
             {
-                "response": f"(Fallback after error) Could not reach AI: {str(e)}",
+                "response": "An internal error occurred while processing your request. Please try again later.",
                 "fallback": True,
             },
             status=200,

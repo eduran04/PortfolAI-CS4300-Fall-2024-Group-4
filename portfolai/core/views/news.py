@@ -500,14 +500,23 @@ def get_market_news(request):
         return Response(response_data)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
+        # Log detailed error information for debugging
+        error_type = type(e).__name__
+        error_message = str(e)
+        user_name = (
+            request.user.username if request.user.is_authenticated
+            else 'anonymous'
+        )
+        logger.error(
+            "Error fetching market news for category '%s': Type=%s, Message=%s, User=%s",
+            category, error_type, error_message, user_name
+        )
         # Return fallback data on error
-        logger.error("Error fetching market news: %s", str(e))
         fallback_data = {
             "articles": FALLBACK_NEWS[:3],
             "totalResults": min(len(FALLBACK_NEWS), 3),
             "fallback": True,
-            "category": category,
-            "error": str(e)
+            "category": category
         }
         cache.set(cache_key, fallback_data, 60)
         return Response(fallback_data)
