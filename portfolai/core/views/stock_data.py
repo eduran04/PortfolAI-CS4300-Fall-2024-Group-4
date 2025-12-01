@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
 from ._clients import finnhub_client, openai_client, FALLBACK_STOCKS
-from ..api_helpers import is_rate_limit_error, get_cached_response
+from ..api_helpers import is_rate_limit_error, get_cached_response, log_error_with_context
 
 logger = logging.getLogger(__name__)
 
@@ -347,7 +347,21 @@ def stock_summary(request):
         })
 
     except Exception as e:  # pylint: disable=broad-exception-caught
-        return Response({"error": str(e)}, status=500)
+        # Log detailed error information for debugging
+        log_error_with_context(
+            e, request, logger,
+            "Error generating AI summary for %s: Type=%s, Message=%s, User=%s",
+            symbol
+        )
+        return Response(
+            {
+                "error": (
+                    "An internal error occurred while generating the summary. "
+                    "Please try again later."
+                )
+            },
+            status=500
+        )
 
 
 @api_view(["GET"])
@@ -402,11 +416,22 @@ def get_stock_data(request):  # pylint: disable=too-many-return-statements
         return Response(response_data)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
+        # Log detailed error information for debugging
+        log_error_with_context(
+            e, request, logger,
+            "Error fetching stock data for %s: Type=%s, Message=%s, User=%s",
+            symbol
+        )
         # Try fallback data if available
         if symbol in FALLBACK_STOCKS:
             return _build_fallback_response(symbol, FALLBACK_STOCKS[symbol])
         return Response(
-            {"error": f"Failed to fetch data for {symbol}: {str(e)}"},
+            {
+                "error": (
+                    "An internal error occurred while fetching stock data. "
+                    "Please try again later."
+                )
+            },
             status=500
         )
 
@@ -564,11 +589,22 @@ def company_overview(request):  # pylint: disable=too-many-return-statements
         return Response(overview)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
+        # Log detailed error information for debugging
+        log_error_with_context(
+            e, request, logger,
+            "Error fetching company overview for %s: Type=%s, Message=%s, User=%s",
+            symbol
+        )
         # Try to return cached data even if expired as fallback
         cached_data = cache.get(cache_key)
         if cached_data:
             return Response(cached_data)
         return Response(
-            {"error": f"Failed to fetch company overview: {str(e)}"},
+            {
+                "error": (
+                    "An internal error occurred while fetching company overview. "
+                    "Please try again later."
+                )
+            },
             status=500
         )

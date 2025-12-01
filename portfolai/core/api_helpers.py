@@ -112,3 +112,45 @@ def get_cached_response(cache_key, force_refresh):
         if cached_data:
             return Response(cached_data)
     return None
+
+
+def log_error_with_context(exception, request, logger_instance, log_message_template, *log_args):
+    """
+    Log error with standardized context information (error type, message, user).
+
+    Args:
+        exception: The exception that was raised
+        request: Django request object
+        logger_instance: Logger instance to use for logging
+        log_message_template: Log message template string with placeholders for:
+                             - *log_args (if any)
+                             - error_type (always added)
+                             - error_message (always added)
+                             - user_name (always added)
+        *log_args: Additional positional arguments to include in the log message
+                  (these come before error_type, error_message, user_name)
+
+    Examples:
+        # Template with context + error info + user
+        log_error_with_context(
+            e, request, logger,
+            "Error fetching stock data for %s: Type=%s, Message=%s, User=%s",
+            symbol
+        )
+
+        # Template with just error info + user
+        log_error_with_context(
+            e, request, logger,
+            "Chatbot error: Type=%s, Message=%s, User=%s"
+        )
+    """
+    error_type = type(exception).__name__
+    error_message = str(exception)
+    user_name = (
+        request.user.username if request.user.is_authenticated
+        else 'anonymous'
+    )
+    logger_instance.error(
+        log_message_template,
+        *log_args, error_type, error_message, user_name
+    )

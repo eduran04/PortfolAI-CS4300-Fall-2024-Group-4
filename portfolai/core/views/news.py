@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
 from ._clients import newsapi, finnhub_client, FALLBACK_NEWS
-from ..api_helpers import format_time_ago
+from ..api_helpers import format_time_ago, log_error_with_context
 
 logger = logging.getLogger(__name__)
 
@@ -500,14 +500,18 @@ def get_market_news(request):
         return Response(response_data)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
+        # Log detailed error information for debugging
+        log_error_with_context(
+            e, request, logger,
+            "Error fetching market news for category '%s': Type=%s, Message=%s, User=%s",
+            category
+        )
         # Return fallback data on error
-        logger.error("Error fetching market news: %s", str(e))
         fallback_data = {
             "articles": FALLBACK_NEWS[:3],
             "totalResults": min(len(FALLBACK_NEWS), 3),
             "fallback": True,
-            "category": category,
-            "error": str(e)
+            "category": category
         }
         cache.set(cache_key, fallback_data, 60)
         return Response(fallback_data)
