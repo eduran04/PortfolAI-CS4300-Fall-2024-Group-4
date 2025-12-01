@@ -3,6 +3,16 @@
  * Handles all modal interactions and animations
  */
 
+// Simple HTML escaping for text insertion
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Modal DOM references
 const loginModal = document.getElementById('loginModal');
 const registerModal = document.getElementById('registerModal');
@@ -77,7 +87,7 @@ function showAnalysisModal(symbol, analysis, isFallback) {
               </div>
               <div>
                 <h2 class="text-2xl font-bold">PortfolAI Analysis</h2>
-                <p class="text-purple-200 text-sm">AI-Powered Stock Analysis for <span id="analysisSymbol" class="font-semibold">${symbol}</span></p>
+                <p class="text-purple-200 text-sm">AI-Powered Stock Analysis for <span id="analysisSymbol" class="font-semibold">${escapeHTML(symbol)}</span></p>
               </div>
             </div>
             <button id="closeAnalysisModal" class="text-white hover:text-purple-200 transition-colors duration-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-10">
