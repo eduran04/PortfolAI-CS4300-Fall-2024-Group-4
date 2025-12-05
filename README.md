@@ -121,6 +121,7 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │   │   │   ├── auth.py                      # SignUpView
 │   │   │   ├── basic.py                     # Landing, dashboard, hello_api
 │   │   │   ├── chat.py                      # chat_api
+│   │   │   ├── learn.py                     # Learn endpoints
 │   │   │   ├── market_movers.py            # get_market_movers
 │   │   │   ├── news.py                      # get_news
 │   │   │   ├── stock_data.py                # get_stock_data, stock_summary
@@ -130,6 +131,7 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │   │   │   ├── analysis_test.py             # AI analysis tests
 │   │   │   ├── auth_test.py                # Authentication tests
 │   │   │   ├── chat_test.py                # Chatbot tests
+│   │   │   ├── learn_test.py               # Learn tests
 │   │   │   ├── market_movers_test.py       # Market movers tests
 │   │   │   ├── news_test.py                # News feed tests
 │   │   │   ├── stock_data_test.py          # Stock data tests
@@ -149,6 +151,7 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │   │       ├── chat_widget.html
 │   │       ├── home.html
 │   │       ├── landing.html
+│   │       ├── learn.html
 │   │       └── registration/
 │   │           ├── login.html
 │   │           └── signup.html
