@@ -409,31 +409,25 @@ nav form button {
 }
 /* Base News Card Styling */
 .news-card {
-  background: #1f2937;                      /* dark gray (Tailwind gray-800) */
   border-radius: 12px;
-  padding: 1.5rem;
   transition: 
-      background 0.25s ease,
-      box-shadow 0.25s ease,
-      transform 0.25s ease;
+      transform 0.18s ease-out,
+      box-shadow 0.18s ease-out,
+      border-color 0.18s ease-out;
+  border: 1px solid transparent;
 }
 
-/* Hover Effect — Dark Mode */
+/* Hover Effect — Similar to learn cards */
 .news-card:hover {
-  background: #273142;                      
-  transform: translateY(-2px);              
-  box-shadow: 0 6px 18px rgba(0,0,0,0.25);  
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(79, 70, 229, 0.28);
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
-/* Light Mode Support */
-.light .news-card {
-  background: #ffffff;
-}
-
-.light .news-card:hover {
-  background: #f3f4f6;                      
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+/* Dark Mode Support */
+.dark .news-card:hover {
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.95);
+  border-color: rgba(165, 180, 252, 0.4);
 }
 
 /* Smooth corner + padding alignment with existing UI */

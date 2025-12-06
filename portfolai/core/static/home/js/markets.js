@@ -119,7 +119,7 @@ function displayMarketNews(articles) {
     const source = article.source || 'Unknown source';
 
     return `
-      <article class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow duration-200">
+      <article class="news-card bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
         <div class="flex flex-col md:flex-row gap-4">
           <div class="md:w-1/3">
             <img 

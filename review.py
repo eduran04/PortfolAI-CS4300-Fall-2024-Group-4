@@ -31,8 +31,10 @@ SYSTEM_PROMPT = """Review the code and provide actionable feedback. Focus on:
 **Format:**
 For each issue, provide: line reference, clear explanation, and code example if helpful. 
 Prioritize security, bugs, and test coverage gaps.
+Only provide feedback on the code that has been changed. 
+If feedback is not relevant to the code that has been changed, do not provide it.
 
-End with a code quality score (0-10) and whether it will pass CI/CD checks."""
+End with a code quality score (0-10) with reasoning."""
 
 
 def initialize() -> tuple[OpenAI, Github, str, str]:
