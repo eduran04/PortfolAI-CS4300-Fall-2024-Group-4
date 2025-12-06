@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import dj_database_url
 
 load_dotenv()
 
@@ -85,20 +86,30 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# For Render deployment: ensure database is on persistent disk
-# The persistent disk is mounted at /opt/render/project/src/portfolai
-# BASE_DIR should resolve to this path on Render
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-        'OPTIONS': {
-            'timeout': 20,  # Wait 20 seconds before raising "database is locked" error
-        },
-        # Connection pooling settings for SQLite
-        'CONN_MAX_AGE': 0,  # Don't persist connections (SQLite doesn't support connection pooling)
+# Use Supabase Postgres if SUPABASE_DB_URL is set, otherwise fallback to SQLite for local development
+SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
+
+if SUPABASE_DB_URL:
+    # Production: Use Supabase Postgres database
+    # Strip whitespace and quotes that might be in .env file
+    SUPABASE_DB_URL = SUPABASE_DB_URL.strip().strip('"').strip("'")
+    db_config = dj_database_url.parse(SUPABASE_DB_URL)
+    db_config['CONN_MAX_AGE'] = 600
+    DATABASES = {
+        'default': db_config
     }
-}
+else:
+    # Local development: Fallback to SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {
+                'timeout': 20,  # Wait 20 seconds before raising "database is locked" error
+            },
+            'CONN_MAX_AGE': 0,  # Don't persist connections (SQLite doesn't support connection pooling)
+        }
+    }
 
 
 # Password validation
