@@ -18,7 +18,7 @@ django-cors-headers==4.4.0
 
 # For production deployments (optional)
 gunicorn==23.0.0
-whitenoise==6.6.0
+whitenoise==6.11.0
 
 # Database dependencies
 dj-database-url==2.1.0
