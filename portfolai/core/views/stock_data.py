@@ -174,6 +174,7 @@ def _build_stock_response_data(symbol, quote, company, company_name, metrics=Non
         "yearHigh": round(year_high, 2) if year_high else 0,
         "yearLow": round(year_low, 2) if year_low else 0,
         "logo": company.get('logo', '') if company else '',
+        "exchange": company.get('exchange', '') if company else '',
     }
 
 

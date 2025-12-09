@@ -9,87 +9,21 @@ Django-based web application for stock analysis and portfolio management with re
 **Repository:** https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4  
 **Live Demo:** https://www.portfolai.org/
 
-## Setup Guide
+## Key Features
+- Real-time market data: quotes, market movers, and news powered by Finnhub and NewsAPI.
+- Stock insights: AI-generated stock summaries and portfolio analysis using OpenAI.
+- Watchlist management: create, view, and track tickers with caching for faster responses.
+- PortfolAI tools: stock summary, performance overview, and risk context via Alpha Vantage/Finnhub data.
+- Guided learning: curated learn endpoints for investing fundamentals.
+- Secure auth: Django auth with session-based APIs.
 
-1. Clone and enter the Repository
-
-```
-git clone https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4.git
-cd PortfolAI-CS4300-Fall-2024-Group-4/portfolai
-```
-
-2. Create and Activate a Virtual Environment
-
-```
-python -m venv venv
-source venv/bin/activate  # macOS/Linux
-```
-
-3. Install Dependencies
-
-```
-pip install -r requirements.txt
-```
-
-4. Configure Environment Variables
-
-Copy the environment template and configure your API keys:
-
-```
-touch .env # portfolai/.env
-```
-
-Edit the `.env` file with your actual API keys:
-
-```
-# Django Configuration
-SECRET_KEY=django-secret-key
-DEBUG=True # True in your environment / False in production
-ALLOWED_HOSTS=localhost,127.0.0.1,our-domain-name.onrender.com
-
-# API Keys
-FINNHUB_API_KEY=your_finnhub_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-NEWS_API_KEY=your_news_api_key_here
-```
-
-5. Run Migrations
-
-```
-python manage.py migrate
-```
-
-7. Start the Development Server
-
-```
-python manage.py runserver 0.0.0.0:3000
-```
-
-Visit ➜ http://localhost:3000/
-
-8. Running Tests
-
-To run all tests with coverage:
-
-```bash
-cd portfolai
-pytest -v --cov=core --cov-report=term-missing
-```
-
-To run tests with HTML coverage report:
-
-```bash
-cd portfolai
-pytest --cov=core --cov-report=html
-open htmlcov/index.html
-```
-
-To check coverage threshold (must be 80%+):
-
-```bash
-cd portfolai
-coverage report --fail-under=80
-```
+## Technologies
+- Backend: Django, Django REST Framework, Python
+- Database: PostgreSQL on Supabase (separate dev/prod instances)
+- Frontend: HTML, CSS (Django templates/static assets)
+- Deployment: Render (app), Cloudflare (DNS/proxy)
+- APIs: Finnhub, Alpha Vantage, NewsAPI, OpenAI
+- Tooling: pytest/coverage, Bandit, Flake8, Pylint, Gunicorn, Whitenoise
 
 ## Project Structure
 
@@ -180,6 +114,12 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 ├── security_report.py                      # Security report script
 └── render.yaml                             # Deployment configuration
 ```
+
+## Team
+- Elizandro Duran — Full-stack development and database integration
+- Jessica Webb — Full-stack development and marketing
+- Sreya Kalyan — Project management and testing
+- Alexis Liew — Frontend development and testing
 
 ## AI Integration and Tools Used
 
