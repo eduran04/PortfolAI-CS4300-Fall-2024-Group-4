@@ -116,10 +116,10 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 ```
 
 ## Team
-- Elizandro Duran — Full-stack development and database integration
-- Jessica Webb — Full-stack development and marketing
-- Sreya Kalyan — Project management and testing
-- Alexis Liew — Frontend development and testing
+- Alexis Liew
+- Elizandro Duran
+- Jessica Webb
+- Sreya Kalyan
 
 ## AI Integration and Tools Used
 
