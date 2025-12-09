@@ -10,11 +10,12 @@ Django-based web application for stock analysis and portfolio management with re
 **Live Demo:** https://www.portfolai.org/
 
 ## Key Features
-- Real-time market data: quotes, market movers, and news powered by Finnhub and NewsAPI.
+- Real-time market data: quotes, market movers, and news powered by Finnhub, Alpha Vantage, and NewsAPI.
 - Stock insights: AI-generated stock summaries and portfolio analysis using OpenAI.
-- Watchlist management: create, view, and track tickers with caching for faster responses.
+- Watchlist management: create, view, and track tickers using realtime data.
 - PortfolAI tools: stock summary, performance overview, and risk context via Alpha Vantage/Finnhub data.
 - Guided learning: curated learn endpoints for investing fundamentals.
+- Chat bot: context aware chatbot powered by OpenAI to answer your questions.
 - Secure auth: Django auth with session-based APIs.
 
 ## Technologies
