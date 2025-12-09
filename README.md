@@ -19,9 +19,9 @@ Django-based web application for stock analysis and portfolio management with re
 
 ## Technologies
 - Backend: Django, Django REST Framework, Python
-- Database: PostgreSQL on Supabase (separate dev/prod instances)
-- Frontend: HTML, CSS (Django templates/static assets)
-- Deployment: Render (app), Cloudflare (DNS/proxy)
+- Database: PostgreSQL on Supabase (separate development/production instances)
+- Frontend: JavaScript, HTML, CSS (Django templates/static assets)
+- Deployment: Render, Cloudflare 
 - APIs: Finnhub, Alpha Vantage, NewsAPI, OpenAI
 - Tooling: pytest/coverage, Bandit, Flake8, Pylint, Gunicorn, Whitenoise
 
@@ -36,8 +36,8 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │       ├── code-coverage.yml               # CI pipeline with code coverage workflow
 │       ├── dependency-review.yml           # Dependency review workflow
 │       ├── deploy.yml                      # Deployment workflow
-│       └── security-check.yml               # Security scanning workflow
-├── portfolai/                               # Main Django project directory
+│       └── security-check.yml              # Security scanning workflow
+├── portfolai/                              # Main Django project directory
 │   ├── core/                               # Django app for core functionality
 │   │   ├── __init__.py
 │   │   ├── admin.py                        # Django admin configuration
@@ -52,17 +52,17 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │   │   │   ├── __init__.py                 # Exports all views
 │   │   │   ├── _clients.py                 # Shared API client initialization
 │   │   │   ├── analysis.py                 # portfolai_analysis
-│   │   │   ├── auth.py                      # SignUpView
-│   │   │   ├── basic.py                     # Landing, dashboard, hello_api
-│   │   │   ├── chat.py                      # chat_api
-│   │   │   ├── learn.py                     # Learn endpoints
+│   │   │   ├── auth.py                     # SignUpView
+│   │   │   ├── basic.py                    # Landing, dashboard, hello_api
+│   │   │   ├── chat.py                     # chat_api
+│   │   │   ├── learn.py                    # Learn endpoints
 │   │   │   ├── market_movers.py            # get_market_movers
-│   │   │   ├── news.py                      # get_news
-│   │   │   ├── stock_data.py                # get_stock_data, stock_summary
+│   │   │   ├── news.py                     # get_news
+│   │   │   ├── stock_data.py               # get_stock_data, stock_summary
 │   │   │   └── watchlist.py                # Watchlist endpoints
 │   │   ├── tests/                          # Test directory
 │   │   │   ├── __init__.py
-│   │   │   ├── analysis_test.py             # AI analysis tests
+│   │   │   ├── analysis_test.py            # AI analysis tests
 │   │   │   ├── auth_test.py                # Authentication tests
 │   │   │   ├── chat_test.py                # Chatbot tests
 │   │   │   ├── learn_test.py               # Learn tests
@@ -72,7 +72,7 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │   │   │   ├── summary_test.py             # Stock summary tests
 │   │   │   ├── test_helpers.py             # Test helper utilities
 │   │   │   ├── view_test.py                # Basic views tests
-│   │   │   └── watchlist_test.py          # Watchlist tests
+│   │   │   └── watchlist_test.py           # Watchlist tests
 │   │   ├── migrations/                     # Database migration files
 │   │   │   ├── __init__.py
 │   │   │   └── 0001_initial.py             # Initial migration
@@ -101,9 +101,9 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │   ├── manage.py                           # Django management script
 │   ├── db.sqlite3                          # SQLite database file
 │   ├── pyproject.toml                      # Python project configuration
-│   ├── pytest.ini                         # Pytest configuration
+│   ├── pytest.ini                          # Pytest configuration
 │   ├── requirements.txt                    # Python dependencies
-│   └── htmlcov/                           # Coverage HTML reports (generated)
+│   └── htmlcov/                            # Coverage HTML reports (generated)
 ├── Pylint.txt                              # Pylint output
 ├── README.md                               # Project documentation
 ├── LICENSE                                 # Project license
