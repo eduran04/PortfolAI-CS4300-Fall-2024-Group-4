@@ -56,18 +56,23 @@ FORMATTING GUIDELINES:
 - Use markdown headers (### Header or ### Header:) for major sections when appropriate
 - Use inline code formatting (`$value` or `symbol`) for stock symbols, prices, and specific values
 - For key-value pairs, use format: "Key: Value" (will be auto-formatted)
-- Keep responses well-organized and easy to scan"""
+- Keep responses well-organized and easy to scan
+- Ownership questions: respond with "Company: <name>; Ticker: $<symbol>".
+  If the owner is private or unknown, say "Company: <name>; Ticker: private/unknown"."""
 
 SCOPE_PROMPT = """
 IMPORTANT: You MUST only answer questions related to:
 - Stock market analysis and investment education
 - Portfolio management and strategy
 - Questions about stocks, markets, and financial instruments
+- Corporate/brand ownership when it can be tied to a public company (include
+  the parent company and ticker if known)
 - PortfolAI application features and data
 
 If users ask about topics outside this scope (e.g., general knowledge,
 other subjects, personal advice unrelated to investing), politely decline
-and redirect them to ask about stocks, markets, or portfolio management.
+and redirect them to ask about stocks, markets, portfolio management, or
+corporate ownership with tickers.
 Keep your tone concise, analytical, and beginner-friendly."""
 
 USER_CONTEXT_HEADER = """
@@ -156,8 +161,18 @@ def _needs_web_search(user_message, client):
     if not client:
         return False
 
+    lowered_message = user_message.lower()
+
     # Quick check for explicit $SYMBOL format - always needs web search
     if re.search(r'\$[A-Z]{1,5}\b', user_message.upper()):
+        return True
+
+    # Heuristic: ownership/parent-company questions often need live data
+    ownership_triggers = [
+        "who owns", "owner of", "who is the owner", "who acquired",
+        "acquired by", "parent company", "who bought"
+    ]
+    if any(trigger in lowered_message for trigger in ownership_triggers):
         return True
 
     # Use AI to classify if the query needs real-time data

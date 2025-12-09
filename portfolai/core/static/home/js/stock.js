@@ -414,8 +414,8 @@ async function performSearch() {
       }, 5000);
     }
 
-    // Render TradingView widget with the searched stock
-    renderTradingViewWidget(searchTerm);
+    // Render TradingView widget with the searched stock and exchange from API
+    renderTradingViewWidget(searchTerm, stockData.exchange);
     
     // Update news feed with stock-specific news (limit to 3 articles)
     // Force refresh to get latest news for the searched stock
@@ -444,10 +444,18 @@ async function performSearch() {
     setTimeout(() => {
       const chartLoader = document.getElementById('chart-loader');
       if (chartLoader && !chartLoader.classList.contains('hidden')) {
-        console.warn('Chart loader still visible after timeout, hiding it');
-        chartLoader.classList.add('hidden');
+        console.warn('Chart loader still visible after timeout, showing fallback message');
+        chartLoader.innerHTML = `
+          <div class="text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Chart unavailable for this symbol</p>
+            <p class="text-sm text-gray-500 dark:text-gray-500">Try searching for a different stock</p>
+          </div>
+        `;
       }
-    }, 5000); // 5 second timeout
+    }, 3000); // 3 second timeout
 
     // Update button states based on watchlist status
     if (addToWatchlistBtn) {
@@ -832,12 +840,51 @@ function initializeCompanyOverview() {
 // ============================================================================
 
 /**
- * Detect the stock exchange for a given symbol
+ * Map Finnhub exchange names to TradingView format
+ * 
+ * Finnhub returns exchange names like "NASDAQ NMS", "NEW YORK STOCK EXCHANGE, INC.",
+ * "NYSE ARCA", etc. TradingView expects simpler identifiers like "NASDAQ", "NYSE", "AMEX".
+ * 
+ * @param {string} finnhubExchange - Exchange name from Finnhub API
+ * @returns {string} TradingView exchange identifier
+ */
+function mapExchangeToTradingView(finnhubExchange) {
+  if (!finnhubExchange) {
+    return null;
+  }
+  
+  const exchange = finnhubExchange.toUpperCase();
+  
+  // NASDAQ variants
+  if (exchange.includes('NASDAQ')) {
+    return 'NASDAQ';
+  }
+  
+  // NYSE Arca / AMEX variants (ETFs typically trade here)
+  if (exchange.includes('ARCA') || exchange.includes('AMEX') || exchange.includes('NYSE AMERICAN')) {
+    return 'AMEX';
+  }
+  
+  // NYSE variants
+  if (exchange.includes('NEW YORK STOCK EXCHANGE') || exchange.includes('NYSE')) {
+    return 'NYSE';
+  }
+  
+  // OTC Markets
+  if (exchange.includes('OTC') || exchange.includes('PINK')) {
+    return 'OTC';
+  }
+  
+  // Return null if we can't map it (will fall back to detectExchange)
+  return null;
+}
+
+/**
+ * Detect the stock exchange for a given symbol (fallback method)
  * 
  * Determines the most likely exchange (NASDAQ, NYSE, or AMEX/NYSE Arca) based on known symbols.
- * Supports both stocks and ETFs. TradingView supports auto-detection if the 
- * exchange is incorrect, but specifying the correct exchange improves widget 
- * initialization speed.
+ * This is used as a fallback when the API doesn't provide exchange information.
+ * Supports both stocks and ETFs.
  * 
  * Note: NYSE Arca (where many ETFs like VOO trade) is represented as "AMEX" in TradingView.
  * 
@@ -1073,6 +1120,9 @@ function clearTradingViewWidget() {
   tradingViewWidget = null;
 }
 
+/** @type {string|null} Store the current exchange for theme updates */
+let currentStockExchange = null;
+
 /**
  * Render or update the TradingView widget for a given stock symbol
  * 
@@ -1089,9 +1139,10 @@ function clearTradingViewWidget() {
  * - Note: NYSE Arca ETFs (like VOO, SPY) use "AMEX" as the exchange identifier
  * 
  * @param {string} symbol - Stock symbol to display (e.g., 'AAPL', 'MSFT', 'NFLX')
+ * @param {string|null} apiExchange - Exchange from API (optional, falls back to detection)
  * @throws {Error} If widget container element is not found in DOM
  */
-function renderTradingViewWidget(symbol) {
+function renderTradingViewWidget(symbol, apiExchange = null) {
   const widgetContainer = document.getElementById('tradingview-widget-container');
   const chartLoader = document.getElementById('chart-loader');
   
@@ -1112,8 +1163,28 @@ function renderTradingViewWidget(symbol) {
     // Clear any previous widget instance
     widgetContainer.innerHTML = '';
     
-    // Detect exchange and theme
-    const exchange = detectExchange(symbol);
+    // Determine exchange: use API data if available, otherwise fall back to detection
+    let exchange;
+    if (apiExchange) {
+      // Try to map the API exchange name to TradingView format
+      const mappedExchange = mapExchangeToTradingView(apiExchange);
+      if (mappedExchange) {
+        exchange = mappedExchange;
+        console.log(`Using API exchange for ${symbol}: ${apiExchange} -> ${exchange}`);
+      } else {
+        // Couldn't map, use fallback detection
+        exchange = detectExchange(symbol);
+        console.log(`Could not map exchange "${apiExchange}", using fallback detection: ${exchange}`);
+      }
+    } else {
+      // No API exchange provided, use fallback detection
+      exchange = detectExchange(symbol);
+      console.log(`No API exchange provided for ${symbol}, using fallback detection: ${exchange}`);
+    }
+    
+    // Store for theme updates
+    currentStockExchange = apiExchange;
+    
     const theme = getCurrentTheme();
     
     // Create widget configuration
@@ -1139,6 +1210,7 @@ function renderTradingViewWidget(symbol) {
     
     // Reset global reference
     tradingViewWidget = null;
+    currentStockExchange = null;
   }
 }
 
@@ -1156,7 +1228,8 @@ function updateWidgetTheme() {
   
   const currentSymbol = searchInput.value.toUpperCase().trim();
   if (currentSymbol && tradingViewWidget) {
-    renderTradingViewWidget(currentSymbol);
+    // Use stored exchange for consistency
+    renderTradingViewWidget(currentSymbol, currentStockExchange);
   }
 }
 
