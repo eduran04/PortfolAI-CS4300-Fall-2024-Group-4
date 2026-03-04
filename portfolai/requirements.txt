@@ -1,5 +1,5 @@
 # Core Django
-Django==5.2.9
+Django==5.2.12
 
 # Django REST Framework (for API endpoints)
 djangorestframework==3.15.2
