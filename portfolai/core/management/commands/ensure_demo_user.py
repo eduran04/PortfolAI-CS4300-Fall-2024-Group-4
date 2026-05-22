@@ -8,6 +8,7 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
+    """Create or update the shared demo login user."""
     help = "Ensure the shared demo user exists with the configured password."
 
     def handle(self, *args, **options):
