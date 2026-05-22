@@ -1,4 +1,4 @@
-name: Python Security Checks
+﻿name: Python Security Checks
 
 on:
   pull_request:
@@ -28,15 +28,15 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('portfolai/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       
       - name: Install dependencies
         run: |
           cd portfolai
-          pip install -r requirements.txt
-          pip install bandit pylint flake8 PyGithub
+          pip install -r requirements-dev.txt
+          pip install PyGithub
       
       - name: Run Bandit (Static Code Analysis)
         id: bandit
@@ -107,3 +107,4 @@ jobs:
           exit(1 if high_count > 0 else 0)
           EOF
           fi
+

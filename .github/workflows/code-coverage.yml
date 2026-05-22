@@ -1,4 +1,4 @@
-name: Django Test Coverage Metrics
+﻿name: Django Test Coverage Metrics
 
 on:
   push:
@@ -41,7 +41,7 @@ jobs:
       run: |
         cd portfolai
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
         pip install PyGithub
     
     - name: Run migrations

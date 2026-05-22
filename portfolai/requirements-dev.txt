@@ -1,0 +1,14 @@
+﻿-r requirements.txt
+
+# Testing
+pytest==9.0.0
+pytest-django==4.7.0
+pytest-cov==4.1.0
+pytest-timeout==2.4.0
+coverage==7.3.2
+
+# CI / local quality and security (not installed on Render)
+bandit
+safety>=3.0.0
+pylint
+flake8

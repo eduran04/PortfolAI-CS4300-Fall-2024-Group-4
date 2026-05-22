@@ -1,8 +1,9 @@
-# Virtual environments
+﻿# Virtual environments
 myenv/
 venv/
 env/
 .venv/
+.venv-safety-test/
 .env/
 ENV/
 env.bak/
