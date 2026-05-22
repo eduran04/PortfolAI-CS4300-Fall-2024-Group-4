@@ -27,9 +27,10 @@ class StockSummaryTests(TestCase):
         mock_client.quote.return_value = {'c': 150.0, 'pc': 148.0}
         mock_client.company_profile2.return_value = {'name': 'Apple Inc.'}
 
-        with patch('core.views.stock_data.finnhub_client', mock_client):
-            url = reverse('stock_summary')
-            response = self.client.get(url, {'symbol': 'AAPL'})
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test-key'):
+            with patch('core.views.stock_data.finnhub_client', mock_client):
+                url = reverse('stock_summary')
+                response = self.client.get(url, {'symbol': 'AAPL'})
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -44,9 +45,10 @@ class StockSummaryTests(TestCase):
         mock_client.quote.return_value = {'c': 150.0, 'pc': 148.0}
         mock_client.company_profile2.return_value = {'name': 'Apple Inc.'}
 
-        with patch('core.views.stock_data.finnhub_client', mock_client):
-            url = reverse('stock_summary')
-            response = self.client.get(url, {'symbol': ''})
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test-key'):
+            with patch('core.views.stock_data.finnhub_client', mock_client):
+                url = reverse('stock_summary')
+                response = self.client.get(url, {'symbol': ''})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['symbol'], 'AAPL')
@@ -56,9 +58,10 @@ class StockSummaryTests(TestCase):
         mock_client = MagicMock()
         mock_client.quote.side_effect = Exception('API error')
 
-        with patch('core.views.stock_data.finnhub_client', mock_client):
-            url = reverse('stock_summary')
-            response = self.client.get(url, {'symbol': 'AAPL'})
+        with patch.object(settings, 'FINNHUB_API_KEY', 'test-key'):
+            with patch('core.views.stock_data.finnhub_client', mock_client):
+                url = reverse('stock_summary')
+                response = self.client.get(url, {'symbol': 'AAPL'})
 
         self.assertEqual(response.status_code, 500)
         self.assertIn('error', response.json())
