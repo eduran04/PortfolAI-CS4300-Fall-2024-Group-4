@@ -1,29 +1,63 @@
-# PortfolAI - AI-Powered Stock Analysis Platform
+# PortfolAI - Stock Analysis Demo Platform
 
-Django-based web application for stock analysis and portfolio management with real-time market data.
+Django-based demo web application for stock analysis with live market data.
 
 [![CI Pipeline](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/code-coverage.yml/badge.svg)](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/code-coverage.yml)
-[![AI Code Review](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ai-code-review.yml/badge.svg)](https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4/actions/workflows/ai-code-review.yml)
 [![Deployed on Render (Custom Domain)](https://img.shields.io/badge/Deployed%20on-Render-46E3B7?logo=render)](https://www.portfolai.org/)
 
 **Repository:** https://github.com/skalyan04/PortfolAI-CS4300-Fall-2024-Group-4  
 **Live Demo:** https://www.portfolai.org/
 
 ## Key Features
-- Real-time market data: quotes, market movers, and news powered by Finnhub, Alpha Vantage, and NewsAPI.
-- Stock insights: AI-generated stock summaries and portfolio analysis using OpenAI.
-- Watchlist management: create, view, and track tickers using realtime data.
-- PortfolAI tools: stock summary, performance overview, and risk context via Alpha Vantage/Finnhub data.
-- Guided learning: curated learn endpoints for investing fundamentals.
-- Chat bot: context aware chatbot powered by OpenAI to answer your questions.
-- Secure auth: Django auth with session-based APIs.
+- **Demo login:** shared demo account — no public registration
+- **Live market data:** quotes, market movers, and news via Finnhub, Alpha Vantage, and NewsAPI
+- **Browser watchlist:** add/remove tickers stored in localStorage
+- **Demo insights:** template stock analysis enriched with live quote data
+- **Guided learning:** curated investing fundamentals with mock explanations
+- **Demo help chat:** navigation and feature guidance (no AI)
+
+## Demo Mode
+
+This project runs as a **demo-only** deployment:
+
+| Included | Removed |
+|----------|---------|
+| Shared demo login (`DEMO_USERNAME` / `DEMO_PASSWORD`) | OpenAI / AI chat & analysis |
+| Live market APIs (Finnhub, Alpha Vantage, NewsAPI) | Supabase / Postgres |
+| SQLite (demo user + sessions only) | Watchlist database persistence |
+| Browser localStorage watchlist | Public signup |
+
+### Required environment variables
+
+```
+SECRET_KEY=
+FINNHUB_API_KEY=
+ALPHA_VANTAGE_API_KEY=
+NEWS_API_KEY=
+DEMO_PASSWORD=
+DEMO_USERNAME=demo          # optional, defaults to "demo"
+ALLOWED_HOSTS=localhost,127.0.0.1
+```
+
+### First-time setup
+
+```bash
+cd portfolai
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+python manage.py migrate
+python manage.py ensure_demo_user
+python manage.py runserver 0.0.0.0:3000
+```
+
+See [SETUP.md](SETUP.md) for full instructions.
 
 ## Technologies
 - Backend: Django, Django REST Framework, Python
-- Database: PostgreSQL on Supabase (separate development/production instances)
+- Database: SQLite (demo user and sessions only)
 - Frontend: JavaScript, HTML, CSS (Django templates/static assets)
-- Deployment: Render, Cloudflare 
-- APIs: Finnhub, Alpha Vantage, NewsAPI, OpenAI
+- Deployment: Render, Cloudflare
+- APIs: Finnhub, Alpha Vantage, NewsAPI
 - Tooling: pytest/coverage, Bandit, Flake8, Pylint, Gunicorn, Whitenoise
 
 ## Project Structure
@@ -103,7 +137,8 @@ PortfolAI-CS4300-Fall-2024-Group-4/
 │   ├── db.sqlite3                          # SQLite database file
 │   ├── pyproject.toml                      # Python project configuration
 │   ├── pytest.ini                          # Pytest configuration
-│   ├── requirements.txt                    # Python dependencies
+│   ├── requirements.txt                    # Production Python dependencies
+│   ├── requirements-dev.txt                # Dev/CI: pytest, linters, Safety
 │   └── htmlcov/                            # Coverage HTML reports (generated)
 ├── Pylint.txt                              # Pylint output
 ├── README.md                               # Project documentation

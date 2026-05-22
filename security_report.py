@@ -1,4 +1,4 @@
-"""Security report automation for GitHub pull requests."""
+﻿"""Security report automation for GitHub pull requests."""
 
 import json
 import os
@@ -195,32 +195,35 @@ def _parse_safety_json(file_path: str) -> list:
 
 
 def _parse_safety_text(file_path: str) -> list:
-    """Parse Safety text file and return list of issues."""
+    """Parse Safety text output and return list of issues."""
     issues = []
     if not os.path.exists(file_path):
         return issues
-    
+
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
     except IOError:
         return issues
-    
+
     for line in lines:
-        if '|' not in line or 'package' in line.lower():
+        stripped = re.sub(r'\x1b\[[0-9;]*m', '', line).strip()
+        if 'Vulnerability found in' not in stripped:
             continue
-        
-        parts = [p.strip() for p in line.split('|')]
-        if len(parts) < 3:
+        match = re.search(
+            r'Vulnerability found in\s+(\S+)\s+version\s+(\S+)',
+            stripped,
+            re.IGNORECASE,
+        )
+        if not match:
             continue
-        
         issues.append({
-            'package': parts[0] if len(parts) > 0 else '',
-            'installed': parts[1] if len(parts) > 1 else '',
-            'vulnerable': parts[2] if len(parts) > 2 else '',
-            'advisory': parts[3] if len(parts) > 3 else ''
+            'package': match.group(1),
+            'installed': match.group(2),
+            'vulnerable': '',
+            'advisory': stripped,
         })
-    
+
     return issues
 
 
@@ -374,3 +377,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+

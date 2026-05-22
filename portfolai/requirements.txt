@@ -1,33 +1,22 @@
-# Core Django
-Django==5.2.9
+﻿# Core Django
+Django==5.2.14
 
 # Django REST Framework (for API endpoints)
 djangorestframework==3.15.2
 
 # API integrations
 finnhub-python==2.4.20
-requests>=2.31.0
+requests==2.34.2
 newsapi-python>=0.2.7
 
 # Environment management (for API keys)
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 
 # CORS (if your frontend and backend communicate separately)
 django-cors-headers==4.4.0
 
-# For production deployments (optional)
+# Production server and static files
 gunicorn==23.0.0
 whitenoise==6.6.0
 
-# Testing dependencies
-pytest==9.0.0
-pytest-django==4.7.0
-pytest-cov==4.1.0
-pytest-timeout==2.4.0
-coverage==7.3.2
 
-# Security dependencies
-bandit
-safety>=2.3.5,<3.0.0
-pylint 
-flake8

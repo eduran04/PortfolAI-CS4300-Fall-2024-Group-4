@@ -1,8 +1,9 @@
-# Virtual environments
+﻿# Virtual environments
 myenv/
 venv/
 env/
 .venv/
+.venv-safety-test/
 .env/
 ENV/
 env.bak/
@@ -142,3 +143,12 @@ dmypy.json
 *.temp
 temp/
 tmp/
+
+# CI / local security scan outputs (generated)
+portfolai/bandit.json
+portfolai/bandit-ci.json
+portfolai/pylint.txt
+portfolai/safety.txt
+portfolai/safety.json
+portfolai/safety-*.txt
+portfolai/safety-out.json
