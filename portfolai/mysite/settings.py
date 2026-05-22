@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-import dj_database_url
 
 load_dotenv()
 
@@ -21,16 +20,19 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
 SECRET_KEY = os.getenv("SECRET_KEY")
+
+# Demo authentication (shared login account)
+DEMO_USERNAME = os.getenv("DEMO_USERNAME", "demo")
+DEMO_PASSWORD = os.getenv("DEMO_PASSWORD", "demo123")
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-#SECRET_KEY = 'django-insecure-z4ih%dt*unw7*5(t*hv7(uur(cx1utk@*#yj2rk(m1hn(i@_-g'
+# SECRET_KEY = 'django-insecure-z4ih%dt*unw7*5(t*hv7(uur(cx1utk@*#yj2rk(m1hn(i@_-g'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -83,33 +85,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
 
-# Database
+# Database — SQLite only (demo user + sessions)
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Use Supabase Postgres if SUPABASE_DB_URL is set, otherwise fallback to SQLite for local development
-SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
-
-if SUPABASE_DB_URL:
-    # Production: Use Supabase Postgres database
-    # Strip whitespace and quotes that might be in .env file
-    SUPABASE_DB_URL = SUPABASE_DB_URL.strip().strip('"').strip("'")
-    db_config = dj_database_url.parse(SUPABASE_DB_URL)
-    db_config['CONN_MAX_AGE'] = 600
-    DATABASES = {
-        'default': db_config
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,
+        },
+        'CONN_MAX_AGE': 0,
     }
-else:
-    # Local development: Fallback to SQLite
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-            'OPTIONS': {
-                'timeout': 20,  # Wait 20 seconds before raising "database is locked" error
-            },
-            'CONN_MAX_AGE': 0,  # Don't persist connections (SQLite doesn't support connection pooling)
-        }
-    }
+}
 
 
 # Password validation

@@ -1,8 +1,8 @@
 """
-Analysis Views - AI-Powered Stock Analysis
-===========================================
+Analysis Views - Demo Stock Analysis
+=====================================
 
-Advanced AI analysis endpoints with OpenAI integration.
+Template-based stock analysis with live market data enrichment.
 """
 
 from datetime import datetime, timedelta
@@ -12,8 +12,7 @@ import requests
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from django.conf import settings
-from ._clients import finnhub_client, openai_client, newsapi
+from ._clients import finnhub_client, newsapi
 from ..serializers import SymbolInputSerializer
 
 logger = logging.getLogger(__name__)
@@ -53,63 +52,8 @@ FALLBACK_ANALYSIS = """
 - Industry developments and regulatory changes
 - Market volatility and economic indicators
 
-*Note: This is a basic analysis. For detailed AI-powered insights
-with real-time web search data, latest news, and current market
-information, please configure the OpenAI API key.*
+*Note: Demo mode — template insights enriched with live market data when API keys are configured.*
 """
-
-ANALYSIS_PROMPT = """
-        As a financial analyst AI, provide a comprehensive analysis of {symbol}
-        stock using real-time web data.
-
-        {context}
-
-        Please search for and analyze:
-        1. Latest news and developments about {symbol}
-        2. Recent earnings reports and financial performance
-        3. Market sentiment and analyst opinions
-        4. Industry trends and competitive landscape
-        5. Recent price movements and technical indicators
-        6. Regulatory or legal developments affecting the company
-        7. Insider sentiment and trading activity (MSPR indicators if available)
-        8. Analyst recommendation trends (buy/hold/sell ratings if available)
-
-        Provide a structured analysis with:
-        - Technical Analysis (current price trends, support/resistance levels)
-        - Fundamental Analysis (recent financials, earnings, growth prospects)
-        - Market Sentiment (news sentiment, analyst ratings, insider activity, market buzz)
-        - Risk Assessment (key risks and opportunities)
-        - Investment Recommendation (Buy/Hold/Sell with detailed reasoning)
-        - Key Factors to Watch (upcoming events, catalysts)
-
-        Include specific recent data points, news headlines, and market
-        developments. Keep the analysis professional, balanced, and educational.
-        Remember this is for learning purposes only, not financial advice.
-        """
-
-SYSTEM_PROMPT = (
-    "You are a hyper-intelligent quant who's worked at Citadel, "
-    "Jane Street, Fidelity Investments, Schwabs, Vanguard and SIG. "
-    "You speak like a confident tech bro - sharp, casual, and full "
-    "of finance + beginner friendly analogies. You're extremely good "
-    "at breaking down complex quant, ML, and finance topics into "
-    "simple, intuitive explanations — like you're explaining it to an "
-    "intern over coffee. Your tone should be analytical but chill: "
-    "drop bits of quant/tech slang naturally (\"alpha,\" \"variance,\" "
-    "\"latency,\" \"throughput,\" \"regime shift,\" \"P&L,\" "
-    "\"backtest,\" etc.). Always keep responses structured, with "
-    "concise reasoning and occasional one-liners that make you sound "
-    "like you've been in the trenches. When explaining something "
-    "technical: Use examples from trading, ML, or data pipelines. "
-    "Avoid academic verbosity - aim for clarity and alpha bro aura. "
-    "Sprinkle in dry humor or mild flexes (\"Yeah, that's basically "
-    "half my PhD thesis compressed into two lines of Python.\"). "
-    "When you don't know something, reason it out like you're "
-    "debugging a bad backtest, not guessing. Provide detailed, "
-    "educational stock analysis using the provided real-time data and "
-    "your knowledge. Always remind users that this is for educational "
-    "purposes only and not financial advice."
-)
 
 
 # HELPER FUNCTIONS TO PREVENT NESTING
@@ -362,67 +306,37 @@ def _fetch_recommendation_trends(symbol):
     return ""
 
 
-def _build_analysis_context(symbol, stock_data):
-    """
-    Build analysis context string from symbol and stock data.
+def _build_demo_analysis(symbol):
+    """Build template analysis enriched with live market data."""
+    analysis = FALLBACK_ANALYSIS.format(symbol=symbol)
+    stock_data = _fetch_stock_data(symbol)
 
-    Args:
-        symbol: Stock symbol
-        stock_data: Stock data dictionary or None
-
-    Returns:
-        str: Formatted context string
-    """
-    context = f"Analyze the stock {symbol}"
     if stock_data:
-        context += (
-            f" with current price ${stock_data['price']:.2f}, "
-            f"change {stock_data['change']:.2f} "
-            f"({stock_data['changePercent']:.2f}%), "
-            f"volume {stock_data['volume']:,}, "
-            f"high ${stock_data['high']:.2f}, "
-            f"low ${stock_data['low']:.2f}, "
-            f"open ${stock_data['open']:.2f}"
+        live_section = (
+            f"\n\n**Live Market Data for {symbol}:**\n"
+            f"- Current Price: ${stock_data['price']:.2f}\n"
+            f"- Change: {stock_data['change']:+.2f} "
+            f"({stock_data['changePercent']:+.2f}%)\n"
+            f"- Open: ${stock_data['open']:.2f}\n"
+            f"- High: ${stock_data['high']:.2f}\n"
+            f"- Low: ${stock_data['low']:.2f}\n"
+            f"- Volume: {stock_data['volume']:,}\n"
         )
-    return context
+        analysis = live_section + analysis
 
-
-def _generate_ai_analysis(_symbol, enhanced_prompt):
-    """
-    Generate AI analysis using OpenAI API.
-
-    Args:
-        _symbol: Stock symbol (unused, kept for API consistency)
-        enhanced_prompt: Complete prompt with all context
-
-    Returns:
-        str: AI-generated analysis text
-
-    Raises:
-        Exception: If OpenAI API call fails
-    """
-    response = openai_client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": enhanced_prompt}
-        ],
-        max_tokens=1500,
-        temperature=0.7
-    )
-    return response.choices[0].message.content
+    analysis += _fetch_news_context(symbol)
+    analysis += _fetch_company_context(symbol)
+    analysis += _fetch_insider_sentiment(symbol)
+    analysis += _fetch_recommendation_trends(symbol)
+    return analysis
 
 
 @api_view(["GET"])
 def portfolai_analysis(request):
     """
-    AI-Powered Stock Analysis - Feature 4: OpenAI Integration
+    Demo stock analysis with live market data enrichment.
     Endpoint: /api/portfolai-analysis/?symbol=AAPL
-    Purpose: Get AI-powered stock analysis using OpenAI
-    Features: Web search integration, real-time data analysis, educational insights
-    Example: /api/portfolai-analysis/?symbol=AAPL
     """
-    # Validate and sanitize input using serializer
     serializer = SymbolInputSerializer(data=request.GET)
     if not serializer.is_valid():
         return Response(
@@ -431,76 +345,11 @@ def portfolai_analysis(request):
         )
 
     symbol = serializer.validated_data['symbol']
+    analysis = _build_demo_analysis(symbol)
 
-    # Check if API key is available
-    if not settings.OPENAI_API_KEY or not openai_client:
-        fallback_analysis = FALLBACK_ANALYSIS.format(symbol=symbol)
-        return Response({
-            "symbol": symbol,
-            "analysis": fallback_analysis,
-            "timestamp": datetime.now().isoformat(),
-            "fallback": True
-        })
-
-    try:
-        # Get stock data for context
-        stock_data = _fetch_stock_data(symbol)
-
-        # Build context for OpenAI
-        context = _build_analysis_context(symbol, stock_data)
-
-        # Create the prompt for OpenAI with web search
-        prompt = ANALYSIS_PROMPT.format(symbol=symbol, context=context)
-
-        # Get additional real-time data to enhance the analysis
-        additional_context = _fetch_news_context(symbol)
-        additional_context += _fetch_company_context(symbol)
-        additional_context += _fetch_insider_sentiment(symbol)
-        additional_context += _fetch_recommendation_trends(symbol)
-
-        # Enhanced prompt with real-time data
-        enhanced_prompt = prompt + additional_context
-
-        # Generate AI analysis
-        try:
-            analysis = _generate_ai_analysis(symbol, enhanced_prompt)
-
-            return Response({
-                "symbol": symbol,
-                "analysis": analysis,
-                "timestamp": datetime.now().isoformat(),
-                "data_used": stock_data is not None
-            })
-        except Exception as api_error:  # pylint: disable=broad-exception-caught
-            # Log detailed error information for debugging
-            error_type = type(api_error).__name__
-            error_message = str(api_error)
-            user_name = (
-                request.user.username if request.user.is_authenticated
-                else 'anonymous'
-            )
-            logger.error(
-                "OpenAI API error generating analysis for %s: Type=%s, Message=%s, User=%s",
-                symbol, error_type, error_message, user_name
-            )
-            # Re-raise to be caught by outer exception handler
-            raise
-
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        # Log detailed error information for debugging
-        error_type = type(e).__name__
-        error_message = str(e)
-        user_name = (
-            request.user.username if request.user.is_authenticated
-            else 'anonymous'
-        )
-        logger.error(
-            "Error generating AI analysis for %s: Type=%s, Message=%s, User=%s",
-            symbol, error_type, error_message, user_name
-        )
-        return Response({
-            "error": (
-                "An internal error occurred while generating the analysis. Please try again later."
-            ),
-            "fallback": True
-        }, status=500)
+    return Response({
+        "symbol": symbol,
+        "analysis": analysis,
+        "timestamp": datetime.now().isoformat(),
+        "fallback": True,
+    })

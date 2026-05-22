@@ -87,7 +87,7 @@ function showAnalysisModal(symbol, analysis, isFallback) {
               </div>
               <div>
                 <h2 class="text-2xl font-bold">PortfolAI Analysis</h2>
-                <p class="text-purple-200 text-sm">AI-Powered Stock Analysis for <span id="analysisSymbol" class="font-semibold">${escapeHTML(symbol)}</span></p>
+                <p class="text-purple-200 text-sm">Demo insights for <span id="analysisSymbol" class="font-semibold">${escapeHTML(symbol)}</span></p>
               </div>
             </div>
             <button id="closeAnalysisModal" class="text-white hover:text-purple-200 transition-colors duration-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-10">
@@ -99,7 +99,7 @@ function showAnalysisModal(symbol, analysis, isFallback) {
         </div>
         <div class="p-6 overflow-y-auto max-h-[65vh]">
           <div id="analysisContent" class="text-gray-700 dark:text-gray-300 prose prose-lg max-w-none"></div>
-          ${isFallback ? '<div class="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900 dark:to-orange-900 border-l-4 border-yellow-400 rounded-r-lg"><div class="flex items-center"><svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg><span class="text-yellow-800 dark:text-yellow-200 font-medium">Demo Analysis</span></div><p class="text-yellow-700 dark:text-yellow-300 text-sm mt-1">OpenAI API not configured - showing sample analysis for demonstration purposes.</p></div>' : ''}
+          ${isFallback ? '<div class="mt-6 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900 dark:to-orange-900 border-l-4 border-yellow-400 rounded-r-lg"><div class="flex items-center"><svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg><span class="text-yellow-800 dark:text-yellow-200 font-medium">Demo Insights</span></div><p class="text-yellow-700 dark:text-yellow-300 text-sm mt-1">Template analysis enriched with live market data — for educational purposes only.</p></div>' : ''}
         </div>
       </div>
     `;

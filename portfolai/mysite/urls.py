@@ -33,9 +33,6 @@ from core.views import (
     get_news,
     get_market_news,
     portfolai_analysis,
-    get_watchlist,
-    add_to_watchlist,
-    remove_from_watchlist,
     chat_api,
     clear_chat,
 )
@@ -47,7 +44,7 @@ urlpatterns = [
     path("dashboard/", trading_dashboard, name="dashboard"),
     path("markets/", markets_view, name="markets"),
     path("learn/", learn_view, name="learn"),
-    # Authentication URLs (login, logout, signup)
+    # Authentication URLs (login, logout)
     path("accounts/", include('core.urls')),
     # API endpoints
     path("api/hello/", hello_api, name="hello_api"),
@@ -64,10 +61,6 @@ urlpatterns = [
     path("api/chat/", chat_api, name="chat_api"),
     path("api/chat/clear/", clear_chat, name="clear_chat"),
     path("api/chatbot/", chat_api, name="chatbot"),
-    # Watchlist endpoints
-    path("api/watchlist/", get_watchlist, name="get_watchlist"),
-    path("api/watchlist/add/", add_to_watchlist, name="add_to_watchlist"),
-    path("api/watchlist/remove/", remove_from_watchlist, name="remove_from_watchlist"),
     # learning resources endpoints
     path("api/learn/topics/", learn.learn_topics, name="learn_topics"),
     path("api/learn/topic/<slug:slug>/", learn.learn_topic_detail, name="learn_topic_detail"),

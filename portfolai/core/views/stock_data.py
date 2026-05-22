@@ -11,7 +11,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.core.cache import cache
 from django.conf import settings
-from ._clients import finnhub_client, openai_client, FALLBACK_STOCKS
+from ._clients import finnhub_client, FALLBACK_STOCKS
 from ..api_helpers import is_rate_limit_error, get_cached_response, log_error_with_context
 
 logger = logging.getLogger(__name__)
@@ -305,59 +305,50 @@ def _get_fallback_search_results(query):
 @api_view(["GET"])
 def stock_summary(request):
     """
-    Advanced Stock Summary - Feature 1: Real-Time Stock Data + AI Analysis
+    Stock summary with live quote data (demo mode — no AI summary).
     Endpoint: /api/stock/?symbol=AAPL
-    Requires: Both Finnhub API key AND OpenAI API key
-    Returns: Stock data + AI-generated summary
-    Example: /api/stock/?symbol=AAPL
     """
     symbol = request.GET.get("symbol", "AAPL").strip().upper()
 
-    # Handle empty or whitespace symbols
     if not symbol:
         symbol = "AAPL"
 
-    # Check if API keys are available - return error if not
-    has_finnhub = settings.FINNHUB_API_KEY and finnhub_client
-    has_openai = settings.OPENAI_API_KEY and openai_client
-
-    if not has_finnhub or not has_openai:
-        return Response({"error": "API keys not configured"}, status=500)
+    if not settings.FINNHUB_API_KEY or not finnhub_client:
+        return Response({"error": "Finnhub API key not configured"}, status=500)
 
     try:
-        # Fetch stock quote from Finnhub
         quote = finnhub_client.quote(symbol)
         company = finnhub_client.company_profile2(symbol=symbol)
 
-        # Ask OpenAI to summarize
-        summary_prompt = f"Summarize this stock data for {symbol}: {quote}"
-        response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a financial analyst."},
-                {"role": "user", "content": summary_prompt}
-            ]
+        price = quote.get('c', 0)
+        change = quote.get('c', 0) - quote.get('pc', 0)
+        change_pct = (
+            (change / quote.get('pc', 1) * 100) if quote.get('pc', 0) else 0
         )
-        ai_summary = response.choices[0].message.content
+        summary = (
+            f"Demo summary for {symbol}: "
+            f"price ${price:.2f}, change {change:+.2f} ({change_pct:+.2f}%). "
+            "For educational purposes only."
+        )
 
         return Response({
             "symbol": symbol,
             "company": company,
             "quote": quote,
-            "ai_summary": ai_summary
+            "summary": summary,
+            "demo": True,
         })
 
     except Exception as e:  # pylint: disable=broad-exception-caught
-        # Log detailed error information for debugging
         log_error_with_context(
             e, request, logger,
-            "Error generating AI summary for %s: Type=%s, Message=%s, User=%s",
+            "Error generating stock summary for %s: Type=%s, Message=%s, User=%s",
             symbol
         )
         return Response(
             {
                 "error": (
-                    "An internal error occurred while generating the summary. "
+                    "An internal error occurred while fetching stock summary. "
                     "Please try again later."
                 )
             },

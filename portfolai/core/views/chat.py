@@ -1,341 +1,127 @@
 """
-Chat Views - PortfolAI Chatbot API
-===================================
+Chat Views - Demo Help API
+===========================
 
-Chatbot endpoint for AI-powered user interactions with session-based memory,
-user context awareness, and real-time web search capabilities.
+Canned demo responses for navigation and feature help. Session history
+is stored in the user's session (no database).
 """
 
 import json
 import logging
-import re
-import requests
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
-from ._clients import openai_client, newsapi
-from ..models import Watchlist
-from ..api_helpers import log_error_with_context
 
 logger = logging.getLogger(__name__)
 
-
-# PROMPT CONSTANTS
-
-CLASSIFICATION_PROMPT = """You are a classifier for a stock market chatbot.
-Determine if the user's query requires real-time stock market data, current news,
-or up-to-date information to answer properly.
-
-Answer with ONLY 'yes' or 'no' - no other text.
-
-User query: {user_message}
-
-Does this query require real-time data? Answer:"""
-
-CLASSIFICATION_SYSTEM_MESSAGE = "You are a classifier. Respond with only 'yes' or 'no'."
-
-SYSTEM_PROMPT_BASE = """You are PortfolAI Assistant; a friendly, knowledgeable AI chatbot
-that helps users with stock market insights, portfolio strategy, and
-investment education.
-
-RESPONSE GUIDELINES - BE CONCISE:
-- Keep responses focused and scannable (2-4 key points maximum)
-- Prioritize the most relevant information based on the user's specific question
-- Only provide comprehensive details when the user explicitly asks for
-  "overview", "details", or "everything"
-- Instead of information dumps, ask follow-up questions like
-  "Would you like to know more about [specific aspect]?"
-- Keep responses conversational and easy to digest
-- Break up long responses into clear, numbered sections only when necessary
-
-FORMATTING GUIDELINES:
-- Use numbered lists (1. **Section Title**: description) for structured information
-- Use bold text (**Section Name**) for section headers and important terms
-- Use bullet points (- Item) for sub-items or lists
-- Use markdown headers (### Header or ### Header:) for major sections when appropriate
-- Use inline code formatting (`$value` or `symbol`) for stock symbols, prices, and specific values
-- For key-value pairs, use format: "Key: Value" (will be auto-formatted)
-- Keep responses well-organized and easy to scan
-- Ownership questions: respond with "Company: <name>; Ticker: $<symbol>".
-  If the owner is private or unknown, say "Company: <name>; Ticker: private/unknown"."""
-
-SCOPE_PROMPT = """
-IMPORTANT: You MUST only answer questions related to:
-- Stock market analysis and investment education
-- Portfolio management and strategy
-- Questions about stocks, markets, and financial instruments
-- Corporate/brand ownership when it can be tied to a public company (include
-  the parent company and ticker if known)
-- PortfolAI application features and data
-
-If users ask about topics outside this scope (e.g., general knowledge,
-other subjects, personal advice unrelated to investing), politely decline
-and redirect them to ask about stocks, markets, portfolio management, or
-corporate ownership with tickers.
-Keep your tone concise, analytical, and beginner-friendly."""
-
-USER_CONTEXT_HEADER = """
-CRITICAL USER CONTEXT (use this information, do NOT make assumptions or hallucinate!!!):
-{user_context}"""
-
-USER_CONTEXT_RULES = """
-IMPORTANT RULES FOR USING CONTEXT:
-- When asked about the user's watchlist, ONLY list the symbols shown in
-  'User's watchlist' above
-- If 'User's watchlist: empty' is shown, tell the user their watchlist is empty
-- When asked about search history or 'what did I search', refer to
-  'Recent searches' from the context above
-- If recent searches are provided, you DO have access to search history -
-  use it directly
-- The most recent search is the LAST item in the 'Recent searches' list
-- NEVER claim you don't have access to search history if 'Recent searches'
-  is provided in the context
-- NEVER add stocks to the watchlist that aren't explicitly listed in the context
-- If the context says 'empty' or 'none', that is the accurate answer -
-  do not guess or assume"""
-
-
-# PROMPT BUILDERS
-
-def _build_classification_prompt(user_message):
-    """Build classification prompt with user message."""
-    return CLASSIFICATION_PROMPT.format(user_message=user_message)
-
-
-def _build_system_prompt(user_context=None):
-    """Build complete system prompt with optional user context."""
-    prompt = SYSTEM_PROMPT_BASE + SCOPE_PROMPT
-
-    if user_context:
-        prompt += USER_CONTEXT_HEADER.format(user_context=user_context)
-        prompt += USER_CONTEXT_RULES
-
-    return prompt
-
-
-# HELPER FUNCTIONS TO PREVENT NESTING
-
-def _get_user_context(request):
-    """Build user context string from watchlist and recent searches."""
-    context_parts = []
-
-    # Get watchlist if user is authenticated
-    if request.user.is_authenticated:
-        try:
-            # Explicitly filter by authenticated user to prevent cross-user data leakage
-            user_id = request.user.id
-            watchlist_items = Watchlist.objects.filter(user_id=user_id)  # pylint: disable=no-member
-            symbols = [item.symbol for item in watchlist_items]
-
-            # Log for debugging
-            logger.info(
-                "Fetching watchlist for user %s (ID: %s): %s items",
-                request.user.username, user_id, len(symbols)
-            )
-
-            if symbols:
-                context_parts.append(f"User's watchlist: {', '.join(symbols)}")
-            else:
-                # Explicitly state empty to prevent AI from hallucinating
-                context_parts.append("User's watchlist: empty")
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            logger.error("Error fetching watchlist for user %s: %s", request.user.username, e)
-            context_parts.append("User's watchlist: error fetching data")
-
-    # Get recent searches from session
-    recent_searches = request.session.get('recent_searches', [])
-    if recent_searches:
-        context_parts.append(f"Recent searches (most recent first): {', '.join(recent_searches)}")
-    else:
-        context_parts.append("Recent searches: none")
-
-    return ". ".join(context_parts) if context_parts else None
-
-
-def _needs_web_search(user_message, client):
-    """
-    Use AI to determine if the query requires real-time web search data.
-    Returns True if the query needs current stock market data, news, or real-time information.
-    """
-    if not client:
-        return False
-
-    lowered_message = user_message.lower()
-
-    # Quick check for explicit $SYMBOL format - always needs web search
-    if re.search(r'\$[A-Z]{1,5}\b', user_message.upper()):
-        return True
-
-    # Heuristic: ownership/parent-company questions often need live data
-    ownership_triggers = [
-        "who owns", "owner of", "who is the owner", "who acquired",
-        "acquired by", "parent company", "who bought"
-    ]
-    if any(trigger in lowered_message for trigger in ownership_triggers):
-        return True
-
-    # Use AI to classify if the query needs real-time data
-    try:
-        classification_prompt = _build_classification_prompt(user_message)
-
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": CLASSIFICATION_SYSTEM_MESSAGE},
-                {"role": "user", "content": classification_prompt}
-            ],
-            temperature=0.1,  # Low temperature for consistent classification
-            max_tokens=5
-        )
-
-        answer = response.choices[0].message.content.strip().lower()
-        return answer.startswith('yes')
-
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.warning("Error classifying query for web search: %s", e)
-        # Fallback: return False to avoid unnecessary API calls
-        return False
-
-
-def _get_symbol_for_context(request, user_message):
-    """
-    Get stock symbol for context - prioritizes recent searches,
-    falls back to explicit $SYMBOL format.
-    Returns list of symbols (usually just one, the most recent search).
-    """
-    symbols = []
-
-    # Primary approach: Use most recently searched symbol from session
-    recent_searches = request.session.get('recent_searches', [])
-    if recent_searches:
-        # Get the last (most recent) search
-        most_recent = recent_searches[-1]
-        symbols.append(most_recent)
-
-    # Fallback: Only extract explicit $SYMBOL format from message
-    # Avoid extracting from natural language to prevent false positives
-    dollar_symbols = re.findall(r'\$([A-Z]{1,5})\b', user_message.upper())
-    for symbol in dollar_symbols:
-        if symbol not in symbols:
-            symbols.append(symbol)
-
-    return symbols[:2]  # Limit to 2 symbols
-
-
-def _get_openai_web_context(symbol):
-    """Get OpenAI web search context for a symbol."""
-    if not openai_client:
-        return ""
-
-    if not hasattr(openai_client, 'responses'):
-        return ""
-
-    try:
-        search_query = f"{symbol} stock news today"
-        response = openai_client.responses.create(
-            model="gpt-4o",
-            tools=[{"type": "web_search"}],
-            input=search_query,
-        )
-
-        if not hasattr(response, 'output_text') or not response.output_text:
-            return ""
-
-        return f"\n\n**Web Search Results for {symbol}:**\n{response.output_text}"
-
-    except AttributeError:
-        # responses.create() not available in this SDK version
-        return ""
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.warning("OpenAI web search failed for %s: %s", symbol, e)
-        return ""
-
-
-def _format_news_articles(articles, symbol):
-    """Format news articles into a readable context string."""
-    if not articles:
-        return ""
-
-    recent_news = []
-    for article in articles[:3]:
-        title = article.get('title')
-        # Handle both old and new format
-        published_at = article.get('publishedAt') or article.get('published_at')
-        if title and published_at:
-            recent_news.append(f"- {title} ({published_at[:10]})")
-
-    if not recent_news:
-        return ""
-
-    return f"\n\n**Recent News about {symbol}:**\n" + "\n".join(recent_news)
-
-
-def _get_newsapi_context(symbol):
-    """Get The News API context for a symbol."""
-    if not newsapi or not newsapi.get('api_token'):
-        return ""
-
-    try:
-        url = 'https://api.thenewsapi.com/v1/news/all'
-        params = {
-            'api_token': newsapi['api_token'],
-            'search': f"{symbol} stock",
-            'language': 'en',
-            'categories': 'business',
-            'limit': 3,
-            'sort': 'published_at'
-        }
-
-        response = requests.get(url, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-
-        if 'error' in data or not data.get('data'):
-            return ""
-
-        articles = data.get('data', [])[:3]
-
-        # Transform to expected format
-        formatted_articles = []
-        for article in articles:
-            if article.get('title') and article.get('published_at'):
-                formatted_articles.append({
-                    'title': article.get('title', ''),
-                    'publishedAt': article.get('published_at', '')
-                })
-
-        return _format_news_articles(formatted_articles, symbol)
-
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.warning("Could not fetch news for %s: %s", symbol, e)
-        return ""
-
-
-def _get_web_search_context(symbols, _user_message):
-    """
-    Get web search context using both OpenAI's web search tool (if available) and NewsAPI.
-    Returns combined context from both sources.
-    """
-    if not symbols:
-        return ""
-
-    symbol = symbols[0] if symbols else None
-    if not symbol:
-        return ""
-
-    openai_web_context = _get_openai_web_context(symbol)
-    newsapi_context = _get_newsapi_context(symbol)
-
-    return openai_web_context + newsapi_context
+DEFAULT_RESPONSE = (
+    "I'm the PortfolAI **Demo Help** assistant. I can help you navigate the app:\n\n"
+    "1. **Dashboard** — search stocks, view charts, and manage your browser watchlist\n"
+    "2. **Markets** — top movers and market news\n"
+    "3. **Learn** — investing fundamentals\n\n"
+    "Try asking: \"How do I search for a stock?\" or \"What is the watchlist?\"\n\n"
+    "*This is a demo — not financial advice.*"
+)
+
+DEMO_RESPONSES = [
+    (
+        ("dashboard", "home", "navigate", "where"),
+        (
+            "The **Dashboard** (`/dashboard/`) is your main workspace:\n"
+            "- Search any ticker in the search bar\n"
+            "- View price charts and company details\n"
+            "- Add stocks to your watchlist (saved in your browser)\n"
+            "- Open **PortfolAI Analysis** for template insights with live data"
+        ),
+    ),
+    (
+        ("market", "mover", "news"),
+        (
+            "The **Markets** page (`/markets/`) shows:\n"
+            "- Top gainers and losers\n"
+            "- Latest market news\n\n"
+            "Live data comes from Finnhub, Alpha Vantage, and NewsAPI."
+        ),
+    ),
+    (
+        ("learn", "education", "tutorial", "basics"),
+        (
+            "The **Learn** page (`/learn/`) covers investing fundamentals:\n"
+            "- Stock market basics\n"
+            "- Reading charts\n"
+            "- Risk vs reward\n\n"
+            "Select a topic and request an explanation."
+        ),
+    ),
+    (
+        ("watchlist", "watch list", "save stock", "track"),
+        (
+            "Your **watchlist** is stored in your browser (localStorage):\n"
+            "- Click **Add to Watchlist** on the dashboard\n"
+            "- Remove items from the watchlist table\n"
+            "- Data persists across page refreshes on this device\n\n"
+            "It is not saved to a server in demo mode."
+        ),
+    ),
+    (
+        ("search", "find stock", "ticker", "symbol", "quote"),
+        (
+            "To **search for a stock**:\n"
+            "1. Go to the Dashboard\n"
+            "2. Type a ticker (e.g. `AAPL`) in the search bar\n"
+            "3. Press Enter or click Search\n\n"
+            "You'll see live quotes, charts, and company overview when API keys are configured."
+        ),
+    ),
+    (
+        ("analysis", "portfolai analysis", "insights", "analyze"),
+        (
+            "**PortfolAI Analysis** provides template insights enriched with live market data:\n"
+            "- Click the analysis button on the dashboard after searching a stock\n"
+            "- Includes price, news, and company context when APIs are available\n\n"
+            "*Demo mode — for educational purposes only, not financial advice.*"
+        ),
+    ),
+    (
+        ("login", "log in", "sign in", "account", "password"),
+        (
+            "Use the shared **demo account** to log in:\n"
+            "- Username is shown on the login page\n"
+            "- Password is set via the `DEMO_PASSWORD` environment variable\n\n"
+            "Registration is disabled in demo mode."
+        ),
+    ),
+    (
+        ("api", "data", "live", "real-time", "real time"),
+        (
+            "Live market data requires these API keys in `.env`:\n"
+            "- `FINNHUB_API_KEY` — quotes, search, company profiles\n"
+            "- `ALPHA_VANTAGE_API_KEY` — market movers, company overview\n"
+            "- `NEWS_API_KEY` — financial news\n\n"
+            "Without keys, the app falls back to static demo data."
+        ),
+    ),
+]
+
+
+def _get_demo_response(user_message):
+    """Return a canned response based on keyword matching."""
+    lowered = user_message.lower().strip()
+    if not lowered:
+        return DEFAULT_RESPONSE
+
+    for keywords, response in DEMO_RESPONSES:
+        if any(keyword in lowered for keyword in keywords):
+            return response
+
+    return DEFAULT_RESPONSE
 
 
 @csrf_exempt
 def chat_api(request):
     """
-    PortfolAI Chatbot API Endpoint
-    Responds to user chat messages with AI-powered answers.
-    Maintains session-based conversation memory and user context awareness.
+    Demo help chat endpoint.
+    Responds with canned navigation and feature guidance.
     """
     if request.method != "POST":
         return JsonResponse({"error": "POST method required"}, status=405)
@@ -343,97 +129,33 @@ def chat_api(request):
     try:
         data = json.loads(request.body.decode("utf-8"))
         user_message = data.get("message", "").strip()
-    except Exception:  # pylint: disable=broad-exception-caught
+    except (json.JSONDecodeError, UnicodeDecodeError):
         user_message = ""
 
     if not user_message:
         return JsonResponse({"error": "Message cannot be empty"}, status=400)
 
-    # Check if API key or client unavailable
-    if not getattr(settings, "OPENAI_API_KEY", None) or openai_client is None:
-        return JsonResponse(
-            {"response": f"(Fallback) You said: {user_message}", "fallback": True},
-            status=200,
-        )
-
-    # Initialize or get conversation history from session
     if 'chat_history' not in request.session:
         request.session['chat_history'] = []
 
     chat_history = request.session['chat_history']
-
-    # Limit history to last 20 messages (10 exchanges) to prevent token overflow
     if len(chat_history) > 20:
         chat_history = chat_history[-20:]
         request.session['chat_history'] = chat_history
 
-    # Build system prompt with scope restrictions and user context
-    user_context = _get_user_context(request)
-    system_prompt = _build_system_prompt(user_context)
+    reply = _get_demo_response(user_message)
 
-    # Only fetch web search context if AI determines the query needs real-time data
-    web_search_context = ""
-    if _needs_web_search(user_message, openai_client):
-        # Get stock symbol for context (prioritizes recent searches)
-        symbols = _get_symbol_for_context(request, user_message)
-        if symbols:
-            web_search_context = _get_web_search_context(symbols, user_message)
+    chat_history.append({"role": "user", "content": user_message})
+    chat_history.append({"role": "assistant", "content": reply})
+    request.session['chat_history'] = chat_history
+    request.session.modified = True
 
-    # Build enhanced user message with web search context if available
-    enhanced_message = user_message
-    if web_search_context:
-        enhanced_message += "\n\n" + web_search_context
-
-    # Build messages list: system prompt + conversation history + current message
-    messages = [{"role": "system", "content": system_prompt}]
-
-    # Add conversation history
-    for msg in chat_history:
-        messages.append(msg)
-
-    # Add current user message
-    messages.append({"role": "user", "content": enhanced_message})
-
-    try:
-        completion = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
-            temperature=0.7,
-            messages=messages,
-        )
-
-        reply = completion.choices[0].message.content.strip()
-
-        # Update session history with user message and bot response
-        chat_history.append({"role": "user", "content": user_message})
-        chat_history.append({"role": "assistant", "content": reply})
-        request.session['chat_history'] = chat_history
-        request.session.modified = True
-
-        return JsonResponse({"response": reply}, status=200)
-
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        log_error_with_context(
-            e, request, logger,
-            "Chatbot error: Type=%s, Message=%s, User=%s"
-        )
-        return JsonResponse(
-            {
-                "response": (
-                    "An internal error occurred while processing your request. "
-                    "Please try again later."
-                ),
-                "fallback": True,
-            },
-            status=200,
-        )
+    return JsonResponse({"response": reply, "demo": True}, status=200)
 
 
 @csrf_exempt
 def clear_chat(request):
-    """
-    Clear chat session history.
-    Endpoint: /api/chat/clear/
-    """
+    """Clear chat session history."""
     if request.method != "POST":
         return JsonResponse({"error": "POST method required"}, status=405)
 

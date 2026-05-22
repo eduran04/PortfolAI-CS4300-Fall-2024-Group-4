@@ -1,198 +1,75 @@
 /**
  * Watchlist Management
- * Handles watchlist CRUD operations with database persistence via API
+ * Browser localStorage persistence (demo mode — no server-side storage)
  */
 
-// Get CSRF token for API requests
-function getCSRFToken() {
-  return getCookie('csrftoken');
-}
+const WATCHLIST_STORAGE_KEY = 'stockWatchlist';
 
-// Watchlist state (loaded from API)
 let watchlist = [];
 
-// DOM references
 const watchlistItemsDiv = document.getElementById('watchlist-items');
 const emptyWatchlistMessage = document.getElementById('empty-watchlist-message');
 
-/**
- * Load watchlist from API
- * @returns {Promise<Array>} Array of stock symbols
- */
-async function loadWatchlist() {
-  try {
-    const response = await fetch('/api/watchlist/', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCSRFToken(),
-      },
-      credentials: 'same-origin',
-    });
-
-    if (!response.ok) {
-      if (response.status === 401) {
-        console.warn('User not authenticated, watchlist unavailable');
-        return [];
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    watchlist = data.symbols || [];
-    return watchlist;
-  } catch (error) {
-    console.error('Error loading watchlist:', error);
-    // Return empty array on error
-    return [];
-  }
+function saveWatchlist() {
+  localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(watchlist));
 }
 
-/**
- * Migrate localStorage watchlist to database
- * Called once on page load if user has localStorage data
- */
-async function migrateLocalStorageWatchlist() {
+function loadWatchlist() {
   try {
-    const localWatchlist = JSON.parse(localStorage.getItem('stockWatchlist')) || [];
-    
-    if (localWatchlist.length === 0) {
-      return; // Nothing to migrate
-    }
-
-    console.log(`Migrating ${localWatchlist.length} items from localStorage to database...`);
-    
-    // Add each symbol from localStorage to database
-    for (const symbol of localWatchlist) {
-      try {
-        await fetch('/api/watchlist/add/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken(),
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({ symbol: symbol }),
-        });
-      } catch (error) {
-        console.warn(`Failed to migrate ${symbol}:`, error);
-      }
-    }
-    
-    // Clear localStorage after successful migration
-    localStorage.removeItem('stockWatchlist');
-    console.log('LocalStorage watchlist migrated successfully');
-    
-    // Reload watchlist from API
-    await loadWatchlist();
+    watchlist = JSON.parse(localStorage.getItem(WATCHLIST_STORAGE_KEY)) || [];
   } catch (error) {
-    console.error('Error migrating localStorage watchlist:', error);
+    console.error('Error loading watchlist from localStorage:', error);
+    watchlist = [];
   }
+  return watchlist;
 }
 
-/**
- * Check if a stock is in the watchlist
- * @param {string} symbol - Stock symbol to check
- * @returns {boolean} True if stock is in watchlist
- */
 function isStockInWatchlist(symbol) {
   return watchlist.includes(symbol);
 }
 
-/**
- * Toggle a stock in the watchlist (add if not present, remove if present)
- * @param {string} symbol - Stock symbol to toggle
- */
 async function toggleWatchlist(symbol) {
   if (!symbol) return;
 
   const isInWatchlist = isStockInWatchlist(symbol);
-  
-  try {
-    if (isInWatchlist) {
-      // Remove from watchlist
-      const response = await fetch(`/api/watchlist/remove/?symbol=${encodeURIComponent(symbol)}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCSRFToken(),
-        },
-        credentials: 'same-origin',
-      });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Remove from local state
-      const index = watchlist.indexOf(symbol);
-      if (index > -1) {
-        watchlist.splice(index, 1);
-      }
-    } else {
-      // Add to watchlist
-      const response = await fetch('/api/watchlist/add/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': getCSRFToken(),
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({ symbol: symbol }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Add to local state
-      if (!watchlist.includes(symbol)) {
-        watchlist.push(symbol);
-      }
+  if (isInWatchlist) {
+    const index = watchlist.indexOf(symbol);
+    if (index > -1) {
+      watchlist.splice(index, 1);
     }
+  } else if (!watchlist.includes(symbol)) {
+    watchlist.push(symbol);
+  }
 
-    // Update UI
-    renderWatchlist();
+  saveWatchlist();
+  renderWatchlist();
 
-    const searchInput = document.getElementById('stock-search');
-    const currentSearchSymbol = searchInput.value.toUpperCase().trim();
-    if (currentSearchSymbol === symbol) {
-      updateWatchlistButton(symbol);
-    }
-  } catch (error) {
-    console.error(`Error toggling watchlist for ${symbol}:`, error);
-    alert(`Failed to update watchlist: ${error.message}`);
+  const searchInput = document.getElementById('stock-search');
+  const currentSearchSymbol = searchInput.value.toUpperCase().trim();
+  if (currentSearchSymbol === symbol) {
+    updateWatchlistButton(symbol);
   }
 }
 
-/**
- * Update the watchlist button state and styling
- * @param {string} symbol - Stock symbol to update button for
- */
 function updateWatchlistButton(symbol) {
   const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
   if (!addToWatchlistBtn) return;
-  
+
   const isInWatchlist = isStockInWatchlist(symbol);
-  
+
   addToWatchlistBtn.textContent = isInWatchlist
     ? 'Remove from Watchlist'
     : 'Add to Watchlist';
-  
+
   addToWatchlistBtn.classList.toggle('bg-red-500', isInWatchlist);
   addToWatchlistBtn.classList.toggle('hover:bg-red-600', isInWatchlist);
   addToWatchlistBtn.classList.toggle('bg-green-500', !isInWatchlist);
   addToWatchlistBtn.classList.toggle('hover:bg-green-600', !isInWatchlist);
 }
 
-/**
- * Render the watchlist table with current data
- */
 async function renderWatchlist() {
-  // Ensure watchlist is loaded
-  if (watchlist.length === 0) {
-    await loadWatchlist();
-  }
+  loadWatchlist();
 
   if (watchlist.length === 0) {
     watchlistItemsDiv.innerHTML = '<tr id="empty-watchlist-message" class="bg-white dark:bg-gray-800"><td colspan="8" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">Your watchlist is empty. Search for a stock and add it!</td></tr>';
@@ -200,36 +77,23 @@ async function renderWatchlist() {
     return;
   }
   if (emptyWatchlistMessage) emptyWatchlistMessage.classList.add('hidden');
-  
-  // Fetch data for each symbol in watchlist
+
   const fetchedData = await Promise.all(
     watchlist.map(async (symbol, index) => {
       try {
         const stockData = await fetchStockData(symbol);
-
-        return {
-          symbol,
-          index,
-          data: stockData,
-          error: null
-        };
+        return { symbol, index, data: stockData, error: null };
       } catch (error) {
         console.error(`Error fetching data for ${symbol}:`, error);
-        return {
-          symbol,
-          index,
-          data: null,
-          error: error.message
-        };
+        return { symbol, index, data: null, error: error.message };
       }
     })
   );
 
-  // Render data
   const watchlistItems = fetchedData.map((item, index) => {
     if (item.error) {
-      const rowClass = index % 2 === 0 
-        ? 'bg-white dark:bg-gray-800' 
+      const rowClass = index % 2 === 0
+        ? 'bg-white dark:bg-gray-800'
         : 'bg-gray-50 dark:bg-gray-700';
       return `
       <tr class="${rowClass} border-b dark:border-gray-700">
@@ -260,9 +124,8 @@ async function renderWatchlist() {
       : 'text-red-500 dark:text-red-400';
     const changeSign = stockData.change >= 0 ? '+' : '';
 
-    // Alternating row colors
-    const rowClass = index % 2 === 0 
-      ? 'bg-white dark:bg-gray-800' 
+    const rowClass = index % 2 === 0
+      ? 'bg-white dark:bg-gray-800'
       : 'bg-gray-50 dark:bg-gray-700';
 
     return `
@@ -291,25 +154,10 @@ async function renderWatchlist() {
   watchlistItemsDiv.innerHTML = watchlistItems.join('');
 }
 
-/**
- * Initialize watchlist functionality
- * Loads watchlist from API and migrates localStorage if needed
- */
 async function initializeWatchlist() {
-  // Check for localStorage data and migrate if user is authenticated
-  const localWatchlist = JSON.parse(localStorage.getItem('stockWatchlist')) || [];
-  if (localWatchlist.length > 0) {
-    // Try to migrate localStorage data to database
-    await migrateLocalStorageWatchlist();
-  } else {
-    // Just load from API
-    await loadWatchlist();
-  }
-  
-  // Render the watchlist
+  loadWatchlist();
   await renderWatchlist();
-  
-  // Set up button event listener
+
   const addToWatchlistBtn = document.getElementById('addToWatchlistBtn');
   const searchInput = document.getElementById('stock-search');
   if (addToWatchlistBtn && searchInput) {

@@ -14,6 +14,11 @@ echo "Applying database migrations..."
 python manage.py migrate --noinput
 echo "Migrations applied successfully!"
 
+# Ensure shared demo login account exists
+echo "Ensuring demo user..."
+python manage.py ensure_demo_user
+echo "Demo user ready!"
+
 # Collect static files (clear existing first to avoid duplicate warnings)
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear

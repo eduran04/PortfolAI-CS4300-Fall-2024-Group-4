@@ -3,7 +3,6 @@
 import json
 import logging
 from django.http import JsonResponse, HttpRequest
-from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)
@@ -104,11 +103,6 @@ def learn_ai_explanation(request: HttpRequest) -> JsonResponse:
     """
     if request.method != "POST":
         return JsonResponse({"error": "POST required"}, status=405)
-
-    # Validate API key
-    api_key = getattr(settings, "OPENAI_API_KEY", None)
-    if isinstance(api_key, str) and api_key.strip() == "":
-        return JsonResponse({"error": "Missing OpenAI API key"}, status=500)
 
     # Parse request body
     try:
