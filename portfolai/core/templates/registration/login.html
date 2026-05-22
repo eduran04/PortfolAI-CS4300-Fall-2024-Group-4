@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Login - PortfolAI{% endblock %}
@@ -60,10 +60,13 @@
             </form>
             
             <p class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                Demo account — username: <strong>{{ demo_username }}</strong>
+                Demo account &mdash; username: <strong>{{ demo_username }}</strong>,
+                password: <strong>{{ demo_password }}</strong>
             </p>
         </div>
     </div>
 </div>
 {% endblock %}
+
+
 

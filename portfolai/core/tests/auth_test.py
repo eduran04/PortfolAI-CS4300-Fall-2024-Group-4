@@ -1,4 +1,4 @@
-"""
+﻿"""
 PortfolAI Authentication Test Suite
 ===================================
 
@@ -8,6 +8,7 @@ and ensure_demo_user management command.
 
 from io import StringIO
 
+from django.conf import settings
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -93,6 +94,8 @@ class AuthenticationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'login', status_code=200)
         self.assertContains(response, 'Demo account')
+        self.assertContains(response, settings.DEMO_USERNAME)
+        self.assertContains(response, settings.DEMO_PASSWORD)
 
     def test_user_login_redirects_to_dashboard(self) -> None:
         """Test login redirects to dashboard after success."""
@@ -172,3 +175,6 @@ class AuthenticationTests(TestCase):
         user = User.objects.get(username='demo')
         self.assertTrue(user.check_password('newpass456'))
         self.assertFalse(user.check_password('oldpass'))
+
+
+
