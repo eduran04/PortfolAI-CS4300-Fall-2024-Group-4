@@ -4,3 +4,6 @@
 skips:
   - B106
 
+exclude_dirs:
+  - tests
+  - core/tests
