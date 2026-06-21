@@ -17,6 +17,6 @@ django-cors-headers==4.4.0
 
 # Production server and static files
 gunicorn==23.0.0
-whitenoise==6.6.0
+whitenoise==6.11.0
 
 
